@@ -1,17 +1,62 @@
 ---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import BarChart from '../components/BarChart.astro';
+import GrafCard from '../components/GrafCard.astro';
 
+const vsechny = (await getCollection('grafy')).sort(
+  (a, b) => b.data.datum.valueOf() - a.data.datum.valueOf()
+);
+const tydne = vsechny[0];
+const dalsi = vsechny.slice(1, 9);
+const datum = (d: Date) => d.toLocaleDateString('cs-CZ');
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<Base titul="data.cesky — Česko v mapách, grafech a číslech">
+  <section class="obal sekce" style="text-align: center;">
+    <div style="max-width: 62ch; margin-inline: auto; display: flex; flex-direction: column; gap: 1.5rem; align-items: center;">
+      <h1>Česko v mapách, grafech a číslech</h1>
+      <p class="perex">
+        Ověřená data z ČSÚ, Eurostatu a dalších primárních zdrojů. U každého grafu najdeš
+        zdroj, metodiku i čísla v tabulce.
+      </p>
+      <div class="rada" style="justify-content: center;">
+        <a class="tlacitko tlacitko--plny" href="/grafy/">Procházet grafy</a>
+        <a class="tlacitko" href="https://www.instagram.com/data.cesky/">Sledovat na Instagramu</a>
+      </div>
+    </div>
+  </section>
+
+  {tydne && (
+    <section class="obal">
+      <div class="karta" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2.5rem; align-items: center;">
+        <div class="sloupec" style="align-items: flex-start;">
+          <span class="znacka">Graf týdne</span>
+          <h2>{tydne.data.titul}</h2>
+          <p class="perex">{tydne.data.perex}</p>
+          <p class="drobne">Zdroj: {tydne.data.zdroj}</p>
+          <p class="drobne">Publikováno {datum(tydne.data.datum)}</p>
+          <a class="tlacitko tlacitko--oranzovy" href={`/grafy/${tydne.id}/`}>Otevřít graf</a>
+        </div>
+        <div>
+          <p class="drobne" style="margin-bottom: 1rem;">{tydne.data.popisGrafu}</p>
+          <BarChart
+            polozky={tydne.data.polozky.slice(0, 6)}
+            jednotka={tydne.data.jednotka}
+            kompaktni={true}
+          />
+        </div>
+      </div>
+    </section>
+  )}
+
+  <section class="obal sekce sloupec">
+    <div class="rada" style="justify-content: space-between;">
+      <h2>Nejnovější grafy</h2>
+      <a href="/grafy/" style="font-weight: 800;">Všechny grafy</a>
+    </div>
+    <ul class="mrizka">
+      {dalsi.map((g) => <GrafCard id={g.id} data={g.data} />)}
+    </ul>
+  </section>
+</Base>

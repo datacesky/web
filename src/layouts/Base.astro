@@ -1,0 +1,76 @@
+---
+import '@fontsource/montserrat/500.css';
+import '@fontsource/montserrat/700.css';
+import '@fontsource/montserrat/800.css';
+import '@fontsource/montserrat/900.css';
+import '../styles/global.css';
+
+interface Props {
+  titul: string;
+  popis?: string;
+  obrazek?: string;
+}
+
+const {
+  titul,
+  popis = 'Česko v mapách, grafech a číslech. Ověřená data z ČSÚ, Eurostatu a dalších primárních zdrojů.',
+  obrazek,
+} = Astro.props;
+
+const kanonicka = new URL(Astro.url.pathname, Astro.site);
+const ogObrazek = obrazek ? new URL(obrazek, Astro.site) : undefined;
+const rok = new Date().getFullYear();
+---
+
+<!doctype html>
+<html lang="cs">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{titul}</title>
+    <meta name="description" content={popis} />
+    <link rel="canonical" href={kanonicka} />
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="data.cesky" />
+    <meta property="og:locale" content="cs_CZ" />
+    <meta property="og:title" content={titul} />
+    <meta property="og:description" content={popis} />
+    <meta property="og:url" content={kanonicka} />
+    {ogObrazek && <meta property="og:image" content={ogObrazek} />}
+    <meta name="twitter:card" content="summary_large_image" />
+  </head>
+  <body>
+    <header class="hlavicka">
+      <div class="obal hlavicka__obsah">
+        <a class="logo" href="/">data.cesky</a>
+        <nav class="navigace" aria-label="Hlavní navigace">
+          <a href="/grafy/">Grafy</a>
+          <a href="/metodika/">Metodika</a>
+          <a href="https://www.instagram.com/data.cesky/">Instagram</a>
+          <a href="https://www.tiktok.com/@data.cesky">TikTok</a>
+        </nav>
+      </div>
+    </header>
+
+    <main>
+      <slot />
+    </main>
+
+    <footer class="patka">
+      <div class="obal sekce sloupec">
+        <div class="rada" style="justify-content: space-between;">
+          <p style="font-weight: 800; font-size: 1.2rem;">data.cesky</p>
+          <span class="znacka">@data<span>.cesky</span></span>
+        </div>
+        <p class="drobne" style="max-width: 46ch;">
+          Česko v mapách, grafech a číslech. Zdroj je vždy uvedený u každého grafu.
+        </p>
+        <p class="drobne">
+          © {rok} data.cesky. Grafy jsou pod licencí
+          <a href="https://creativecommons.org/licenses/by/4.0/deed.cs">CC BY 4.0</a>.
+          Kontakt: <a href="mailto:data.cesky@gmail.com">data.cesky@gmail.com</a>
+        </p>
+      </div>
+    </footer>
+  </body>
+</html>

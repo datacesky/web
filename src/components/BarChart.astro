@@ -1,0 +1,113 @@
+---
+interface Polozka {
+  nazev: string;
+  hodnota: number;
+  kategorie?: string;
+}
+
+interface Props {
+  polozky: Polozka[];
+  jednotka: string;
+  barvy?: Record<string, string>;
+  kompaktni?: boolean;
+}
+
+const { polozky, jednotka, barvy = {}, kompaktni = false } = Astro.props;
+
+const vychoziBarvy: Record<string, string> = {
+  'Zbrojařství': 'var(--orange)',
+  'Finance': 'var(--navy)',
+  'Energetika': 'var(--teal)',
+  'Ostatní': 'var(--slate)',
+  'Odhad': 'var(--teal)',
+};
+const mapaBarev = { ...vychoziBarvy, ...barvy };
+const barva = (kategorie?: string) =>
+  (kategorie && mapaBarev[kategorie]) || 'var(--navy)';
+
+const max = Math.max(...polozky.map((p) => p.hodnota));
+const format = new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 1 });
+const kategorie = [...new Set(polozky.map((p) => p.kategorie).filter(Boolean))] as string[];
+const vyskaPruhu = kompaktni ? 14 : 26;
+---
+
+<div class="graf">
+  {kategorie.length > 1 && (
+    <ul class="graf__legenda">
+      {kategorie.map((k) => (
+        <li>
+          <span class="graf__tecka" style={`background: ${barva(k)};`}></span>
+          {k}
+        </li>
+      ))}
+    </ul>
+  )}
+
+  <ul class="graf__radky" aria-hidden="true">
+    {polozky.map((p) => (
+      <li class="graf__radek">
+        <span class="graf__jmeno">{p.nazev}</span>
+        <span
+          class="graf__pruh"
+          style={`width: ${(p.hodnota / max) * 100}%; height: ${vyskaPruhu}px; background: ${barva(p.kategorie)};`}
+        ></span>
+        <span class="graf__hodnota">{format.format(p.hodnota)}</span>
+      </li>
+    ))}
+  </ul>
+
+  {!kompaktni && (
+    <details class="graf__tabulka">
+      <summary>Zobrazit jako tabulku</summary>
+      <table>
+        <caption class="drobne">Hodnoty v jednotkách: {jednotka}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Pořadí</th>
+            <th scope="col">Název</th>
+            {kategorie.length > 0 && <th scope="col">Kategorie</th>}
+            <th scope="col">Hodnota</th>
+          </tr>
+        </thead>
+        <tbody>
+          {polozky.map((p, i) => (
+            <tr>
+              <td>{i + 1}.</td>
+              <td>{p.nazev}</td>
+              {kategorie.length > 0 && <td>{p.kategorie ?? ''}</td>}
+              <td><strong>{format.format(p.hodnota)}</strong></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </details>
+  )}
+</div>
+
+<style>
+  .graf { display: flex; flex-direction: column; gap: 1rem; }
+  .graf__legenda {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+  .graf__legenda li { display: flex; align-items: center; gap: 0.4rem; }
+  .graf__tecka { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .graf__radky { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+  .graf__radek {
+    display: grid;
+    grid-template-columns: minmax(70px, 130px) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .graf__jmeno { text-align: right; font-weight: 700; font-size: 0.95rem; }
+  .graf__pruh { border-radius: 999px; min-width: 6px; }
+  .graf__hodnota { font-weight: 800; white-space: nowrap; font-size: 0.95rem; }
+  .graf__tabulka summary { cursor: pointer; font-weight: 700; font-size: 0.95rem; }
+  .graf__tabulka[open] { margin-top: 0.5rem; }
+</style>
