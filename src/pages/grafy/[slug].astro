@@ -1,8 +1,9 @@
 ---
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import BarChart from '../../components/BarChart.astro';
+import InteraktivniGraf from '../../components/InteraktivniGraf.astro';
 import GrafCard from '../../components/GrafCard.astro';
+import { datum } from '../../lib/format';
 
 export async function getStaticPaths() {
   const grafy = await getCollection('grafy');
@@ -14,113 +15,126 @@ const { data } = graf;
 const { Content } = await render(graf);
 
 const vsechny = await getCollection('grafy');
-const souvisejici = vsechny
-  .filter((g) => g.id !== graf.id && g.data.tema === data.tema)
-  .slice(0, 3);
-
-const datum = (d: Date) => d.toLocaleDateString('cs-CZ');
+const stejneTema = vsechny.filter((g) => g.id !== graf.id && g.data.tema === data.tema);
+const ostatni = vsechny.filter((g) => g.id !== graf.id && g.data.tema !== data.tema);
+const souvisejici = [...stejneTema, ...ostatni].slice(0, 3);
 ---
 
 <Base titul={`${data.titul} — data.cesky`} popis={data.perex} obrazek={data.obrazek}>
-  <article class="obal sekce sloupec">
-    <nav aria-label="Drobečková navigace" class="drobne">
-      <a href="/grafy/">Grafy</a> / <span aria-current="page">{data.titul}</span>
+  <article class="obal sekce--mala sloupec" style="gap: 1.25rem;">
+    <nav class="drobecky" aria-label="Drobečková navigace">
+      <a href="/grafy/">Grafy</a>
+      <span aria-hidden="true">/</span>
+      <span>{data.tema}</span>
+      <span aria-hidden="true">/</span>
+      <span aria-current="page" style="color: var(--navy);">{data.titul}</span>
     </nav>
 
     <h1>{data.titul}</h1>
     <p class="perex" style="max-width: 62ch;">{data.perex}</p>
 
     <div class="rada">
-      <span class="chip" style="cursor: default;">Zdroj: {data.zdroj}</span>
-      <span class="chip" style="cursor: default;">Publikováno {datum(data.datum)}</span>
-      <span class="chip" style="cursor: default;">Téma: {data.tema}</span>
+      <span class="chip chip--info">Zdroj: {data.zdroj}</span>
+      <span class="chip chip--info">Publikováno {datum(data.datum)}</span>
+      <span class="chip chip--info">Téma: {data.tema}</span>
+      {data.serie && <span class="chip chip--info">Série: {data.serie}</span>}
     </div>
 
-    <div class="detail" style="margin-top: 1.5rem;">
-      <div class="sloupec" style="gap: 2.5rem;">
-        <div class="karta sloupec">
-          <div style="text-align: center;">
-            <h2 style="text-transform: uppercase;">{data.titul}</h2>
-            {data.popisGrafu && (
-              <p class="stitek" style="margin-top: 0.4rem;">{data.popisGrafu}</p>
-            )}
+    <div class="detail" style="margin-top: 1.25rem;">
+      <div class="sloupec" style="gap: 3rem;">
+        <div class="karta sloupec" style="gap: 1.5rem;">
+          <div class="sloupec" style="gap: 0.35rem; text-align: center; align-items: center;">
+            <h2 class="nadpis-grafu" style="font-size: clamp(1.4rem, 3vw, 2rem);">{data.titul}</h2>
+            {data.popisGrafu && <p class="stitek" style="font-size: 0.95rem;">{data.popisGrafu}</p>}
           </div>
-          <BarChart polozky={data.polozky} jednotka={data.jednotka} />
-          <div class="rada" style="justify-content: space-between;">
+          <InteraktivniGraf polozky={data.polozky} jednotka={data.jednotka} soucet={data.soucet} barvy={data.barvy} desetinna={data.desetinna} />
+          <div class="rada rada--mezi">
             <span class="drobne">Zdroj: {data.zdroj}</span>
             <span class="znacka">@data<span>.cesky</span></span>
           </div>
         </div>
 
-        <div class="sloupec" style="gap: 1.25rem;">
-          <h2>Co z toho plyne</h2>
-          <Content />
-        </div>
+        <section class="sloupec" style="gap: 1.25rem;">
+          <h2 style="font-size: clamp(1.4rem, 3vw, 1.9rem);">Co z toho plyne</h2>
+          <div class="text-clanku">
+            <Content />
+          </div>
+        </section>
 
         {data.metodika && (
-          <div class="karta sloupec">
+          <section class="karta sloupec">
             <h2 style="font-size: 1.3rem;">Metodika</h2>
-            <p>{data.metodika}</p>
+            <p style="line-height: 1.8; color: var(--text-2);">{data.metodika}</p>
             <p class="drobne">
-              Našel jsi chybu? Napiš na
-              <a href="mailto:data.cesky@gmail.com">data.cesky@gmail.com</a>.
+              Našel jsi chybu? Napiš na <a href="mailto:data.cesky@gmail.com">data.cesky@gmail.com</a>.
             </p>
-          </div>
+          </section>
         )}
       </div>
 
-      <aside class="sloupec" style="gap: 1.25rem;">
-        <div class="karta sloupec">
+      <aside class="sloupec" style="gap: 1.25rem;" aria-label="Zdroj, stažení a sdílení">
+        <div class="karta sloupec" style="gap: 0.7rem;">
           <h2 style="font-size: 1.1rem;">Zdroj</h2>
-          <p style="font-weight: 600;">{data.zdroj}</p>
+          <p style="font-weight: 700;">{data.zdroj}</p>
           {data.dataStazena && <p class="drobne">Data převzata {datum(data.dataStazena)}</p>}
           <a href={data.zdrojUrl} style="font-weight: 800;">Otevřít zdroj</a>
         </div>
 
-        <div class="karta sloupec">
+        <div class="karta sloupec" style="gap: 0.7rem;">
           <h2 style="font-size: 1.1rem;">Stáhnout</h2>
           {data.obrazek && (
-            <a class="tlacitko tlacitko--plny" href={data.obrazek} download>Obrázek grafu</a>
+            <a class="tlacitko tlacitko--plny tlacitko--plna-sirka" href={data.obrazek} download>Obrázek grafu</a>
           )}
           {data.dataOtevrena && data.dataSoubor ? (
-            <a class="tlacitko" href={data.dataSoubor} download>Data v CSV</a>
+            <a class="tlacitko tlacitko--plna-sirka" href={data.dataSoubor} download>Data v CSV</a>
           ) : (
             <>
-              <button class="tlacitko" type="button" disabled aria-describedby="csv-pozn">
-                Data nejsou ke stažení
-              </button>
-              <p class="drobne" id="csv-pozn">
-                Data nejsou otevřená, proto je tu nesdílíme. U dat z ČSÚ nebo Eurostatu tu CSV najdeš.
-              </p>
+              <button class="tlacitko tlacitko--plna-sirka" type="button" disabled aria-describedby="csv-pozn">Data nejsou ke stažení</button>
+              <p class="drobne" id="csv-pozn">Data nejsou otevřená, proto je tu nesdílím. U dat z ČSÚ nebo Eurostatu tu CSV najdeš.</p>
             </>
           )}
         </div>
 
         {(data.instagram || data.tiktok) && (
-          <div class="karta sloupec">
+          <div class="karta sloupec" style="gap: 0.7rem;">
             <h2 style="font-size: 1.1rem;">Animovaná verze</h2>
-            {data.instagram && <a class="tlacitko" href={data.instagram}>Instagram</a>}
-            {data.tiktok && <a class="tlacitko" href={data.tiktok}>TikTok</a>}
+            {data.instagram && <a class="tlacitko tlacitko--plna-sirka" href={data.instagram}>Přehrát na Instagramu</a>}
+            {data.tiktok && <a class="tlacitko tlacitko--plna-sirka" href={data.tiktok}>Přehrát na TikToku</a>}
           </div>
         )}
 
-        <div class="karta sloupec">
+        <div class="karta sloupec" style="gap: 0.7rem;">
           <h2 style="font-size: 1.1rem;">Sdílet a převzít</h2>
+          <button class="tlacitko tlacitko--oranzovy tlacitko--plna-sirka" type="button" data-kopirovat>Kopírovat odkaz</button>
           <p class="drobne">
-            Graf můžeš převzít i upravit. Uveď autora @data.cesky, odkaz na tuto stránku a licenci
-            <a href="https://creativecommons.org/licenses/by/4.0/deed.cs">CC BY 4.0</a>.
+            Graf můžeš převzít i upravit. Uveď autora @data.cesky, odkaz na tuto stránku a licenci <a href="https://creativecommons.org/licenses/by/4.0/deed.cs">CC BY 4.0</a>.
           </p>
         </div>
       </aside>
     </div>
 
     {souvisejici.length > 0 && (
-      <section class="sloupec" style="margin-top: 3rem;">
-        <h2>Související grafy</h2>
-        <ul class="mrizka">
+      <section class="sloupec" style="margin-top: 3.5rem; gap: 1.5rem;">
+        <h2 style="font-size: clamp(1.5rem, 3vw, 2.1rem);">Související grafy</h2>
+        <ul class="mrizka mrizka--3">
           {souvisejici.map((g) => <GrafCard id={g.id} data={g.data} />)}
         </ul>
       </section>
     )}
   </article>
 </Base>
+
+<script>
+  for (const tlacitko of document.querySelectorAll<HTMLButtonElement>('[data-kopirovat]')) {
+    const puvodni = tlacitko.textContent;
+    tlacitko.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(location.href);
+        tlacitko.textContent = 'Odkaz zkopírován';
+      } catch {
+        tlacitko.textContent = 'Zkopíruj adresu z prohlížeče';
+      }
+      setTimeout(() => (tlacitko.textContent = puvodni), 2500);
+    });
+  }
+</script>

@@ -1,0 +1,39 @@
+---
+import Base from '../layouts/Base.astro';
+import { serie } from '../data/serie';
+import { datum, sklonuj } from '../lib/format';
+---
+
+<Base titul="Série — data.cesky" popis="Česko vs. svět, Index týdne a Kdyby Česko bylo 100 lidí. Všechny díly na jednom místě.">
+  <section class="obal sekce--mala sloupec" style="gap: 1.5rem;">
+    <div class="sloupec" style="max-width: 62ch;">
+      <h1>Série</h1>
+      <p class="perex">Témata, která pokračují díl po dílu. Animované verze najdeš na Instagramu.</p>
+    </div>
+    <nav class="rada" aria-label="Série">
+      {serie.map((s) => <a class="chip" style="text-decoration: none;" href={`#${s.id}`}>{s.nazev}</a>)}
+    </nav>
+  </section>
+
+  {serie.map((s) => (
+    <section id={s.id} class="obal sekce--mala sloupec" style="gap: 1.25rem; scroll-margin-top: 1rem;">
+      <div class="nadpis-sekce" style="margin-bottom: 0;">
+        <div class="sloupec" style="gap: 0.35rem;">
+          <h2>{s.nazev}</h2>
+          <p class="drobne">{s.popis}</p>
+        </div>
+        <span class="stitek">{sklonuj(s.dily.length, 'díl', 'díly', 'dílů')}</span>
+      </div>
+      <ul class="mrizka mrizka--3">
+        {[...s.dily].reverse().map((d) => (
+          <li class="karta sloupec" style="gap: 0.6rem;">
+            <span class="stitek">{d.cislo ? `Díl ${d.cislo}` : 'Díl'} · {datum(new Date(d.datum))}</span>
+            <h3 style="font-size: 1.35rem; font-weight: 900;">{d.nazev}</h3>
+            <p class="drobne" style="flex-grow: 1;">{d.popis}</p>
+            {d.instagram && <a class="tlacitko" href={d.instagram}>Přehrát na Instagramu</a>}
+          </li>
+        ))}
+      </ul>
+    </section>
+  ))}
+</Base>

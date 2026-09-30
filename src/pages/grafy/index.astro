@@ -1,86 +1,22 @@
 ---
 import { getCollection } from 'astro:content';
 import Base from '../../layouts/Base.astro';
-import GrafCard from '../../components/GrafCard.astro';
+import ArchivGrafu from '../../components/ArchivGrafu.astro';
 
 const grafy = (await getCollection('grafy')).sort(
   (a, b) => b.data.datum.valueOf() - a.data.datum.valueOf()
 );
-const temata = ['Vše', ...new Set(grafy.map((g) => g.data.tema))];
 ---
 
 <Base
   titul="Všechny grafy — data.cesky"
-  popis="Archiv grafů a map o Česku. Filtruj podle tématu nebo hledej."
+  popis="Archiv grafů a map o Česku se zdroji a metodikou. Filtruj podle tématu nebo hledej."
 >
-  <section class="obal sekce sloupec">
-    <h1>Všechny grafy</h1>
-    <p class="perex">Filtruj podle tématu, nebo hledej podle názvu.</p>
-
-    <div class="rada" style="justify-content: space-between; align-items: flex-end;">
-      <div class="rada" role="group" aria-label="Filtrovat podle tématu">
-        {temata.map((t, i) => (
-          <button class="chip" type="button" data-filtr={t} aria-pressed={i === 0 ? 'true' : 'false'}>
-            {t}
-          </button>
-        ))}
-      </div>
-      <div class="sloupec" style="gap: 0.4rem;">
-        <label for="hledat" style="font-weight: 700; font-size: 0.9rem;">Hledat graf</label>
-        <input id="hledat" type="search" placeholder="Třeba Penny nebo jména" />
-      </div>
+  <section class="obal sekce--mala sloupec" style="gap: 1.75rem;">
+    <div class="sloupec" style="max-width: 62ch;">
+      <h1>Všechny grafy</h1>
+      <p class="perex">Filtruj podle tématu, nebo hledej podle názvu. Každý graf má uvedený zdroj a metodiku.</p>
     </div>
-
-    <p class="drobne" id="pocet" aria-live="polite"></p>
-
-    <ul class="mrizka" id="seznam">
-      {grafy.map((g) => <GrafCard id={g.id} data={g.data} />)}
-    </ul>
-
-    <p id="prazdno" hidden class="karta" style="text-align: center;">
-      Žádný graf neodpovídá hledání.
-    </p>
+    <ArchivGrafu grafy={grafy} />
   </section>
 </Base>
-
-<script>
-  const karty = Array.from(document.querySelectorAll<HTMLElement>('.karta-grafu'));
-  const chipy = Array.from(document.querySelectorAll<HTMLButtonElement>('.chip'));
-  const hledat = document.querySelector<HTMLInputElement>('#hledat')!;
-  const pocet = document.querySelector<HTMLElement>('#pocet')!;
-  const prazdno = document.querySelector<HTMLElement>('#prazdno')!;
-  let filtr = 'Vše';
-
-  const bezDiakritiky = (t: string) =>
-    t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-
-  const popisek = (n: number) =>
-    n === 1 ? '1 graf' : n >= 2 && n <= 4 ? `${n} grafy` : `${n} grafů`;
-
-  function prekresli() {
-    const dotaz = bezDiakritiky(hledat.value.trim());
-    let videt = 0;
-
-    for (const karta of karty) {
-      const temaSedi = filtr === 'Vše' || karta.dataset.tema === filtr;
-      const textSedi = !dotaz || bezDiakritiky(karta.dataset.hledani ?? '').includes(dotaz);
-      const zobrazit = temaSedi && textSedi;
-      karta.hidden = !zobrazit;
-      if (zobrazit) videt++;
-    }
-
-    pocet.textContent = popisek(videt);
-    prazdno.hidden = videt > 0;
-  }
-
-  for (const chip of chipy) {
-    chip.addEventListener('click', () => {
-      filtr = chip.dataset.filtr ?? 'Vše';
-      for (const c of chipy) c.setAttribute('aria-pressed', String(c === chip));
-      prekresli();
-    });
-  }
-
-  hledat.addEventListener('input', prekresli);
-  prekresli();
-</script>

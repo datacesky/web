@@ -15,6 +15,7 @@ const grafy = defineCollection({
       'Kultura',
       'Sport',
       'Mapy',
+      'Cestování',
     ]),
     serie: z.string().optional(),
     zdroj: z.string(),
@@ -22,12 +23,18 @@ const grafy = defineCollection({
     dataStazena: z.date().optional(),
     dataOtevrena: z.boolean().default(false),
     jednotka: z.string(),
+    // true = hodnoty se dají sčítat (majetek, počty). U procent a průměrů nech false.
+    soucet: z.boolean().default(false),
+    // Pevný počet desetinných míst v grafu, např. 1 → 36,0. Když chybí, ukáže se nejvýš jedno.
+    desetinna: z.number().int().min(0).max(3).optional(),
     popisGrafu: z.string().optional(),
     metodika: z.string().optional(),
     obrazek: z.string().optional(),
     dataSoubor: z.string().optional(),
     instagram: z.string().url().optional(),
     tiktok: z.string().url().optional(),
+    // Barvy kategorií: orange, navy, teal, slate nebo hex kód.
+    barvy: z.record(z.string(), z.string()).optional(),
     polozky: z
       .array(
         z.object({

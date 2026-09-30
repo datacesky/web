@@ -1,0 +1,87 @@
+---
+import GrafCard from './GrafCard.astro';
+
+interface Props {
+  grafy: { id: string; data: any }[];
+}
+
+const { grafy } = Astro.props;
+const temata = ['Vše', ...new Set(grafy.map((g) => g.data.tema))];
+---
+
+<div class="archiv" data-archiv>
+  <div class="archiv__ovladani">
+    <div class="rada" role="group" aria-label="Filtrovat podle tématu">
+      {temata.map((t, i) => (
+        <button class="chip" type="button" data-filtr={t} aria-pressed={i === 0 ? 'true' : 'false'}>{t}</button>
+      ))}
+    </div>
+    <div class="sloupec" style="gap: 0.4rem;">
+      <label for="hledat-graf">Hledat graf</label>
+      <input id="hledat-graf" type="search" placeholder="Třeba Penny nebo káva" autocomplete="off" />
+    </div>
+  </div>
+
+  <p class="drobne" data-pocet aria-live="polite"></p>
+
+  <ul class="mrizka" data-seznam>
+    {grafy.map((g) => <GrafCard id={g.id} data={g.data} />)}
+  </ul>
+
+  <div class="karta archiv__prazdno" data-prazdno hidden>
+    <p style="font-weight: 800; font-size: 1.15rem;">Žádný graf neodpovídá hledání.</p>
+    <p class="drobne">Zkus jiné slovo, nebo zruš filtr tématu.</p>
+    <button class="tlacitko tlacitko--plny" type="button" data-zrusit>Zrušit filtr a hledání</button>
+  </div>
+</div>
+
+<style>
+  .archiv { display: flex; flex-direction: column; gap: 1.25rem; }
+  .archiv__ovladani { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; align-items: flex-end; justify-content: space-between; }
+  .archiv__prazdno { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; text-align: center; border-style: dashed; }
+</style>
+
+<script>
+  const bezDiakritiky = (t: string) =>
+    t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const popisek = (n: number) =>
+    n === 1 ? '1 graf' : n >= 2 && n <= 4 ? `${n} grafy` : `${n} grafů`;
+
+  for (const archiv of document.querySelectorAll<HTMLElement>('[data-archiv]')) {
+    const karty = Array.from(archiv.querySelectorAll<HTMLElement>('.kg'));
+    const chipy = Array.from(archiv.querySelectorAll<HTMLButtonElement>('[data-filtr]'));
+    const hledat = archiv.querySelector<HTMLInputElement>('input[type="search"]')!;
+    const pocet = archiv.querySelector<HTMLElement>('[data-pocet]')!;
+    const prazdno = archiv.querySelector<HTMLElement>('[data-prazdno]')!;
+    const zrusit = archiv.querySelector<HTMLButtonElement>('[data-zrusit]')!;
+    let filtr = 'Vše';
+
+    const prekresli = () => {
+      const dotaz = bezDiakritiky(hledat.value.trim());
+      let videt = 0;
+      for (const karta of karty) {
+        const tema = filtr === 'Vše' || karta.dataset.tema === filtr;
+        const text = !dotaz || bezDiakritiky(karta.dataset.hledani ?? '').includes(dotaz);
+        karta.hidden = !(tema && text);
+        if (tema && text) videt++;
+      }
+      pocet.textContent = popisek(videt);
+      prazdno.hidden = videt > 0;
+      for (const c of chipy) c.setAttribute('aria-pressed', String(c.dataset.filtr === filtr));
+    };
+
+    for (const chip of chipy) {
+      chip.addEventListener('click', () => {
+        filtr = chip.dataset.filtr ?? 'Vše';
+        prekresli();
+      });
+    }
+    hledat.addEventListener('input', prekresli);
+    zrusit.addEventListener('click', () => {
+      filtr = 'Vše';
+      hledat.value = '';
+      prekresli();
+    });
+    prekresli();
+  }
+</script>

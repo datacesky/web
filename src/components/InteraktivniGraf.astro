@@ -1,0 +1,236 @@
+---
+import { barvaKategorie, cislo } from '../lib/format';
+
+interface Polozka {
+  nazev: string;
+  hodnota: number;
+  kategorie?: string;
+}
+
+interface Props {
+  polozky: Polozka[];
+  jednotka: string;
+  soucet?: boolean;
+  barvy?: Record<string, string>;
+  desetinna?: number;
+}
+
+const { polozky, jednotka, soucet = false, barvy = {}, desetinna } = Astro.props;
+const c = (h: number) => cislo(h, desetinna);
+
+const serazene = [...polozky].sort((a, b) => b.hodnota - a.hodnota);
+const prvni = serazene[0];
+const druhy = serazene[1];
+const posledni = serazene[serazene.length - 1];
+const max = prvni.hodnota;
+const celkem = polozky.reduce((s, p) => s + p.hodnota, 0);
+const jednotkaRozdilu = jednotka === '%' ? 'p. b.' : jednotka;
+const kategorie = [...new Set(polozky.map((p) => p.kategorie).filter(Boolean))] as string[];
+
+const radky = polozky.map((p) => {
+  const poradi = serazene.indexOf(p) + 1;
+  const rozdil =
+    poradi === 1
+      ? `O ${c(p.hodnota - druhy.hodnota)} ${jednotkaRozdilu} víc než 2. místo`
+      : `O ${c(prvni.hodnota - p.hodnota)} ${jednotkaRozdilu} méně než 1. místo`;
+  const podil = soucet ? `${cislo((p.hodnota / celkem) * 100)} % součtu všech položek` : '';
+  return {
+    ...p,
+    poradi,
+    text: `${c(p.hodnota)} ${jednotka}`,
+    sirka: (p.hodnota / max) * 100,
+    barva: barvaKategorie(p.kategorie, barvy),
+    rozdil,
+    podil,
+  };
+});
+
+const sirkaHodnot = `calc(${Math.max(...polozky.map((p) => c(p.hodnota).length))}ch + 0.4rem)`;
+
+const souhrnNadpis = soucet ? 'Součet všech položek' : 'Rozpětí';
+const souhrnHodnota = soucet
+  ? `${c(celkem)} ${jednotka}`
+  : `${c(posledni.hodnota)} až ${c(prvni.hodnota)} ${jednotka}`;
+---
+
+<div class="ig" data-ig style={`--sirka-hodnot: ${sirkaHodnot};`}>
+  <div class="ig__lista">
+    <div class="ig__prepinac" role="group" aria-label="Způsob zobrazení">
+      <button type="button" aria-pressed="true" data-pohled="graf">Graf</button>
+      <button type="button" aria-pressed="false" data-pohled="tabulka">Tabulka</button>
+    </div>
+    {kategorie.length > 1 && (
+      <ul class="legenda">
+        {kategorie.map((k) => (
+          <li><span class="legenda__tecka" style={`background: ${barvaKategorie(k, barvy)};`}></span>{k}</li>
+        ))}
+      </ul>
+    )}
+  </div>
+
+  <div data-obsah="graf" class="ig__graf">
+    <ul class="ig__radky">
+      {radky.map((r) => (
+        <li>
+          <button
+            type="button"
+            class="ig__radek"
+            aria-pressed="false"
+            aria-label={`${r.poradi}. místo, ${r.nazev}, ${r.text}`}
+            data-nazev={r.nazev}
+            data-poradi={r.poradi}
+            data-text={r.text}
+            data-kategorie={r.kategorie ?? ''}
+            data-rozdil={r.rozdil}
+            data-podil={r.podil}
+          >
+            <span class="ig__jmeno">{r.nazev}</span>
+            <span class="ig__draha"><span class="ig__pruh" style={`width: ${r.sirka}%; background: ${r.barva};`}></span></span>
+            <span class="ig__hodnota">{c(r.hodnota)}</span>
+          </button>
+        </li>
+      ))}
+    </ul>
+
+    <div class="ig__panel" aria-live="polite">
+      <div class="ig__souhrn" data-souhrn>
+        <div>
+          <span class="ig__maly">{souhrnNadpis}</span>
+          <strong class="ig__velky">{souhrnHodnota}</strong>
+        </div>
+        <span class="ig__napoveda">Klikni na řádek a uvidíš podrobnosti.</span>
+      </div>
+      <div class="ig__vyber" data-vyber hidden>
+        <div>
+          <span class="ig__maly" data-v="poradi"></span>
+          <strong class="ig__jmeno-vyber" data-v="nazev"></strong>
+        </div>
+        <strong class="ig__velky" data-v="text"></strong>
+        <div class="ig__detaily">
+          <span data-v="kategorie"></span>
+          <span data-v="rozdil"></span>
+          <span data-v="podil"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div data-obsah="tabulka" hidden>
+    <div class="tabulka-obal">
+      <table>
+        <caption class="drobne">Hodnoty v jednotkách: {jednotka}</caption>
+        <thead>
+          <tr>
+            <th scope="col">Pořadí</th>
+            <th scope="col">Název</th>
+            {kategorie.length > 0 && <th scope="col">Kategorie</th>}
+            <th scope="col" class="cislo">Hodnota</th>
+          </tr>
+        </thead>
+        <tbody>
+          {radky.map((r) => (
+            <tr>
+              <td>{r.poradi}.</td>
+              <td style="font-weight: 700;">{r.nazev}</td>
+              {kategorie.length > 0 && <td>{r.kategorie ?? ''}</td>}
+              <td class="cislo" style="font-weight: 800;">{c(r.hodnota)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<style>
+  .ig { display: flex; flex-direction: column; gap: 1.25rem; }
+  .ig__lista { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; }
+  .ig__prepinac { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--cream); border: 1px solid var(--line); }
+  .ig__prepinac button { min-height: 44px; padding: 0 1.3rem; border: 0; border-radius: 999px; background: transparent; color: var(--navy); font-family: inherit; font-size: 0.95rem; font-weight: 800; cursor: pointer; }
+  .ig__prepinac button[aria-pressed='true'] { background: var(--navy); color: var(--cream); }
+
+  .ig__graf { display: flex; flex-direction: column; gap: 1.25rem; }
+  .ig__radky { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+  .ig__radek {
+    display: grid;
+    grid-template-columns: minmax(80px, 130px) minmax(0, 1fr) var(--sirka-hodnot);
+    gap: 1rem;
+    align-items: center;
+    width: 100%;
+    min-height: 46px;
+    padding: 0.4rem 0.75rem;
+    border: 0;
+    border-radius: 12px;
+    background: transparent;
+    color: var(--navy);
+    font-family: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: opacity 0.15s ease, background 0.15s ease;
+  }
+  .ig__radek:hover { background: rgba(27, 42, 74, 0.05); }
+  .ig__radek[aria-pressed='true'] { background: var(--cream); }
+  .ig--vyber .ig__radek[aria-pressed='false'] { opacity: 0.38; }
+  .ig__jmeno { text-align: right; font-weight: 700; font-size: 0.98rem; }
+  .ig__draha { display: block; }
+  .ig__pruh { display: block; height: 28px; border-radius: 999px; min-width: 6px; }
+  .ig__hodnota { font-weight: 800; font-size: 1.02rem; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+  .ig__panel { background: var(--navy); color: var(--cream); border-radius: 16px; padding: 1.25rem 1.5rem; }
+  .ig__souhrn, .ig__vyber { display: flex; flex-wrap: wrap; gap: 0.75rem 2rem; align-items: center; justify-content: space-between; }
+  .ig__maly { display: block; font-size: 0.85rem; font-weight: 700; color: #D9D3C7; }
+  .ig__velky { font-size: clamp(1.3rem, 3vw, 1.65rem); font-weight: 900; color: var(--orange); white-space: nowrap; }
+  .ig__jmeno-vyber { display: block; font-size: 1.4rem; font-weight: 900; line-height: 1.25; }
+  .ig__napoveda { font-size: 0.92rem; font-weight: 600; color: #D9D3C7; }
+  .ig__detaily { display: flex; flex-direction: column; gap: 0.15rem; font-size: 0.9rem; font-weight: 600; color: #D9D3C7; }
+
+  @media (max-width: 560px) {
+    .ig__radek { grid-template-columns: 78px minmax(0, 1fr) var(--sirka-hodnot); gap: 0.6rem; padding-inline: 0.4rem; }
+    .ig__jmeno { font-size: 0.85rem; }
+    .ig__pruh { height: 20px; }
+    .ig__hodnota { font-size: 0.9rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .ig__radek { transition: none; } }
+</style>
+
+<script>
+  for (const ig of document.querySelectorAll<HTMLElement>('[data-ig]')) {
+    const radky = Array.from(ig.querySelectorAll<HTMLButtonElement>('.ig__radek'));
+    const souhrn = ig.querySelector<HTMLElement>('[data-souhrn]')!;
+    const vyber = ig.querySelector<HTMLElement>('[data-vyber]')!;
+    let aktivni: HTMLButtonElement | null = null;
+
+    const nastav = (klic: string, text: string) => {
+      const el = vyber.querySelector<HTMLElement>(`[data-v="${klic}"]`)!;
+      el.textContent = text;
+      el.hidden = !text;
+    };
+
+    const zobraz = (radek: HTMLButtonElement | null) => {
+      aktivni = radek;
+      ig.classList.toggle('ig--vyber', !!radek);
+      for (const r of radky) r.setAttribute('aria-pressed', String(r === radek));
+      souhrn.hidden = !!radek;
+      vyber.hidden = !radek;
+      if (!radek) return;
+      const d = radek.dataset;
+      nastav('poradi', `${d.poradi}. místo`);
+      nastav('nazev', d.nazev ?? '');
+      nastav('text', d.text ?? '');
+      nastav('kategorie', d.kategorie ? `Kategorie: ${d.kategorie}` : '');
+      nastav('rozdil', d.rozdil ?? '');
+      nastav('podil', d.podil ?? '');
+    };
+
+    for (const r of radky) r.addEventListener('click', () => zobraz(aktivni === r ? null : r));
+
+    const tlacitka = Array.from(ig.querySelectorAll<HTMLButtonElement>('[data-pohled]'));
+    const obsahy = Array.from(ig.querySelectorAll<HTMLElement>('[data-obsah]'));
+    for (const t of tlacitka) {
+      t.addEventListener('click', () => {
+        for (const x of tlacitka) x.setAttribute('aria-pressed', String(x === t));
+        for (const o of obsahy) o.hidden = o.dataset.obsah !== t.dataset.pohled;
+      });
+    }
+  }
+</script>

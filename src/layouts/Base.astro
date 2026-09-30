@@ -1,5 +1,6 @@
 ---
 import '@fontsource/montserrat/500.css';
+import '@fontsource/montserrat/600.css';
 import '@fontsource/montserrat/700.css';
 import '@fontsource/montserrat/800.css';
 import '@fontsource/montserrat/900.css';
@@ -18,8 +19,14 @@ const {
 } = Astro.props;
 
 const kanonicka = new URL(Astro.url.pathname, Astro.site);
-const ogObrazek = obrazek ? new URL(obrazek, Astro.site) : undefined;
+const ogObrazek = new URL(obrazek ?? '/logo.png', Astro.site);
+const cesta = Astro.url.pathname;
+const aktivni = (prefix: string) => (cesta.startsWith(prefix) ? 'page' : undefined);
 const rok = new Date().getFullYear();
+
+const IG = 'https://www.instagram.com/data.cesky/';
+const TT = 'https://www.tiktok.com/@data.cesky';
+const FB = 'https://www.facebook.com/data.cesky';
 ---
 
 <!doctype html>
@@ -30,25 +37,34 @@ const rok = new Date().getFullYear();
     <title>{titul}</title>
     <meta name="description" content={popis} />
     <link rel="canonical" href={kanonicka} />
+    <link rel="icon" type="image/png" href="/logo.png" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="data.cesky" />
     <meta property="og:locale" content="cs_CZ" />
     <meta property="og:title" content={titul} />
     <meta property="og:description" content={popis} />
     <meta property="og:url" content={kanonicka} />
-    {ogObrazek && <meta property="og:image" content={ogObrazek} />}
+    <meta property="og:image" content={ogObrazek} />
     <meta name="twitter:card" content="summary_large_image" />
   </head>
   <body>
     <header class="hlavicka">
       <div class="obal hlavicka__obsah">
-        <a class="logo" href="/">data.cesky</a>
+        <a class="logo" href="/">
+          <img src="/logo.png" alt="" width="46" height="46" />
+          <span>data.cesky</span>
+        </a>
         <nav class="navigace" aria-label="Hlavní navigace">
-          <a href="/grafy/">Grafy</a>
-          <a href="/metodika/">Metodika</a>
-          <a href="https://www.instagram.com/data.cesky/">Instagram</a>
-          <a href="https://www.tiktok.com/@data.cesky">TikTok</a>
+          <a href="/grafy/" aria-current={aktivni('/grafy')}>Grafy</a>
+          <a href="/mapa/" aria-current={aktivni('/mapa')}>Mapa Česka</a>
+          <a href="/serie/" aria-current={aktivni('/serie')}>Série</a>
+          <a href="/metodika/" aria-current={aktivni('/metodika')}>Metodika</a>
         </nav>
+        <div class="hlavicka__site">
+          <a href={IG}>Instagram</a>
+          <a href={TT}>TikTok</a>
+          <a href={FB}>Facebook</a>
+        </div>
       </div>
     </header>
 
@@ -57,19 +73,49 @@ const rok = new Date().getFullYear();
     </main>
 
     <footer class="patka">
-      <div class="obal sekce sloupec">
-        <div class="rada" style="justify-content: space-between;">
-          <p style="font-weight: 800; font-size: 1.2rem;">data.cesky</p>
+      <div class="obal">
+        <div class="patka__mrizka">
+          <div class="sloupec patka__znacka">
+            <a class="logo" href="/">
+              <img src="/logo.png" alt="" width="46" height="46" />
+              <span>data.cesky</span>
+            </a>
+            <p class="drobne" style="max-width: 40ch;">
+              Česko v mapách, grafech a číslech. Zdroj je vždy uvedený u každého grafu.
+            </p>
+          </div>
+          <div class="sloupec">
+            <h2>Obsah</h2>
+            <ul class="patka__odkazy">
+              <li><a href="/grafy/">Grafy</a></li>
+              <li><a href="/mapa/">Mapa Česka</a></li>
+              <li><a href="/serie/">Série</a></li>
+            </ul>
+          </div>
+          <div class="sloupec">
+            <h2>O projektu</h2>
+            <ul class="patka__odkazy">
+              <li><a href="/metodika/">Metodika a zdroje</a></li>
+              <li><a href="/metodika/#opravy">Opravy</a></li>
+              <li><a href="mailto:data.cesky@gmail.com">Kontakt</a></li>
+            </ul>
+          </div>
+          <div class="sloupec">
+            <h2>Sleduj</h2>
+            <ul class="patka__odkazy">
+              <li><a href={IG}>Instagram</a></li>
+              <li><a href={TT}>TikTok</a></li>
+              <li><a href={FB}>Facebook</a></li>
+            </ul>
+          </div>
+        </div>
+        <div class="patka__spodek">
+          <p class="drobne">
+            © {rok} data.cesky. Grafy jsou pod licencí <a href="https://creativecommons.org/licenses/by/4.0/deed.cs">CC BY 4.0</a>.
+            Kontakt: <a href="mailto:data.cesky@gmail.com">data.cesky@gmail.com</a>
+          </p>
           <span class="znacka">@data<span>.cesky</span></span>
         </div>
-        <p class="drobne" style="max-width: 46ch;">
-          Česko v mapách, grafech a číslech. Zdroj je vždy uvedený u každého grafu.
-        </p>
-        <p class="drobne">
-          © {rok} data.cesky. Grafy jsou pod licencí
-          <a href="https://creativecommons.org/licenses/by/4.0/deed.cs">CC BY 4.0</a>.
-          Kontakt: <a href="mailto:data.cesky@gmail.com">data.cesky@gmail.com</a>
-        </p>
       </div>
     </footer>
   </body>

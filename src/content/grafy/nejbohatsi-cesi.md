@@ -7,6 +7,9 @@ zdroj: "Forbes Česko"
 zdrojUrl: "https://forbes.cz/"
 dataOtevrena: false
 jednotka: "mld. Kč"
+soucet: true
+barvy: { "Energetika": "#9A520E" }
+instagram: "https://www.instagram.com/reel/DZzNoxdKuM-/"
 popisGrafu: "Majetek v miliardách Kč podle žebříčku Forbes Česko"
 metodika: "Hodnoty jsou odhady majetku podle žebříčku Forbes Česko 2026, uvedené v miliardách korun. Rodinu Kellnerových uvádí Forbes jako jeden záznam. Obor odpovídá hlavnímu zdroji majetku."
 polozky:

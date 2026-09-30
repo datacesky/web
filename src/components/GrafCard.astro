@@ -7,16 +7,19 @@ interface Props {
 }
 
 const { id, data } = Astro.props;
-const nahled = data.polozky.slice(0, 4);
-const hledani = `${data.titul} ${data.perex} ${data.tema}`;
+const hledani = `${data.titul} ${data.perex} ${data.tema} ${data.serie ?? ''}`;
 ---
 
-<li class="karta-grafu" data-tema={data.tema} data-hledani={hledani}>
-  <a href={`/grafy/${id}/`}>
-    <div class="karta-grafu__nahled">
-      <BarChart polozky={nahled} jednotka={data.jednotka} kompaktni={true} />
+<li class="kg" data-tema={data.tema} data-hledani={hledani}>
+  <a href={`/grafy/${id}/`} class="kg__odkaz">
+    <div class="kg__nahled">
+      {data.obrazek ? (
+        <img src={data.obrazek} alt="" loading="lazy" />
+      ) : (
+        <BarChart polozky={data.polozky.slice(0, 6)} barvy={data.barvy} desetinna={data.desetinna} velikost="mala" />
+      )}
     </div>
-    <div class="karta-grafu__text">
+    <div class="kg__text">
       <span class="stitek">{data.tema}</span>
       <h3>{data.titul}</h3>
       <p class="drobne">{data.perex}</p>
@@ -25,29 +28,13 @@ const hledani = `${data.titul} ${data.perex} ${data.tema}`;
 </li>
 
 <style>
-  .karta-grafu {
-    background: var(--paper);
-    border: 1px solid var(--line);
-    border-radius: 18px;
-    overflow: hidden;
-  }
-  .karta-grafu a {
-    display: flex;
-    flex-direction: column;
-    height: 100%;
-    text-decoration: none;
-    color: var(--navy);
-  }
-  .karta-grafu__nahled {
-    padding: 1.25rem;
-    background: var(--cream);
-    border-bottom: 1px solid var(--line);
-    min-height: 150px;
-    display: flex;
-    align-items: center;
-  }
-  .karta-grafu__nahled > * { width: 100%; }
-  .karta-grafu__text { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.25rem; }
-  .karta-grafu h3 { font-size: 1.15rem; font-weight: 800; }
-  .karta-grafu[hidden] { display: none; }
+  .kg { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; transition: transform 0.15s ease, box-shadow 0.15s ease; }
+  .kg:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(27, 42, 74, 0.08); }
+  .kg__odkaz { display: flex; flex-direction: column; height: 100%; text-decoration: none; color: var(--navy); }
+  .kg__odkaz:hover { color: var(--navy); }
+  .kg__nahled { height: 190px; display: flex; align-items: center; padding: 1.1rem 1.1rem; background: var(--cream); border-bottom: 1px solid var(--line); }
+  .kg__nahled img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
+  .kg__text { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.25rem 1.25rem 1.5rem; }
+  .kg__text h3 { font-size: 1.12rem; line-height: 1.35; }
+  @media (prefers-reduced-motion: reduce) { .kg { transition: none; } .kg:hover { transform: none; } }
 </style>

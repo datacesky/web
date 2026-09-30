@@ -2,61 +2,137 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import BarChart from '../components/BarChart.astro';
-import GrafCard from '../components/GrafCard.astro';
+import ArchivGrafu from '../components/ArchivGrafu.astro';
+import MapaNahled from '../components/MapaNahled.astro';
+import { vrstvy } from '../data/vrstvy';
+import { serie } from '../data/serie';
+import { datum, sklonuj } from '../lib/format';
 
-const vsechny = (await getCollection('grafy')).sort(
+const grafy = (await getCollection('grafy')).sort(
   (a, b) => b.data.datum.valueOf() - a.data.datum.valueOf()
 );
-const tydne = vsechny[0];
-const dalsi = vsechny.slice(1, 9);
-const datum = (d: Date) => d.toLocaleDateString('cs-CZ');
+const tydne = grafy[0];
+
+
+const IG = 'https://www.instagram.com/data.cesky/';
+const TT = 'https://www.tiktok.com/@data.cesky';
+const FB = 'https://www.facebook.com/data.cesky';
 ---
 
 <Base titul="data.cesky — Česko v mapách, grafech a číslech">
-  <section class="obal sekce" style="text-align: center;">
-    <div style="max-width: 62ch; margin-inline: auto; display: flex; flex-direction: column; gap: 1.5rem; align-items: center;">
-      <h1>Česko v mapách, grafech a číslech</h1>
-      <p class="perex">
-        Ověřená data z ČSÚ, Eurostatu a dalších primárních zdrojů. U každého grafu najdeš
-        zdroj, metodiku i čísla v tabulce.
-      </p>
-      <div class="rada" style="justify-content: center;">
-        <a class="tlacitko tlacitko--plny" href="/grafy/">Procházet grafy</a>
-        <a class="tlacitko" href="https://www.instagram.com/data.cesky/">Sledovat na Instagramu</a>
+  <section class="hero sekce">
+    <svg class="hero__vrstevnice" viewBox="0 0 1440 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true" fill="none" stroke="#DCD3C2" stroke-width="1.5">
+      <path d="M136 362 C136 330 162 312 196 318 C232 326 246 352 238 380 C230 408 196 418 170 406 C148 396 136 384 136 362 Z" />
+      <path d="M90 360 C90 290 150 250 210 262 C280 276 310 330 292 392 C276 448 200 470 150 446 C108 426 90 400 90 360 Z" />
+      <path d="M40 360 C40 250 140 196 226 214 C330 236 372 322 346 408 C322 490 208 522 132 488 C70 460 40 420 40 360 Z" />
+      <path d="M-20 360 C-20 210 120 136 240 164 C380 196 434 314 400 424 C368 530 214 572 110 530 C26 496 -20 440 -20 360 Z" />
+      <path d="M1216 150 C1216 128 1238 116 1262 120 C1288 124 1300 142 1294 164 C1288 184 1262 192 1240 184 C1224 178 1216 166 1216 150 Z" />
+      <path d="M1170 150 C1170 96 1220 70 1270 78 C1330 88 1360 130 1348 176 C1336 222 1276 240 1226 224 C1190 212 1170 186 1170 150 Z" />
+      <path d="M1110 150 C1110 60 1200 16 1286 30 C1380 46 1428 116 1408 196 C1388 276 1286 306 1204 282 C1142 264 1110 214 1110 150 Z" />
+      <path d="M1040 160 C1040 20 1180 -46 1300 -24 C1430 0 1500 100 1470 220 C1440 340 1300 380 1190 350 C1100 326 1040 250 1040 160 Z" />
+    </svg>
+    <div class="obal">
+      <div class="hero__obsah">
+        <h1>Česko v mapách, grafech a číslech</h1>
+        <p class="perex">
+          Ověřená data z ČSÚ, Eurostatu a dalších primárních zdrojů. U každého grafu najdeš zdroj,
+          metodiku a čísla v tabulce.
+        </p>
+        <div class="rada" style="justify-content: center;">
+          <a class="tlacitko tlacitko--plny" href="#grafy">Procházet grafy</a>
+          <a class="tlacitko" href="/mapa/">Otevřít mapu Česka</a>
+        </div>
       </div>
     </div>
   </section>
 
   {tydne && (
     <section class="obal">
-      <div class="karta" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2.5rem; align-items: center;">
-        <div class="sloupec" style="align-items: flex-start;">
+      <div class="karta graf-tydne">
+        <div class="sloupec" style="align-items: flex-start; gap: 1.1rem;">
           <span class="znacka">Graf týdne</span>
           <h2>{tydne.data.titul}</h2>
           <p class="perex">{tydne.data.perex}</p>
-          <p class="drobne">Zdroj: {tydne.data.zdroj}</p>
-          <p class="drobne">Publikováno {datum(tydne.data.datum)}</p>
-          <a class="tlacitko tlacitko--oranzovy" href={`/grafy/${tydne.id}/`}>Otevřít graf</a>
+          <div class="sloupec" style="gap: 0.2rem;">
+            <span class="drobne">Zdroj: {tydne.data.zdroj}</span>
+            <span class="drobne">Publikováno {datum(tydne.data.datum)}</span>
+          </div>
+          <div class="rada">
+            <a class="tlacitko tlacitko--oranzovy" href={`/grafy/${tydne.id}/`}>Otevřít graf</a>
+            {tydne.data.instagram && <a class="tlacitko" href={tydne.data.instagram}>Přehrát animaci</a>}
+          </div>
         </div>
-        <div>
-          <p class="drobne" style="margin-bottom: 1rem;">{tydne.data.popisGrafu}</p>
-          <BarChart
-            polozky={tydne.data.polozky.slice(0, 6)}
-            jednotka={tydne.data.jednotka}
-            kompaktni={true}
-          />
+        <div class="panel-grafu">
+          <div class="sloupec" style="gap: 0.3rem;">
+            <span class="nadpis-grafu">{tydne.data.titul}</span>
+            {tydne.data.popisGrafu && <span class="stitek">{tydne.data.popisGrafu}</span>}
+          </div>
+          <BarChart polozky={tydne.data.polozky.length <= 8 ? tydne.data.polozky : tydne.data.polozky.slice(0, 6)} barvy={tydne.data.barvy} desetinna={tydne.data.desetinna} legenda={true} />
+          <div class="rada rada--mezi">
+            <span class="drobne">Zdroj: {tydne.data.zdroj}</span>
+            <span class="znacka">@data<span>.cesky</span></span>
+          </div>
         </div>
       </div>
     </section>
   )}
 
-  <section class="obal sekce sloupec">
-    <div class="rada" style="justify-content: space-between;">
-      <h2>Nejnovější grafy</h2>
-      <a href="/grafy/" style="font-weight: 800;">Všechny grafy</a>
+  <section id="grafy" class="obal sekce">
+    <div class="nadpis-sekce">
+      <h2>Všechny grafy</h2>
     </div>
-    <ul class="mrizka">
-      {dalsi.map((g) => <GrafCard id={g.id} data={g.data} />)}
+    <ArchivGrafu grafy={grafy} />
+  </section>
+
+  <section class="obal">
+    <div class="karta graf-tydne">
+      <div class="sloupec" style="align-items: flex-start; gap: 1.1rem;">
+        <span class="znacka">Mapa Česka</span>
+        <h2>Porovnej kraje na jedné mapě</h2>
+        <p class="perex">
+          Přepínej mezi vrstvami a klikni na kraj. Teď na mapě najdeš {vrstvy.map((v) => v.nazev.toLowerCase()).join(' a ')}.
+        </p>
+        <a class="tlacitko tlacitko--plny" href="/mapa/">Otevřít mapu</a>
+      </div>
+      <a href="/mapa/" class="panel-grafu" aria-label="Otevřít mapu Česka">
+        <MapaNahled />
+      </a>
+    </div>
+  </section>
+
+  <section id="serie" class="obal sekce">
+    <div class="nadpis-sekce">
+      <h2>Série</h2>
+      <a href="/serie/" style="font-weight: 800;">Všechny díly</a>
+    </div>
+    <ul class="mrizka mrizka--3">
+      {serie.map((s) => (
+        <li class="karta sloupec">
+          <span class="stitek">{sklonuj(s.dily.length, 'díl', 'díly', 'dílů')}</span>
+          <h3 style="font-size: 1.5rem; font-weight: 900;">{s.nazev}</h3>
+          <p class="drobne">{s.popis}</p>
+          <ul class="rada" style="list-style: none; padding: 0; margin: 0;">
+            {[...s.dily].reverse().slice(0, 3).map((d) => <li><span class="chip chip--info">{d.nazev}</span></li>)}
+          </ul>
+          <a href={`/serie/#${s.id}`} style="font-weight: 800; margin-top: auto;">Zobrazit díly</a>
+        </li>
+      ))}
     </ul>
+  </section>
+
+  <section class="obal sekce">
+    <div class="pas">
+      <div class="sloupec">
+        <h2>Nový graf každý týden</h2>
+        <p style="font-size: 1.1rem; max-width: 52ch;">
+          Animované verze grafů vycházejí nejdřív na sociálních sítích. Sleduj data.cesky, ať ti nic neuteče.
+        </p>
+      </div>
+      <div class="rada">
+        <a class="tlacitko tlacitko--oranzovy" href={IG}>Instagram</a>
+        <a class="tlacitko tlacitko--svetly" href={TT}>TikTok</a>
+        <a class="tlacitko tlacitko--svetly" href={FB}>Facebook</a>
+      </div>
+    </div>
   </section>
 </Base>
