@@ -36,6 +36,9 @@ export function barvaTridy(i: number, pocetTrid: number): string {
 
 export type Vrstva = {
   id: string;
+  skupina: string;
+  // Volitelně vývoj v čase: { '2015': { praha: 1, ... }, ... }. Když je vyplněné, objeví se posuvník let.
+  roky?: Record<string, Record<string, number>>;
   nazev: string;
   popis: string;
   typ: 'ciselna' | 'kategorie';

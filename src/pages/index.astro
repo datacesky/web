@@ -6,6 +6,10 @@ import ArchivGrafu from '../components/ArchivGrafu.astro';
 import MapaNahled from '../components/MapaNahled.astro';
 import { vrstvy } from '../data/vrstvy';
 import { serie } from '../data/serie';
+import { epizody } from '../data/epizody';
+import svet from '../data/svet.json';
+import { geoEqualEarth, geoPath } from 'd3-geo';
+import { feature } from 'topojson-client';
 import { datum, sklonuj } from '../lib/format';
 
 const grafy = (await getCollection('grafy')).sort(
@@ -13,6 +17,15 @@ const grafy = (await getCollection('grafy')).sort(
 );
 const tydne = grafy[0];
 
+
+const svetZeme = (feature(svet.topo as any, (svet.topo as any).objects.countries) as any).features;
+const svetCesta = geoPath(geoEqualEarth().fitExtent([[4, 4], [996, 516]], { type: 'Sphere' } as any));
+const epKody = new Set(epizody.map((e) => e.a3));
+const svetMapa = svetZeme.map((f: any) => ({
+  d: svetCesta(f) ?? '',
+  fill: f.id === 'CZE' ? '#F08829' : epKody.has(f.id) ? '#1B2A4A' : '#D6D9DF',
+}));
+const svetMore = svetCesta({ type: 'Sphere' } as any) ?? '';
 
 const IG = 'https://www.instagram.com/data.cesky/';
 const TT = 'https://www.tiktok.com/@data.cesky';
@@ -77,7 +90,7 @@ const FB = 'https://www.facebook.com/data.cesky';
     </section>
   )}
 
-  <section id="grafy" class="obal sekce">
+  <section id="grafy" class="obal sekce odhal">
     <div class="nadpis-sekce">
       <h2>Všechny grafy</h2>
     </div>
@@ -100,7 +113,27 @@ const FB = 'https://www.facebook.com/data.cesky';
     </div>
   </section>
 
-  <section id="serie" class="obal sekce">
+  <section class="obal sekce odhal">
+    <div class="karta graf-tydne">
+      <div class="sloupec" style="align-items: flex-start; gap: 1.1rem;">
+        <span class="znacka">Svět</span>
+        <h2>Postav Česko vedle jakékoli země</h2>
+        <p class="perex">
+          Zatoč glóbusem a klikni na stát. Uvidíš jeho počet obyvatel, vzdálenost od Prahy, cenu Big Macu
+          a u {epizody.length} zemí i díl naší série Česko vs. svět.
+        </p>
+        <a class="tlacitko tlacitko--plny" href="/svet/">Otevřít glóbus</a>
+      </div>
+      <a href="/svet/" class="panel-grafu" aria-label="Otevřít mapu světa">
+        <svg viewBox="0 0 1000 520" style="width: 100%; height: auto; display: block;" role="img" aria-label="Mapa světa se zeměmi ze série Česko vs. svět">
+          <path d={svetMore} fill="#EAE4D8" />
+          {svetMapa.map((z: any) => <path d={z.d} fill={z.fill} stroke="#F2EDE3" stroke-width="0.6" />)}
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <section id="serie" class="obal sekce odhal">
     <div class="nadpis-sekce">
       <h2>Série</h2>
       <a href="/serie/" style="font-weight: 800;">Všechny díly</a>

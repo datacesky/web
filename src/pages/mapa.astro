@@ -8,73 +8,105 @@ const prvni = vrstvy[0];
 const hr = prvni.typ === 'ciselna' ? hranice(Object.values(prvni.hodnoty).map(Number)) : [];
 // Praha se kreslí jako poslední, aby byla vidět nad Středočeským krajem.
 const kraje = [...geo.kraje].sort((a, b) => Number(a.id === 'praha') - Number(b.id === 'praha'));
+const abecedne = [...geo.kraje].sort((a, b) => a.nazev.localeCompare(b.nazev, 'cs'));
+const skupiny = [...new Set(vrstvy.map((v) => v.skupina))];
 const data = JSON.stringify({
   vrstvy,
   kraje: Object.fromEntries(geo.kraje.map((k) => [k.id, k.nazev])),
+  sirka: geo.sirka,
+  vyska: geo.vyska,
 });
 ---
 
 <Base
   titul="Mapa Česka po krajích — data.cesky"
-  popis="Interaktivní mapa krajů Česka. Přepínej vrstvy, klikni na kraj a porovnej čísla."
+  popis="Interaktivní mapa krajů Česka: obyvatelé, mzdy, ceny bytů, jména. Přepínej vrstvy, porovnej svůj kraj a stáhni si mapu."
 >
   <section class="obal sekce--mala sloupec" style="gap: 1.5rem;">
-    <div class="sloupec" style="max-width: 62ch;">
-      <h1>Mapa Česka</h1>
-      <p class="perex">Přepínej vrstvy a klikni na kraj. Pod mapou najdeš všechna čísla v tabulce.</p>
+    <div class="mapa-hlava">
+      <div class="sloupec" style="gap: 0.5rem; max-width: 60ch;">
+        <h1>Mapa Česka</h1>
+        <p class="perex">Přepínej vrstvy, najeď na kraj, nebo si nastav ten svůj a porovnej ho se zbytkem Česka.</p>
+      </div>
+      <div class="sloupec" style="gap: 0.4rem;">
+        <label for="muj-kraj">Můj kraj</label>
+        <select id="muj-kraj" data-muj>
+          <option value="">Nevybráno</option>
+          {abecedne.map((k) => <option value={k.id}>{k.nazev}</option>)}
+        </select>
+      </div>
     </div>
 
-    <div class="rada" role="group" aria-label="Vrstvy mapy">
-      {vrstvy.map((v, i) => (
-        <button type="button" class="chip" data-vrstva={v.id} aria-pressed={i === 0 ? 'true' : 'false'}>{v.nazev}</button>
+    <div class="vrstvy" role="group" aria-label="Vrstvy mapy">
+      {skupiny.map((s) => (
+        <div class="vrstvy__skupina">
+          <span class="vrstvy__nazev">{s}</span>
+          <div class="rada" style="gap: 0.5rem;">
+            {vrstvy.filter((v) => v.skupina === s).map((v) => (
+              <button type="button" class="chip" data-vrstva={v.id} aria-pressed={v.id === prvni.id ? 'true' : 'false'}>{v.nazev}</button>
+            ))}
+          </div>
+        </div>
       ))}
     </div>
 
     <div class="mapa">
       <div class="karta mapa__platno">
-        <svg
-          viewBox={`0 0 ${geo.sirka} ${geo.vyska}`}
-          class="mapa__svg"
-          role="group"
-          aria-label="Kraje Česka"
-          data-svg
-        >
-          {kraje.map((k) => (
-            <path
-              class="kraj"
-              d={k.d}
-              fill={barvaKraje(prvni, k.id, hr)}
-              fill-rule="evenodd"
-              data-kraj={k.id}
-              tabindex="0"
-              role="button"
-              aria-label={k.nazev}
-            />
-          ))}
-        </svg>
+        <div class="sloupec" style="gap: 0.25rem;">
+          <h2 class="mapa__titul" data-titul>{prvni.nazev}</h2>
+          <p class="drobne" data-popis>{prvni.popis}, {prvni.obdobi}</p>
+        </div>
+
+        <div class="mapa__svg-obal" data-obal>
+          <svg viewBox={`0 0 ${geo.sirka} ${geo.vyska}`} class="mapa__svg" role="group" aria-label="Kraje Česka" data-svg>
+            {kraje.map((k) => (
+              <path
+                class="kraj"
+                d={k.d}
+                fill={barvaKraje(prvni, k.id, hr)}
+                fill-rule="evenodd"
+                data-kraj={k.id}
+                tabindex="0"
+                role="button"
+                aria-label={k.nazev}
+              />
+            ))}
+          </svg>
+          <div class="mapa__tooltip" data-tooltip hidden></div>
+        </div>
+
+        <div class="mapa__cas" data-cas hidden>
+          <button type="button" class="mapa__prehrat" data-prehrat aria-label="Přehrát vývoj v čase">▶</button>
+          <input type="range" data-posuvnik aria-label="Rok" />
+          <strong class="mapa__rok" data-rok></strong>
+        </div>
+
+        <ul class="legenda" data-legenda></ul>
+
         <div class="rada rada--mezi">
-          <span class="drobne" data-zdroj>Zdroj: {prvni.zdroj}</span>
-          <span class="znacka">@data<span>.cesky</span></span>
+          <span class="drobne" data-zdroj></span>
+          <div class="rada" style="gap: 0.5rem;">
+            <button type="button" class="tlacitko tlacitko--male" data-sdilet>Kopírovat odkaz</button>
+            <button type="button" class="tlacitko tlacitko--male tlacitko--plny" data-stahnout>Stáhnout PNG</button>
+          </div>
         </div>
       </div>
 
       <aside class="mapa__panel">
-        <div class="karta sloupec" style="gap: 0.75rem;">
-          <h2 class="mapa__titul" data-titul>{prvni.nazev}</h2>
-          <p class="drobne" data-popis>{prvni.popis}, {prvni.obdobi}</p>
-          <ul class="legenda legenda--svisla" data-legenda></ul>
-        </div>
         <div class="mapa__detail" aria-live="polite" data-detail></div>
+        <div class="karta sloupec" style="gap: 0.75rem;">
+          <h2 style="font-size: 1.1rem;">Pořadí krajů</h2>
+          <ol class="poradi" data-poradi></ol>
+        </div>
       </aside>
     </div>
 
-    <div class="karta sloupec">
-      <h2 style="font-size: 1.35rem;">Kraje v tabulce</h2>
-      <div class="tabulka-obal">
+    <details class="karta">
+      <summary style="font-weight: 800; cursor: pointer;">Všechna čísla v tabulce</summary>
+      <div class="tabulka-obal" style="margin-top: 1rem;">
         <table>
           <thead>
             <tr>
-              <th scope="col" data-hlavicka-poradi>Pořadí</th>
               <th scope="col">Kraj</th>
               <th scope="col" class="cislo" data-hlavicka-hodnota>Hodnota</th>
             </tr>
@@ -82,71 +114,83 @@ const data = JSON.stringify({
           <tbody data-tabulka></tbody>
         </table>
       </div>
-    </div>
+    </details>
   </section>
 
   <div id="mapa-data" data-json={data} hidden></div>
 </Base>
 
 <style>
-  .mapa { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: 1.5rem; align-items: start; }
-  @media (max-width: 960px) { .mapa { grid-template-columns: 1fr; } }
-  .mapa__platno { display: flex; flex-direction: column; gap: 1rem; }
-  .mapa__svg { width: 100%; height: auto; display: block; overflow: visible; }
-  .mapa__panel { display: flex; flex-direction: column; gap: 1rem; }
-  .mapa__titul { font-size: 1.35rem; }
-  .mapa__detail { background: var(--navy); color: var(--cream); border-radius: var(--radius); padding: 1.5rem; min-height: 170px; display: flex; flex-direction: column; gap: 0.5rem; }
+  .mapa-hlava { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; align-items: flex-end; justify-content: space-between; }
+  .vrstvy { display: flex; flex-wrap: wrap; gap: 1rem 2rem; }
+  .vrstvy__skupina { display: flex; flex-direction: column; gap: 0.45rem; }
+  .vrstvy__nazev { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
 
-  :global(.kraj) { stroke: var(--cream); stroke-width: 2; stroke-linejoin: round; cursor: pointer; transition: opacity 0.15s ease; }
-  :global(.kraj:hover) { opacity: 0.82; }
+  .mapa { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 1.5rem; align-items: start; }
+  @media (max-width: 980px) { .mapa { grid-template-columns: 1fr; } }
+  .mapa__platno { display: flex; flex-direction: column; gap: 1.1rem; }
+  .mapa__titul { font-size: clamp(1.3rem, 2.6vw, 1.7rem); }
+  .mapa__svg-obal { position: relative; }
+  .mapa__svg { width: 100%; height: auto; display: block; overflow: visible; touch-action: manipulation; }
+  .mapa__tooltip {
+    position: absolute; pointer-events: none; z-index: 5; transform: translate(-50%, calc(-100% - 14px));
+    background: var(--navy); color: var(--cream); padding: 0.5rem 0.8rem; border-radius: 10px;
+    font-size: 0.85rem; font-weight: 700; white-space: nowrap; box-shadow: 0 8px 20px rgba(27, 42, 74, 0.25);
+  }
+  .mapa__cas { display: flex; align-items: center; gap: 1rem; }
+  .mapa__cas input { flex-grow: 1; accent-color: var(--orange); }
+  .mapa__prehrat { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--navy); color: var(--cream); font-size: 1rem; cursor: pointer; }
+  .mapa__rok { font-size: 1.4rem; font-weight: 900; min-width: 4ch; }
+  .mapa__panel { display: flex; flex-direction: column; gap: 1rem; }
+  .mapa__detail { background: var(--navy); color: var(--cream); border-radius: var(--radius); padding: 1.5rem; min-height: 190px; display: flex; flex-direction: column; gap: 0.45rem; }
+  .poradi { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.15rem; }
+
+  :global(.kraj) { stroke: var(--cream); stroke-width: 2; stroke-linejoin: round; cursor: pointer; transition: fill 0.45s ease, opacity 0.2s ease; }
   :global(.kraj:focus-visible) { outline: none; stroke: var(--orange); stroke-width: 4; }
+  :global(.kraj--hover) { opacity: 0.78; }
   :global(.kraj--vybrany) { stroke: var(--orange); stroke-width: 4.5; }
-  :global(.mapa__svg--vyber .kraj:not(.kraj--vybrany)) { opacity: 0.4; }
-  :global(.mapa__detail .maly) { font-size: 0.85rem; font-weight: 700; color: #D9D3C7; }
-  :global(.mapa__detail .jmeno) { font-size: 1.3rem; font-weight: 900; line-height: 1.25; }
-  :global(.mapa__detail .velky) { font-size: 1.6rem; font-weight: 900; color: var(--orange); line-height: 1.25; }
+  :global(.kraj--muj) { stroke: var(--navy); stroke-width: 3; stroke-dasharray: 7 5; }
+  :global(.mapa__svg--vyber .kraj:not(.kraj--vybrany):not(.kraj--hover)) { opacity: 0.42; }
+  :global(.mapa__detail .maly) { font-size: 0.82rem; font-weight: 700; color: #D9D3C7; }
+  :global(.mapa__detail .jmeno) { font-size: 1.35rem; font-weight: 900; line-height: 1.25; }
+  :global(.mapa__detail .velky) { font-size: 1.75rem; font-weight: 900; color: var(--orange); line-height: 1.2; }
   :global(.mapa__detail .radek) { font-size: 0.92rem; font-weight: 600; color: #D9D3C7; }
+  :global(.mapa__detail .srovnani) { margin-top: 0.4rem; padding: 0.7rem 0.9rem; border-radius: 12px; background: var(--navy-2); font-size: 0.92rem; font-weight: 700; }
   :global(.mapa__detail button) { align-self: flex-start; margin-top: 0.5rem; min-height: 40px; padding: 0 1rem; border: 1.5px solid var(--cream); border-radius: 999px; background: transparent; color: var(--cream); font-family: inherit; font-weight: 700; cursor: pointer; }
-  @media (prefers-reduced-motion: reduce) { :global(.kraj) { transition: none; } }
+  :global(.poradi button) {
+    display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; width: 100%;
+    padding: 0.35rem 0.5rem; border: 0; border-radius: 10px; background: transparent; color: var(--navy);
+    font-family: inherit; font-size: 0.86rem; font-weight: 700; text-align: left; cursor: pointer;
+  }
+  :global(.poradi button:hover), :global(.poradi button[aria-pressed='true']) { background: var(--cream); }
+  :global(.poradi .p-jmeno) { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
+  :global(.poradi .p-pruh) { display: block; height: 6px; border-radius: 999px; transition: width 0.45s ease, background 0.45s ease; }
+  :global(.poradi .p-hodnota) { font-variant-numeric: tabular-nums; font-weight: 800; }
+  @media (prefers-reduced-motion: reduce) { :global(.kraj), :global(.poradi .p-pruh) { transition: none; } }
 </style>
 
 <script>
   import { hranice, barvaKraje, barvaTridy, type Vrstva } from '../lib/mapa';
 
-  const zdrojDat = document.getElementById('mapa-data')!;
-  const { vrstvy, kraje } = JSON.parse(zdrojDat.dataset.json!) as {
-    vrstvy: Vrstva[];
-    kraje: Record<string, string>;
+  const { vrstvy, kraje, sirka } = JSON.parse(document.getElementById('mapa-data')!.dataset.json!) as {
+    vrstvy: Vrstva[]; kraje: Record<string, string>; sirka: number; vyska: number;
   };
-
-  const svg = document.querySelector<SVGSVGElement>('[data-svg]')!;
+  const $ = <T extends Element>(s: string) => document.querySelector<T>(s)!;
+  const svg = $<SVGSVGElement>('[data-svg]');
+  const obal = $<HTMLElement>('[data-obal]');
+  const tooltip = $<HTMLElement>('[data-tooltip]');
   const cesty = Array.from(svg.querySelectorAll<SVGPathElement>('.kraj'));
   const tlacitka = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-vrstva]'));
-  const elTitul = document.querySelector<HTMLElement>('[data-titul]')!;
-  const elPopis = document.querySelector<HTMLElement>('[data-popis]')!;
-  const elLegenda = document.querySelector<HTMLElement>('[data-legenda]')!;
-  const elDetail = document.querySelector<HTMLElement>('[data-detail]')!;
-  const elTabulka = document.querySelector<HTMLElement>('[data-tabulka]')!;
-  const elZdroj = document.querySelector<HTMLElement>('[data-zdroj]')!;
-  const elHlavickaPoradi = document.querySelector<HTMLElement>('[data-hlavicka-poradi]')!;
-  const elHlavickaHodnota = document.querySelector<HTMLElement>('[data-hlavicka-hodnota]')!;
+  const elMuj = $<HTMLSelectElement>('[data-muj]');
+  const elCas = $<HTMLElement>('[data-cas]');
+  const elPosuvnik = $<HTMLInputElement>('[data-posuvnik]');
+  const elPrehrat = $<HTMLButtonElement>('[data-prehrat]');
+  const elRok = $<HTMLElement>('[data-rok]');
+  const pocet = Object.keys(kraje).length;
 
-  const pocetKraju = Object.keys(kraje).length;
-  let vrstva: Vrstva = vrstvy.find((v) => v.id === location.hash.slice(1)) ?? vrstvy[0];
-  let vybrany: string | null = null;
-
-  const cislo = (v: number, d = 0) =>
-    new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: d }).format(v);
+  const cislo = (v: number, d = 0) => new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: d, minimumFractionDigits: d }).format(v);
   const krajuText = (n: number) => (n === 1 ? '1 kraj' : n >= 2 && n <= 4 ? `${n} kraje` : `${n} krajů`);
   const vKrajich = (n: number) => (n === 1 ? 'v 1 kraji' : `v ${n} krajích`);
-
-  const hodnotaText = (v: Vrstva, id: string) => {
-    const h = v.hodnoty[id];
-    if (h === undefined) return 'bez dat';
-    if (typeof h === 'number') return `${cislo(h, v.desetinna ?? 0)}${v.jednotka ? ' ' + v.jednotka : ''}`;
-    return String(h);
-  };
-
   const el = (tag: string, trida?: string, text?: string) => {
     const e = document.createElement(tag);
     if (trida) e.className = trida;
@@ -154,151 +198,287 @@ const data = JSON.stringify({
     return e;
   };
 
-  function serazeneKraje(v: Vrstva): string[] {
+  // --- stav (z odkazu, případně z paměti prohlížeče)
+  const parametry = new URLSearchParams(location.hash.slice(1).includes('=') ? location.hash.slice(1) : `v=${location.hash.slice(1)}`);
+  let vrstva: Vrstva = vrstvy.find((v) => v.id === parametry.get('v')) ?? vrstvy[0];
+  let vybrany: string | null = kraje[parametry.get('k') ?? ''] ? parametry.get('k') : null;
+  let muj: string | null = kraje[parametry.get('m') ?? ''] ? parametry.get('m') : null;
+  if (!muj) { try { const m = localStorage.getItem('dc-muj-kraj'); if (m && kraje[m]) muj = m; } catch {} }
+  let rok: string | null = parametry.get('r');
+  let hover: string | null = null;
+  let prehravani: number | null = null;
+  let legendaPolozky: { barva: string; text: string }[] = [];
+
+  const roky = (v: Vrstva) => (v.roky ? Object.keys(v.roky).sort() : []);
+  const hodnoty = (v: Vrstva): Record<string, number | string> => {
+    if (!v.roky) return v.hodnoty;
+    const r = rok && v.roky[rok] ? rok : roky(v).at(-1)!;
+    return v.roky[r];
+  };
+  const text = (v: Vrstva, h: number | string | undefined) => {
+    if (h === undefined) return 'bez dat';
+    return typeof h === 'number' ? `${cislo(h, v.desetinna ?? 0)}${v.jednotka ? ' ' + v.jednotka : ''}` : String(h);
+  };
+  const obdobi = (v: Vrstva) => (v.roky ? (rok && v.roky[rok] ? rok : roky(v).at(-1)!) : v.obdobi);
+  const serazene = (v: Vrstva, h: Record<string, number | string>) => {
     const ids = Object.keys(kraje);
-    if (v.typ === 'ciselna') {
-      return ids.sort((a, b) => Number(v.hodnoty[b] ?? -Infinity) - Number(v.hodnoty[a] ?? -Infinity));
-    }
-    return ids.sort((a, b) => kraje[a].localeCompare(kraje[b], 'cs'));
-  }
+    if (v.typ === 'ciselna') return ids.sort((a, b) => Number(h[b] ?? -Infinity) - Number(h[a] ?? -Infinity));
+    return ids.sort((a, b) => String(h[a]).localeCompare(String(h[b]), 'cs') || kraje[a].localeCompare(kraje[b], 'cs'));
+  };
 
-  function vykresliLegendu(v: Vrstva, hr: number[]) {
-    elLegenda.replaceChildren();
-    if (v.typ === 'ciselna') {
-      const n = hr.length + 1;
-      for (let i = 0; i < n; i++) {
-        const popisek =
-          i === 0 ? `do ${cislo(hr[0])}` : i === n - 1 ? `nad ${cislo(hr[n - 2])}` : `${cislo(hr[i - 1])} až ${cislo(hr[i])}`;
-        const li = el('li');
-        const tecka = el('span', 'legenda__tecka');
-        tecka.style.background = barvaTridy(i, n);
-        li.append(tecka, popisek);
-        elLegenda.append(li);
-      }
-    } else {
-      for (const [kategorie, barva] of Object.entries(v.barvy ?? {})) {
-        const pocet = Object.values(v.hodnoty).filter((h) => h === kategorie).length;
-        const li = el('li');
-        const tecka = el('span', 'legenda__tecka');
-        tecka.style.background = barva;
-        li.append(tecka, `${kategorie} (${krajuText(pocet)})`);
-        elLegenda.append(li);
-      }
-    }
-  }
-
-  function vykresliDetail(v: Vrstva) {
-    elDetail.replaceChildren();
-    const poradi = serazeneKraje(v);
-
-    if (vybrany) {
-      elDetail.append(el('span', 'maly', v.nazev), el('span', 'jmeno', kraje[vybrany]), el('span', 'velky', hodnotaText(v, vybrany)));
+  function detail(v: Vrstva, h: Record<string, number | string>, poradi: string[]) {
+    const box = $<HTMLElement>('[data-detail]');
+    box.replaceChildren();
+    const zobrazeny = vybrany ?? muj;
+    if (zobrazeny) {
+      box.append(el('span', 'maly', zobrazeny === muj && !vybrany ? 'Můj kraj' : v.nazev), el('span', 'jmeno', kraje[zobrazeny]), el('span', 'velky', text(v, h[zobrazeny])));
       if (v.typ === 'ciselna') {
-        elDetail.append(el('span', 'radek', `${poradi.indexOf(vybrany) + 1}. místo ze ${pocetKraju} krajů`));
+        box.append(el('span', 'radek', `${poradi.indexOf(zobrazeny) + 1}. místo ze ${pocet} krajů`));
         if (v.soucet) {
-          const celkem = Object.values(v.hodnoty).reduce<number>((s, h) => s + Number(h), 0);
-          const podil = (Number(v.hodnoty[vybrany]) / celkem) * 100;
-          elDetail.append(el('span', 'radek', `${cislo(podil, 1)} % z celého Česka`));
+          const celkem = Object.values(h).reduce<number>((s, x) => s + Number(x), 0);
+          box.append(el('span', 'radek', `${cislo((Number(h[zobrazeny]) / celkem) * 100, 1)} % z celého Česka`));
+        }
+        if (muj && zobrazeny !== muj && h[muj] !== undefined) {
+          const rozdil = Number(h[zobrazeny]) - Number(h[muj]);
+          const proc = (rozdil / Number(h[muj])) * 100;
+          const smer = rozdil > 0 ? 'víc' : 'míň';
+          box.append(el('span', 'srovnani', rozdil === 0 ? `Stejně jako ${kraje[muj]}` : `O ${text(v, Math.abs(rozdil))} ${smer} než ${kraje[muj]} (${proc > 0 ? '+' : '−'}${cislo(Math.abs(proc), 1)} %)`));
         }
       } else {
-        const stejne = Object.values(v.hodnoty).filter((h) => h === v.hodnoty[vybrany!]).length;
-        elDetail.append(el('span', 'radek', `Stejná hodnota ${vKrajich(stejne)}`));
+        const stejne = Object.values(h).filter((x) => x === h[zobrazeny]).length;
+        box.append(el('span', 'radek', `Stejná hodnota ${vKrajich(stejne)}`));
       }
-      const zrusit = el('button', undefined, 'Zrušit výběr') as HTMLButtonElement;
-      zrusit.type = 'button';
-      zrusit.addEventListener('click', () => vyber(null));
-      elDetail.append(zrusit);
+      if (vybrany) {
+        const zrusit = el('button', undefined, 'Zrušit výběr') as HTMLButtonElement;
+        zrusit.type = 'button';
+        zrusit.addEventListener('click', () => { vybrany = null; vykresli(); });
+        box.append(zrusit);
+      }
       return;
     }
-
     if (v.typ === 'ciselna') {
       if (v.soucet) {
-        const celkem = Object.values(v.hodnoty).reduce<number>((s, h) => s + Number(h), 0);
-        elDetail.append(el('span', 'maly', 'Česko celkem'), el('span', 'velky', `${cislo(celkem)}${v.jednotka ? ' ' + v.jednotka : ''}`));
+        const celkem = Object.values(h).reduce<number>((s, x) => s + Number(x), 0);
+        box.append(el('span', 'maly', 'Česko celkem'), el('span', 'velky', text(v, celkem)));
       }
-      const nej = poradi[0];
-      const min = poradi[poradi.length - 1];
-      elDetail.append(
-        el('span', 'radek', `Nejvíc: ${kraje[nej]} (${hodnotaText(v, nej)})`),
-        el('span', 'radek', `Nejméně: ${kraje[min]} (${hodnotaText(v, min)})`)
+      box.append(
+        el('span', 'radek', `Nejvíc: ${kraje[poradi[0]]} (${text(v, h[poradi[0]])})`),
+        el('span', 'radek', `Nejméně: ${kraje[poradi.at(-1)!]} (${text(v, h[poradi.at(-1)!])})`),
       );
     } else {
       const pocty = new Map<string, number>();
-      for (const h of Object.values(v.hodnoty)) pocty.set(String(h), (pocty.get(String(h)) ?? 0) + 1);
-      const [nej, pocet] = [...pocty.entries()].sort((a, b) => b[1] - a[1])[0];
-      elDetail.append(el('span', 'maly', 'Nejčastěji'), el('span', 'velky', nej), el('span', 'radek', `vede ${vKrajich(pocet)} ze ${pocetKraju}`));
+      for (const x of Object.values(h)) pocty.set(String(x), (pocty.get(String(x)) ?? 0) + 1);
+      const [nej, n] = [...pocty.entries()].sort((a, b) => b[1] - a[1])[0];
+      box.append(el('span', 'maly', 'Nejčastěji'), el('span', 'velky', nej), el('span', 'radek', `vede ${vKrajich(n)} ze ${pocet}`));
     }
-    elDetail.append(el('span', 'radek', 'Klikni na kraj v mapě a uvidíš podrobnosti.'));
+    box.append(el('span', 'radek', 'Klikni na kraj v mapě, nebo si nahoře nastav ten svůj.'));
   }
 
-  function vykresliTabulku(v: Vrstva) {
-    elTabulka.replaceChildren();
-    const ciselna = v.typ === 'ciselna';
-    elHlavickaPoradi.hidden = !ciselna;
-    elHlavickaHodnota.textContent = ciselna ? `Hodnota${v.jednotka ? ` (${v.jednotka})` : ''}` : v.nazev;
-    serazeneKraje(v).forEach((id, i) => {
-      const tr = el('tr');
-      if (id === vybrany) tr.style.background = 'var(--cream)';
-      const tdPoradi = el('td', undefined, `${i + 1}.`);
-      tdPoradi.hidden = !ciselna;
-      const tdHodnota = el('td', 'cislo', ciselna ? cislo(Number(v.hodnoty[id]), v.desetinna ?? 0) : String(v.hodnoty[id] ?? ''));
-      tdHodnota.style.fontWeight = '800';
-      tr.append(tdPoradi, el('td', undefined, kraje[id]), tdHodnota);
-      elTabulka.append(tr);
+  function poradiKraju(v: Vrstva, h: Record<string, number | string>, poradi: string[], hr: number[]) {
+    const ol = $<HTMLElement>('[data-poradi]');
+    const max = v.typ === 'ciselna' ? Math.max(...poradi.map((id) => Number(h[id]))) : 1;
+    ol.replaceChildren();
+    poradi.forEach((id, i) => {
+      const li = el('li');
+      const b = el('button') as HTMLButtonElement;
+      b.type = 'button';
+      b.setAttribute('aria-pressed', String(id === vybrany));
+      const jmeno = el('span', 'p-jmeno');
+      const pruh = el('span', 'p-pruh');
+      pruh.style.width = v.typ === 'ciselna' ? `${(Number(h[id]) / max) * 100}%` : '100%';
+      pruh.style.background = barvaKraje({ ...v, hodnoty: h }, id, hr);
+      jmeno.append(el('span', undefined, kraje[id] + (id === muj ? ' (můj)' : '')), pruh);
+      b.append(el('span', 'drobne', v.typ === 'ciselna' ? `${i + 1}.` : ''), jmeno, el('span', 'p-hodnota', typeof h[id] === 'number' ? cislo(Number(h[id]), v.desetinna ?? 0) : String(h[id] ?? '')));
+      b.addEventListener('click', () => vyber(vybrany === id ? null : id));
+      b.addEventListener('mouseenter', () => { hover = id; zvyrazni(); });
+      b.addEventListener('mouseleave', () => { hover = null; zvyrazni(); });
+      li.append(b);
+      ol.append(li);
     });
+  }
+
+  function legenda(v: Vrstva, h: Record<string, number | string>, hr: number[]) {
+    const ul = $<HTMLElement>('[data-legenda]');
+    legendaPolozky = [];
+    if (v.typ === 'ciselna') {
+      const n = hr.length + 1;
+      const d = v.desetinna ?? 0;
+      for (let i = 0; i < n; i++) {
+        const t = i === 0 ? `do ${cislo(hr[0], d)}` : i === n - 1 ? `nad ${cislo(hr[n - 2], d)}` : `${cislo(hr[i - 1], d)} až ${cislo(hr[i], d)}`;
+        legendaPolozky.push({ barva: barvaTridy(i, n), text: t });
+      }
+    } else {
+      for (const [k, barva] of Object.entries(v.barvy ?? {})) {
+        legendaPolozky.push({ barva, text: `${k} (${krajuText(Object.values(h).filter((x) => x === k).length)})` });
+      }
+    }
+    ul.replaceChildren(...legendaPolozky.map((p) => {
+      const li = el('li');
+      const t = el('span', 'legenda__tecka');
+      t.style.background = p.barva;
+      t.style.borderRadius = '4px';
+      t.style.width = '22px';
+      li.append(t, p.text);
+      return li;
+    }));
+  }
+
+  function zvyrazni() {
+    for (const c of cesty) c.classList.toggle('kraj--hover', c.dataset.kraj === hover);
   }
 
   function vykresli() {
-    const hr = vrstva.typ === 'ciselna' ? hranice(Object.values(vrstva.hodnoty).map(Number)) : [];
-    for (const cesta of cesty) {
-      const id = cesta.dataset.kraj!;
-      cesta.setAttribute('fill', barvaKraje(vrstva, id, hr));
-      cesta.classList.toggle('kraj--vybrany', id === vybrany);
-      cesta.setAttribute('aria-pressed', String(id === vybrany));
-      cesta.setAttribute('aria-label', `${kraje[id]}: ${hodnotaText(vrstva, id)}`);
+    const v = vrstva;
+    const h = hodnoty(v);
+    const hr = v.typ === 'ciselna' ? hranice(Object.values(h).map(Number)) : [];
+    const poradi = serazene(v, h);
+    const vrstvaNaRok = { ...v, hodnoty: h };
+
+    for (const c of cesty) {
+      const id = c.dataset.kraj!;
+      c.style.fill = barvaKraje(vrstvaNaRok, id, hr);
+      c.classList.toggle('kraj--vybrany', id === vybrany);
+      c.classList.toggle('kraj--muj', id === muj && id !== vybrany);
+      c.setAttribute('aria-pressed', String(id === vybrany));
+      c.setAttribute('aria-label', `${kraje[id]}: ${text(v, h[id])}`);
     }
-    if (vybrany) {
-      const cesta = cesty.find((c) => c.dataset.kraj === vybrany);
-      if (cesta) svg.append(cesta);
-    }
+    const nahoru = [muj, vybrany].filter(Boolean) as string[];
+    for (const id of nahoru) { const c = cesty.find((x) => x.dataset.kraj === id); if (c) svg.append(c); }
     svg.classList.toggle('mapa__svg--vyber', !!vybrany);
-    for (const t of tlacitka) t.setAttribute('aria-pressed', String(t.dataset.vrstva === vrstva.id));
-    elTitul.textContent = vrstva.nazev;
-    elPopis.textContent = `${vrstva.popis}, ${vrstva.obdobi}`;
+    for (const t of tlacitka) t.setAttribute('aria-pressed', String(t.dataset.vrstva === v.id));
 
-    elZdroj.replaceChildren('Zdroj: ');
-    const odkaz = el('a', undefined, vrstva.zdroj) as HTMLAnchorElement;
-    odkaz.href = vrstva.zdrojUrl;
-    elZdroj.append(odkaz);
+    $<HTMLElement>('[data-titul]').textContent = v.nazev;
+    $<HTMLElement>('[data-popis]').textContent = `${v.popis}, ${obdobi(v)}`;
+    const zdroj = $<HTMLElement>('[data-zdroj]');
+    const odkaz = el('a', undefined, v.zdroj) as HTMLAnchorElement;
+    odkaz.href = v.zdrojUrl;
+    zdroj.replaceChildren('Zdroj: ', odkaz);
 
-    vykresliLegendu(vrstva, hr);
-    vykresliDetail(vrstva);
-    vykresliTabulku(vrstva);
+    const r = roky(v);
+    elCas.hidden = r.length < 2;
+    if (r.length > 1) {
+      elPosuvnik.min = '0';
+      elPosuvnik.max = String(r.length - 1);
+      elPosuvnik.value = String(Math.max(0, r.indexOf(obdobi(v))));
+      elRok.textContent = obdobi(v);
+    }
+
+    legenda(v, h, hr);
+    detail(v, h, poradi);
+    poradiKraju(v, h, poradi, hr);
+
+    const tbody = $<HTMLElement>('[data-tabulka]');
+    $<HTMLElement>('[data-hlavicka-hodnota]').textContent = v.typ === 'ciselna' ? `${v.nazev}${v.jednotka ? ` (${v.jednotka})` : ''}` : v.nazev;
+    tbody.replaceChildren(...poradi.map((id) => {
+      const tr = el('tr');
+      const td = el('td', 'cislo', typeof h[id] === 'number' ? cislo(Number(h[id]), v.desetinna ?? 0) : String(h[id] ?? ''));
+      td.style.fontWeight = '800';
+      tr.append(el('td', undefined, kraje[id]), td);
+      return tr;
+    }));
+
+    const p = new URLSearchParams({ v: v.id });
+    if (vybrany) p.set('k', vybrany);
+    if (muj) p.set('m', muj);
+    if (v.roky && rok) p.set('r', rok);
+    history.replaceState(null, '', `#${p}`);
   }
 
-  function vyber(id: string | null) {
-    vybrany = id;
+  function vyber(id: string | null) { vybrany = id; vykresli(); }
+
+  // --- ovládání
+  for (const c of cesty) {
+    const id = c.dataset.kraj!;
+    c.addEventListener('click', () => vyber(vybrany === id ? null : id));
+    c.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); vyber(vybrany === id ? null : id); } });
+    c.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return;
+      const r = obal.getBoundingClientRect();
+      tooltip.hidden = false;
+      tooltip.textContent = `${kraje[id]}: ${text(vrstva, hodnoty(vrstva)[id])}`;
+      tooltip.style.left = `${e.clientX - r.left}px`;
+      tooltip.style.top = `${e.clientY - r.top}px`;
+      if (hover !== id) { hover = id; zvyrazni(); }
+    });
+    c.addEventListener('pointerleave', () => { tooltip.hidden = true; hover = null; zvyrazni(); });
+  }
+  for (const t of tlacitka) t.addEventListener('click', () => { vrstva = vrstvy.find((v) => v.id === t.dataset.vrstva) ?? vrstvy[0]; rok = null; zastav(); vykresli(); });
+  elMuj.value = muj ?? '';
+  elMuj.addEventListener('change', () => {
+    muj = elMuj.value || null;
+    try { muj ? localStorage.setItem('dc-muj-kraj', muj) : localStorage.removeItem('dc-muj-kraj'); } catch {}
     vykresli();
-  }
-
-  for (const cesta of cesty) {
-    const id = cesta.dataset.kraj!;
-    cesta.addEventListener('click', () => vyber(vybrany === id ? null : id));
-    cesta.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' || e.key === ' ') {
-        e.preventDefault();
-        vyber(vybrany === id ? null : id);
-      }
-    });
-  }
-
-  for (const t of tlacitka) {
-    t.addEventListener('click', () => {
-      vrstva = vrstvy.find((v) => v.id === t.dataset.vrstva) ?? vrstvy[0];
-      history.replaceState(null, '', `#${vrstva.id}`);
+  });
+  elPosuvnik.addEventListener('input', () => { rok = roky(vrstva)[Number(elPosuvnik.value)]; vykresli(); });
+  function zastav() { if (prehravani) { clearInterval(prehravani); prehravani = null; elPrehrat.textContent = '▶'; } }
+  elPrehrat.addEventListener('click', () => {
+    if (prehravani) return zastav();
+    const r = roky(vrstva);
+    let i = r.indexOf(obdobi(vrstva));
+    if (i >= r.length - 1) i = -1;
+    elPrehrat.textContent = '❚❚';
+    prehravani = window.setInterval(() => {
+      i++;
+      if (i >= r.length) return zastav();
+      rok = r[i];
       vykresli();
+    }, 900);
+  });
+
+  const sdilet = $<HTMLButtonElement>('[data-sdilet]');
+  sdilet.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(location.href); sdilet.textContent = 'Odkaz zkopírován'; }
+    catch { sdilet.textContent = 'Zkopíruj adresu z prohlížeče'; }
+    setTimeout(() => (sdilet.textContent = 'Kopírovat odkaz'), 2500);
+  });
+
+  // --- stažení mapy jako PNG (s legendou, zdrojem a značkou)
+  $<HTMLButtonElement>('[data-stahnout]').addEventListener('click', async () => {
+    await document.fonts.ready;
+    const W = 1600, H = 1240, c = document.createElement('canvas');
+    c.width = W; c.height = H;
+    const x = c.getContext('2d')!;
+    x.fillStyle = '#F2EDE3'; x.fillRect(0, 0, W, H);
+    x.textAlign = 'center';
+    x.fillStyle = '#1B2A4A'; x.font = '900 60px Montserrat, sans-serif';
+    x.fillText(vrstva.nazev.toUpperCase(), W / 2, 110);
+    x.fillStyle = '#9A520E'; x.font = '700 28px Montserrat, sans-serif';
+    x.fillText(`${vrstva.popis}, ${obdobi(vrstva)}`, W / 2, 162);
+    const s = 1400 / sirka;
+    x.save(); x.translate(100, 210); x.scale(s, s);
+    for (const p of Array.from(svg.querySelectorAll<SVGPathElement>('.kraj'))) {
+      const cesta = new Path2D(p.getAttribute('d')!);
+      x.fillStyle = p.style.fill || p.getAttribute('fill')!;
+      x.fill(cesta, 'evenodd');
+      x.strokeStyle = '#F2EDE3'; x.lineWidth = 2.5 / s * 1.4; x.lineJoin = 'round';
+      x.stroke(cesta);
+    }
+    x.restore();
+    x.font = '600 24px Montserrat, sans-serif'; x.textAlign = 'left';
+    const sirky = legendaPolozky.map((p) => 40 + x.measureText(p.text).width + 36);
+    let lx = (W - sirky.reduce((a, b) => a + b, 0)) / 2;
+    legendaPolozky.forEach((p, i) => {
+      x.fillStyle = p.barva; x.beginPath(); x.roundRect(lx, 1052, 30, 20, 5); x.fill();
+      x.fillStyle = '#1B2A4A'; x.fillText(p.text, lx + 40, 1070);
+      lx += sirky[i];
     });
-  }
+    x.fillStyle = '#56627A'; x.font = '500 22px Montserrat, sans-serif';
+    x.fillText(`Zdroj: ${vrstva.zdroj} · datacesky.cz · CC BY 4.0`, 100, 1170);
+    x.font = '800 26px Montserrat, sans-serif';
+    const w1 = x.measureText('@data').width, w2 = x.measureText('.cesky').width;
+    const bw = w1 + w2 + 44, bx = W - 100 - bw;
+    x.fillStyle = '#1B2A4A'; x.beginPath(); x.roundRect(bx, 1136, bw, 50, 25); x.fill();
+    x.fillStyle = '#F2EDE3'; x.fillText('@data', bx + 22, 1170);
+    x.fillStyle = '#F08829'; x.fillText('.cesky', bx + 22 + w1, 1170);
+    c.toBlob((b) => {
+      if (!b) return;
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(b);
+      a.download = `data-cesky-mapa-${vrstva.id}.png`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }, 'image/png');
+  });
 
   vykresli();
 </script>

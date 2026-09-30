@@ -37,7 +37,8 @@ const FB = 'https://www.facebook.com/data.cesky';
     <title>{titul}</title>
     <meta name="description" content={popis} />
     <link rel="canonical" href={kanonicka} />
-    <link rel="icon" type="image/png" href="/logo.png" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script is:inline>document.documentElement.classList.add('js');</script>
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="data.cesky" />
     <meta property="og:locale" content="cs_CZ" />
@@ -50,13 +51,11 @@ const FB = 'https://www.facebook.com/data.cesky';
   <body>
     <header class="hlavicka">
       <div class="obal hlavicka__obsah">
-        <a class="logo" href="/">
-          <img src="/logo.png" alt="" width="46" height="46" />
-          <span>data.cesky</span>
-        </a>
+        <a class="logo" href="/" aria-label="data.cesky, úvodní stránka">data<span class="logo__cesky">.cesky</span></a>
         <nav class="navigace" aria-label="Hlavní navigace">
           <a href="/grafy/" aria-current={aktivni('/grafy')}>Grafy</a>
           <a href="/mapa/" aria-current={aktivni('/mapa')}>Mapa Česka</a>
+          <a href="/svet/" aria-current={aktivni('/svet')}>Svět</a>
           <a href="/serie/" aria-current={aktivni('/serie')}>Série</a>
           <a href="/metodika/" aria-current={aktivni('/metodika')}>Metodika</a>
         </nav>
@@ -76,10 +75,7 @@ const FB = 'https://www.facebook.com/data.cesky';
       <div class="obal">
         <div class="patka__mrizka">
           <div class="sloupec patka__znacka">
-            <a class="logo" href="/">
-              <img src="/logo.png" alt="" width="46" height="46" />
-              <span>data.cesky</span>
-            </a>
+            <a class="logo" href="/" aria-label="data.cesky, úvodní stránka">data<span class="logo__cesky">.cesky</span></a>
             <p class="drobne" style="max-width: 40ch;">
               Česko v mapách, grafech a číslech. Zdroj je vždy uvedený u každého grafu.
             </p>
@@ -89,6 +85,7 @@ const FB = 'https://www.facebook.com/data.cesky';
             <ul class="patka__odkazy">
               <li><a href="/grafy/">Grafy</a></li>
               <li><a href="/mapa/">Mapa Česka</a></li>
+              <li><a href="/svet/">Svět</a></li>
               <li><a href="/serie/">Série</a></li>
             </ul>
           </div>
@@ -118,5 +115,14 @@ const FB = 'https://www.facebook.com/data.cesky';
         </div>
       </div>
     </footer>
+    <script>
+      const prvky = document.querySelectorAll('.odhal');
+      if ('IntersectionObserver' in window) {
+        const pozorovatel = new IntersectionObserver((zaznamy) => {
+          for (const z of zaznamy) if (z.isIntersecting) { z.target.classList.add('odhal--videt'); pozorovatel.unobserve(z.target); }
+        }, { rootMargin: '0px 0px -8% 0px' });
+        prvky.forEach((p) => pozorovatel.observe(p));
+      } else prvky.forEach((p) => p.classList.add('odhal--videt'));
+    </script>
   </body>
 </html>

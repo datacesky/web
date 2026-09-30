@@ -131,10 +131,11 @@ a:hover { color: var(--orange-text); }
 .legenda--svisla .legenda__tecka { border-radius: 4px; width: 22px; height: 14px; }
 
 /* Hlavička */
-.hlavicka { border-bottom: 1px solid var(--line); background: var(--cream); }
+.hlavicka { position: sticky; top: 0; z-index: 50; border-bottom: 1px solid var(--line); background: rgba(242, 237, 227, 0.86); backdrop-filter: saturate(1.4) blur(12px); -webkit-backdrop-filter: saturate(1.4) blur(12px); }
 .hlavicka__obsah { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 2rem; padding-block: 0.9rem; }
-.logo { display: flex; align-items: center; gap: 0.75rem; text-decoration: none; font-size: 1.3rem; font-weight: 800; letter-spacing: -0.01em; }
-.logo img { width: 46px; height: 46px; border-radius: 50%; }
+.logo { display: inline-flex; align-items: baseline; text-decoration: none; font-size: 1.55rem; font-weight: 900; letter-spacing: -0.03em; color: var(--navy); line-height: 1; }
+.logo:hover { color: var(--navy); }
+.logo__cesky { color: var(--orange); }
 .navigace { display: flex; flex-wrap: wrap; gap: 0.5rem 1.75rem; font-size: 0.98rem; font-weight: 700; }
 .navigace a { text-decoration: none; }
 .navigace a[aria-current='page'] { color: var(--orange-text); }
@@ -199,3 +200,17 @@ label { font-size: 0.9rem; font-weight: 700; }
 .patka__odkazy a { text-decoration: none; }
 .patka__spodek { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; padding-block: 1.5rem 2.5rem; border-top: 1px solid var(--line); }
 @media (max-width: 760px) { .patka__mrizka { grid-template-columns: 1fr 1fr; } .patka__znacka { grid-column: 1 / -1; } }
+
+/* Plynulé přechody mezi stránkami (prohlížeče, které to umí) */
+@view-transition { navigation: auto; }
+
+/* Odhalení obsahu při scrollu */
+.js .odhal { opacity: 0; transform: translateY(18px); transition: opacity 0.6s ease, transform 0.6s ease; }
+.js .odhal--videt { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) { .js .odhal { opacity: 1; transform: none; transition: none; } }
+
+.tlacitko--male { min-height: 40px; padding: 0 1rem; font-size: 0.88rem; }
+select {
+  min-height: 46px; padding: 0 2.25rem 0 1rem; border: 1.5px solid var(--line-2); border-radius: 12px;
+  background: var(--paper); color: var(--navy); font-family: inherit; font-size: 0.98rem; font-weight: 600; cursor: pointer;
+}
