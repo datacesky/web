@@ -1,6 +1,13 @@
 :root {
   --cream: #F2EDE3;
-  --paper: #FBF8F2;
+  --paper: #FFFFFF;
+  --plocha-2: #F8F5EF;
+  --stin: 0 1px 2px rgba(27, 42, 74, 0.05), 0 12px 32px -14px rgba(27, 42, 74, 0.22);
+  --stin-maly: 0 1px 2px rgba(27, 42, 74, 0.06), 0 6px 16px -8px rgba(27, 42, 74, 0.2);
+  --more: #A9CBE3;
+  --more-svetle: #D5E7F3;
+  --pevnina: #F6F2EA;
+  --draha: #EEE8DD;
   --navy: #1B2A4A;
   --navy-2: #26375C;
   --orange: #F08829;
@@ -9,7 +16,7 @@
   --muted: #56627A;
   --text-2: #3A4763;
   --orange-text: #9A520E;
-  --line: #DDD5C6;
+  --line: #E2D9C9;
   --line-2: #B9AE9B;
   --obal: 1200px;
   --radius: 20px;
@@ -52,8 +59,11 @@ a:hover { color: var(--orange-text); }
   background: var(--paper);
   border: 1px solid var(--line);
   border-radius: var(--radius);
+  box-shadow: var(--stin);
   padding: clamp(1.25rem, 3vw, 2.25rem);
 }
+/* Graf vždy na bílé ploše, aby nesplýval s krémovým pozadím stránky */
+.plocha-grafu { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--stin-maly); }
 
 /* Text */
 .perex { font-size: clamp(1.02rem, 2vw, 1.25rem); line-height: 1.7; color: var(--text-2); }
@@ -107,6 +117,7 @@ a:hover { color: var(--orange-text); }
 .chip:hover { border-color: var(--navy); }
 .chip[aria-pressed='true'] { background: var(--navy); border-color: var(--navy); color: var(--cream); }
 .chip--info { cursor: default; background: var(--paper); border-color: var(--line); font-size: 0.85rem; min-height: 38px; }
+.chip { background: var(--paper); }
 .chip--info:hover { border-color: var(--line); }
 
 .znacka {
@@ -142,6 +153,14 @@ a:hover { color: var(--orange-text); }
 .hlavicka__site { display: flex; gap: 1rem; font-size: 0.88rem; font-weight: 600; }
 .hlavicka__site a { color: var(--muted); text-decoration: none; }
 @media (max-width: 860px) { .hlavicka__site { display: none; } }
+@media (max-width: 700px) {
+  .hlavicka__obsah { gap: 0.35rem; padding-block: 0.6rem 0.45rem; }
+  .navigace {
+    width: calc(100% + 2.5rem); margin-inline: -1.25rem; padding: 0.15rem 1.25rem 0.2rem; flex-wrap: nowrap; gap: 1.35rem;
+    overflow-x: auto; scrollbar-width: none; white-space: nowrap; font-size: 0.94rem;
+  }
+  .navigace::-webkit-scrollbar { display: none; }
+}
 
 /* Hero */
 .hero { position: relative; overflow: hidden; text-align: center; }
@@ -152,7 +171,7 @@ a:hover { color: var(--orange-text); }
 /* Graf týdne */
 .graf-tydne { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
 @media (max-width: 880px) { .graf-tydne { grid-template-columns: 1fr; } }
-.panel-grafu { background: var(--cream); border-radius: 18px; padding: clamp(1.25rem, 3vw, 2rem); display: flex; flex-direction: column; gap: 1.1rem; }
+.panel-grafu { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: clamp(1.25rem, 3vw, 2rem); display: flex; flex-direction: column; gap: 1.1rem; }
 
 /* Mřížka karet */
 .mrizka { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; list-style: none; margin: 0; padding: 0; }
@@ -179,7 +198,7 @@ thead th { border-bottom: 2px solid var(--navy); font-size: 0.85rem; font-weight
 td.cislo, th.cislo { text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Formuláře */
-input[type='search'] {
+input[type='search'], input[type='text'] {
   min-height: 50px;
   width: min(100%, 340px);
   padding: 0 1.1rem;
@@ -214,3 +233,8 @@ select {
   min-height: 46px; padding: 0 2.25rem 0 1rem; border: 1.5px solid var(--line-2); border-radius: 12px;
   background: var(--paper); color: var(--navy); font-family: inherit; font-size: 0.98rem; font-weight: 600; cursor: pointer;
 }
+
+/* Nadpis sekce s malým štítkem nad ním */
+.nadpis { display: flex; flex-direction: column; gap: 0.45rem; }
+.nadpis__stitek { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange-text); }
+.vlajka { display: inline-block; width: 28px; height: 21px; border-radius: 4px; object-fit: cover; box-shadow: 0 0 0 1px rgba(27, 42, 74, 0.14); flex-shrink: 0; }

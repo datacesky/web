@@ -2,30 +2,28 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import BarChart from '../components/BarChart.astro';
-import ArchivGrafu from '../components/ArchivGrafu.astro';
-import MapaNahled from '../components/MapaNahled.astro';
-import { vrstvy } from '../data/vrstvy';
-import { serie } from '../data/serie';
+import GrafCard from '../components/GrafCard.astro';
+import HeroGlobus from '../components/uvod/HeroGlobus.astro';
+import CeskoVeSvete from '../components/uvod/CeskoVeSvete.astro';
+import MapaMini from '../components/uvod/MapaMini.astro';
+import StoLidi from '../components/uvod/StoLidi.astro';
 import { epizody } from '../data/epizody';
-import svet from '../data/svet.json';
-import { geoEqualEarth, geoPath } from 'd3-geo';
-import { feature } from 'topojson-client';
-import { datum, sklonuj } from '../lib/format';
+import { datum } from '../lib/format';
 
-const grafy = (await getCollection('grafy')).sort(
-  (a, b) => b.data.datum.valueOf() - a.data.datum.valueOf()
-);
+const grafy = (await getCollection('grafy')).sort((a, b) => b.data.datum.valueOf() - a.data.datum.valueOf());
 const tydne = grafy[0];
+const zbytek = grafy.slice(1, 7);
+// Do mřížky po třech – ať nezůstane jedna osamělá karta na konci řádku.
+const dalsi = zbytek.length > 3 ? zbytek.slice(0, Math.floor(zbytek.length / 3) * 3) : zbytek;
 
-
-const svetZeme = (feature(svet.topo as any, (svet.topo as any).objects.countries) as any).features;
-const svetCesta = geoPath(geoEqualEarth().fitExtent([[4, 4], [996, 516]], { type: 'Sphere' } as any));
-const epKody = new Set(epizody.map((e) => e.a3));
-const svetMapa = svetZeme.map((f: any) => ({
-  d: svetCesta(f) ?? '',
-  fill: f.id === 'CZE' ? '#F08829' : epKody.has(f.id) ? '#1B2A4A' : '#D6D9DF',
-}));
-const svetMore = svetCesta({ type: 'Sphere' } as any) ?? '';
+// V grafu týdne ukážeme až 10 řádků a Česko vždycky.
+const polozkyTydne = (() => {
+  if (!tydne) return [];
+  const p = tydne.data.polozky;
+  const prvni = p.slice(0, 10);
+  const cesko = p.find((x) => x.kategorie === 'Česko');
+  return cesko && !prvni.includes(cesko) ? [...prvni.slice(0, 9), cesko] : prvni;
+})();
 
 const IG = 'https://www.instagram.com/data.cesky/';
 const TT = 'https://www.tiktok.com/@data.cesky';
@@ -33,127 +31,87 @@ const FB = 'https://www.facebook.com/data.cesky';
 ---
 
 <Base titul="data.cesky — Česko v mapách, grafech a číslech">
-  <section class="hero sekce">
-    <svg class="hero__vrstevnice" viewBox="0 0 1440 560" preserveAspectRatio="xMidYMid slice" aria-hidden="true" fill="none" stroke="#DCD3C2" stroke-width="1.5">
-      <path d="M136 362 C136 330 162 312 196 318 C232 326 246 352 238 380 C230 408 196 418 170 406 C148 396 136 384 136 362 Z" />
-      <path d="M90 360 C90 290 150 250 210 262 C280 276 310 330 292 392 C276 448 200 470 150 446 C108 426 90 400 90 360 Z" />
-      <path d="M40 360 C40 250 140 196 226 214 C330 236 372 322 346 408 C322 490 208 522 132 488 C70 460 40 420 40 360 Z" />
-      <path d="M-20 360 C-20 210 120 136 240 164 C380 196 434 314 400 424 C368 530 214 572 110 530 C26 496 -20 440 -20 360 Z" />
-      <path d="M1216 150 C1216 128 1238 116 1262 120 C1288 124 1300 142 1294 164 C1288 184 1262 192 1240 184 C1224 178 1216 166 1216 150 Z" />
-      <path d="M1170 150 C1170 96 1220 70 1270 78 C1330 88 1360 130 1348 176 C1336 222 1276 240 1226 224 C1190 212 1170 186 1170 150 Z" />
-      <path d="M1110 150 C1110 60 1200 16 1286 30 C1380 46 1428 116 1408 196 C1388 276 1286 306 1204 282 C1142 264 1110 214 1110 150 Z" />
-      <path d="M1040 160 C1040 20 1180 -46 1300 -24 C1430 0 1500 100 1470 220 C1440 340 1300 380 1190 350 C1100 326 1040 250 1040 160 Z" />
-    </svg>
-    <div class="obal">
-      <div class="hero__obsah">
-        <h1>Česko v mapách, grafech a číslech</h1>
-        <p class="perex">
-          Ověřená data z ČSÚ, Eurostatu a dalších primárních zdrojů. U každého grafu najdeš zdroj,
-          metodiku a čísla v tabulce.
-        </p>
-        <div class="rada" style="justify-content: center;">
-          <a class="tlacitko tlacitko--plny" href="#grafy">Procházet grafy</a>
-          <a class="tlacitko" href="/mapa/">Otevřít mapu Česka</a>
-        </div>
+  <section class="uvod obal">
+    <div class="uvod__text">
+      <span class="nadpis__stitek">Ověřená data · zdroj u každého grafu</span>
+      <h1>Česko v mapách, grafech a&nbsp;číslech</h1>
+      <p class="perex">Data z ČSÚ, Eurostatu, Světové banky a dalších primárních zdrojů. Všechno, co tu vidíš, se dá rozkliknout.</p>
+      <div class="uvod__legenda">
+        <span><i style="background: #F08829;"></i>Česko</span>
+        <span><i style="background: #1B2A4A;"></i>{epizody.length} zemí ze série Česko vs. svět</span>
       </div>
+    </div>
+    <a href="/svet/" class="uvod__globus" aria-label="Otevřít glóbus">
+      <HeroGlobus />
+    </a>
+  </section>
+
+  <section class="obal sekce--mala odhal">
+    <div class="karta sloupec" style="gap: 1.25rem;">
+      <div class="nadpis-sekce" style="margin-bottom: 0;">
+        <div class="nadpis">
+          <span class="nadpis__stitek">Česko ve světě</span>
+          <h2>Kde je Česko ve světových žebříčcích</h2>
+        </div>
+        <p class="drobne" style="max-width: 36ch;">Každá čárka je jedna země. Oranžový bod je Česko, vlevo je první místo.</p>
+      </div>
+      <CeskoVeSvete />
     </div>
   </section>
 
   {tydne && (
-    <section class="obal">
-      <div class="karta graf-tydne">
-        <div class="sloupec" style="align-items: flex-start; gap: 1.1rem;">
+    <section class="obal sekce--mala odhal">
+      <a class="tydne" href={`/grafy/${tydne.id}/`}>
+        <div class="tydne__text">
           <span class="znacka">Graf týdne</span>
           <h2>{tydne.data.titul}</h2>
           <p class="perex">{tydne.data.perex}</p>
-          <div class="sloupec" style="gap: 0.2rem;">
-            <span class="drobne">Zdroj: {tydne.data.zdroj}</span>
-            <span class="drobne">Publikováno {datum(tydne.data.datum)}</span>
-          </div>
-          <div class="rada">
-            <a class="tlacitko tlacitko--oranzovy" href={`/grafy/${tydne.id}/`}>Otevřít graf</a>
-            {tydne.data.instagram && <a class="tlacitko" href={tydne.data.instagram}>Přehrát animaci</a>}
-          </div>
+          <span class="drobne">Zdroj: {tydne.data.zdroj} · {datum(tydne.data.datum)}</span>
         </div>
-        <div class="panel-grafu">
-          <div class="sloupec" style="gap: 0.3rem;">
+        <div class="tydne__graf">
+          <div class="sloupec" style="gap: 0.3rem; text-align: center;">
             <span class="nadpis-grafu">{tydne.data.titul}</span>
             {tydne.data.popisGrafu && <span class="stitek">{tydne.data.popisGrafu}</span>}
           </div>
-          <BarChart polozky={tydne.data.polozky.length <= 8 ? tydne.data.polozky : tydne.data.polozky.slice(0, 6)} barvy={tydne.data.barvy} desetinna={tydne.data.desetinna} legenda={true} />
+          <BarChart polozky={polozkyTydne} barvy={tydne.data.barvy} desetinna={tydne.data.desetinna} legenda={true} />
           <div class="rada rada--mezi">
             <span class="drobne">Zdroj: {tydne.data.zdroj}</span>
             <span class="znacka">@data<span>.cesky</span></span>
           </div>
         </div>
-      </div>
+      </a>
     </section>
   )}
 
-  <section id="grafy" class="obal sekce odhal">
-    <div class="nadpis-sekce">
-      <h2>Všechny grafy</h2>
-    </div>
-    <ArchivGrafu grafy={grafy} />
-  </section>
-
-  <section class="obal">
-    <div class="karta graf-tydne">
-      <div class="sloupec" style="align-items: flex-start; gap: 1.1rem;">
-        <span class="znacka">Mapa Česka</span>
-        <h2>Porovnej kraje na jedné mapě</h2>
-        <p class="perex">
-          Přepínej mezi vrstvami a klikni na kraj. Teď na mapě najdeš {vrstvy.map((v) => v.nazev.toLowerCase()).join(' a ')}.
-        </p>
-        <a class="tlacitko tlacitko--plny" href="/mapa/">Otevřít mapu</a>
+  {dalsi.length > 0 && (
+    <section class="obal sekce--mala">
+      <div class="nadpis-sekce">
+        <div class="nadpis">
+          <span class="nadpis__stitek">Grafy</span>
+          <h2>Další grafy</h2>
+        </div>
       </div>
-      <a href="/mapa/" class="panel-grafu" aria-label="Otevřít mapu Česka">
-        <MapaNahled />
-      </a>
+      <ul class="mrizka mrizka--3">
+        {dalsi.map((g) => <GrafCard id={g.id} data={g.data} />)}
+      </ul>
+    </section>
+  )}
+
+  <section class="obal sekce--mala odhal">
+    <div class="nadpis-sekce" style="justify-content: center; text-align: center;">
+      <div class="nadpis" style="align-items: center;">
+        <span class="nadpis__stitek">Mapa Česka</span>
+        <h2>Porovnej kraje na jedné mapě</h2>
+      </div>
     </div>
+    <MapaMini />
   </section>
 
   <section class="obal sekce odhal">
-    <div class="karta graf-tydne">
-      <div class="sloupec" style="align-items: flex-start; gap: 1.1rem;">
-        <span class="znacka">Svět</span>
-        <h2>Postav Česko vedle jakékoli země</h2>
-        <p class="perex">
-          Zatoč glóbusem a klikni na stát. Uvidíš jeho počet obyvatel, vzdálenost od Prahy, cenu Big Macu
-          a u {epizody.length} zemí i díl naší série Česko vs. svět.
-        </p>
-        <a class="tlacitko tlacitko--plny" href="/svet/">Otevřít glóbus</a>
-      </div>
-      <a href="/svet/" class="panel-grafu" aria-label="Otevřít mapu světa">
-        <svg viewBox="0 0 1000 520" style="width: 100%; height: auto; display: block;" role="img" aria-label="Mapa světa se zeměmi ze série Česko vs. svět">
-          <path d={svetMore} fill="#EAE4D8" />
-          {svetMapa.map((z: any) => <path d={z.d} fill={z.fill} stroke="#F2EDE3" stroke-width="0.6" />)}
-        </svg>
-      </a>
-    </div>
+    <StoLidi />
   </section>
 
-  <section id="serie" class="obal sekce odhal">
-    <div class="nadpis-sekce">
-      <h2>Série</h2>
-      <a href="/serie/" style="font-weight: 800;">Všechny díly</a>
-    </div>
-    <ul class="mrizka mrizka--3">
-      {serie.map((s) => (
-        <li class="karta sloupec">
-          <span class="stitek">{sklonuj(s.dily.length, 'díl', 'díly', 'dílů')}</span>
-          <h3 style="font-size: 1.5rem; font-weight: 900;">{s.nazev}</h3>
-          <p class="drobne">{s.popis}</p>
-          <ul class="rada" style="list-style: none; padding: 0; margin: 0;">
-            {[...s.dily].reverse().slice(0, 3).map((d) => <li><span class="chip chip--info">{d.nazev}</span></li>)}
-          </ul>
-          <a href={`/serie/#${s.id}`} style="font-weight: 800; margin-top: auto;">Zobrazit díly</a>
-        </li>
-      ))}
-    </ul>
-  </section>
-
-  <section class="obal sekce">
+  <section class="obal sekce--mala">
     <div class="pas">
       <div class="sloupec">
         <h2>Nový graf každý týden</h2>
@@ -169,3 +127,22 @@ const FB = 'https://www.facebook.com/data.cesky';
     </div>
   </section>
 </Base>
+
+<style>
+  .uvod { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 4rem); align-items: center; padding-block: clamp(2rem, 6vw, 4.5rem) clamp(1rem, 3vw, 2rem); }
+  @media (max-width: 860px) { .uvod { grid-template-columns: 1fr; text-align: center; } .uvod__text { align-items: center; } }
+  .uvod__text { display: flex; flex-direction: column; gap: 1.3rem; align-items: flex-start; }
+  .uvod h1 { font-size: clamp(2.3rem, 4.6vw, 3.6rem); line-height: 1.14; }
+  .uvod__legenda { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; font-size: 0.85rem; font-weight: 700; color: var(--text-2); }
+  .uvod__legenda span { display: inline-flex; align-items: center; gap: 0.45rem; }
+  .uvod__legenda i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  .uvod__globus { display: block; max-width: 560px; justify-self: center; width: 100%; }
+
+  .tydne { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center; text-decoration: none; color: var(--navy); }
+  .tydne:hover { color: var(--navy); }
+  .tydne:hover .tydne__graf { box-shadow: 0 1px 2px rgba(27, 42, 74, 0.05), 0 18px 40px -14px rgba(27, 42, 74, 0.3); }
+  @media (max-width: 880px) { .tydne { grid-template-columns: 1fr; } }
+  .tydne__text { display: flex; flex-direction: column; gap: 1rem; align-items: flex-start; }
+  .tydne__graf { background: var(--paper); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--stin); padding: clamp(1.25rem, 3vw, 2.25rem); display: flex; flex-direction: column; gap: 1.2rem; transition: box-shadow 0.25s ease; }
+  :global(.tydne__graf .legenda) { justify-content: center; }
+</style>

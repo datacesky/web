@@ -21,7 +21,7 @@ const sirkaHodnot = `calc(${Math.max(...polozky.map((p) => cislo(p.hodnota, dese
 const kategorie = [...new Set(polozky.map((p) => p.kategorie).filter(Boolean))] as string[];
 ---
 
-<div class:list={['sg', `sg--${velikost}`]} style={`--sirka-hodnot: ${sirkaHodnot};`}>
+<div class:list={['sg', `sg--${velikost}`, 'odhal-graf']} style={`--sirka-hodnot: ${sirkaHodnot};`}>
   {legenda && kategorie.length > 1 && (
     <ul class="legenda">
       {kategorie.map((k) => (
@@ -30,8 +30,8 @@ const kategorie = [...new Set(polozky.map((p) => p.kategorie).filter(Boolean))] 
     </ul>
   )}
   <ul class="sg__radky" aria-hidden="true">
-    {polozky.map((p) => (
-      <li class="sg__radek">
+    {polozky.map((p, i) => (
+      <li class:list={['sg__radek', { 'sg__radek--cesko': p.kategorie === 'Česko' }]} style={`--i: ${i};`}>
         <span class="sg__jmeno">{p.nazev}</span>
         <span class="sg__draha">
           <span class="sg__pruh" style={`width: ${(p.hodnota / max) * 100}%; background: ${barvaKategorie(p.kategorie, barvy)};`}></span>
@@ -47,19 +47,30 @@ const kategorie = [...new Set(polozky.map((p) => p.kategorie).filter(Boolean))] 
   .sg__radky { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
   .sg__radek { display: grid; align-items: center; }
   .sg__jmeno { text-align: right; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sg__draha { display: block; }
-  .sg__pruh { display: block; border-radius: 999px; min-width: 6px; }
+  .sg__radek--cesko .sg__jmeno, .sg__radek--cesko .sg__hodnota { color: var(--orange-text); font-weight: 900; }
+  .sg__draha { display: block; background: var(--draha); border-radius: 999px; }
+  .sg__pruh { display: block; border-radius: 999px; min-width: 6px; height: 100%; transform-origin: left center; }
   .sg__hodnota { font-weight: 800; white-space: nowrap; font-variant-numeric: tabular-nums; }
 
-  .sg--stredni .sg__radky { gap: 0.8rem; }
-  .sg--stredni .sg__radek { grid-template-columns: minmax(70px, 115px) minmax(0, 1fr) var(--sirka-hodnot); gap: 0.8rem; }
-  .sg--stredni .sg__jmeno { font-size: 0.95rem; }
-  .sg--stredni .sg__pruh { height: 26px; }
+  .sg--stredni .sg__radky { gap: 0.75rem; }
+  .sg--stredni .sg__radek { grid-template-columns: minmax(70px, 125px) minmax(0, 1fr) var(--sirka-hodnot); gap: 0.8rem; }
+  .sg--stredni .sg__jmeno { font-size: 0.95rem; line-height: 1.5; }
+  .sg--stredni .sg__draha { height: 24px; }
   .sg--stredni .sg__hodnota { font-size: 1rem; }
 
-  .sg--mala .sg__radky { gap: 0.6rem; }
-  .sg--mala .sg__radek { grid-template-columns: 76px minmax(0, 1fr) var(--sirka-hodnot); gap: 0.5rem; }
-  .sg--mala .sg__jmeno { font-size: 0.75rem; }
-  .sg--mala .sg__pruh { height: 13px; }
-  .sg--mala .sg__hodnota { font-size: 0.75rem; }
+  .sg--mala .sg__radky { gap: 0.55rem; }
+  .sg--mala .sg__radek { grid-template-columns: 84px minmax(0, 1fr) var(--sirka-hodnot); gap: 0.55rem; }
+  .sg--mala .sg__jmeno { font-size: 0.78rem; line-height: 1.45; }
+  .sg--mala .sg__draha { height: 13px; }
+  .sg--mala .sg__hodnota { font-size: 0.78rem; }
+
+  /* Pruhy pomalu vyrostou, až graf vjede do obrazu */
+  :global(.js) .odhal-graf .sg__pruh { transform: scaleX(0); }
+  :global(.js) .odhal-graf .sg__hodnota { opacity: 0; }
+  :global(.js) .odhal-graf:global(.odhal--videt) .sg__pruh { transform: scaleX(1); transition: transform 1.4s cubic-bezier(0.22, 0.8, 0.24, 1) calc(var(--i) * 90ms); }
+  :global(.js) .odhal-graf:global(.odhal--videt) .sg__hodnota { opacity: 1; transition: opacity 0.6s ease calc(var(--i) * 90ms + 0.7s); }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .odhal-graf .sg__pruh { transform: none; transition: none !important; }
+    :global(.js) .odhal-graf .sg__hodnota { opacity: 1; transition: none !important; }
+  }
 </style>

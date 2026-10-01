@@ -1,40 +1,56 @@
 ---
 import BarChart from './BarChart.astro';
+import { datum } from '../lib/format';
 
 interface Props {
   id: string;
   data: any;
+  radku?: number;
 }
 
-const { id, data } = Astro.props;
+const { id, data, radku = 7 } = Astro.props;
 const hledani = `${data.titul} ${data.perex} ${data.tema} ${data.serie ?? ''}`;
+// Česko v grafu necháme vždy vidět, i když je níž než první řádky.
+const polozky = (() => {
+  const prvni = data.polozky.slice(0, radku);
+  const cesko = data.polozky.find((p: any) => p.kategorie === 'Česko');
+  return cesko && !prvni.includes(cesko) ? [...prvni.slice(0, radku - 1), cesko] : prvni;
+})();
 ---
 
 <li class="kg" data-tema={data.tema} data-hledani={hledani}>
   <a href={`/grafy/${id}/`} class="kg__odkaz">
-    <div class="kg__nahled">
+    <div class="kg__hlava">
+      <span class="stitek">{data.tema}</span>
+      <h3>{data.titul}</h3>
+      {data.popisGrafu && <p class="drobne kg__popis">{data.popisGrafu}</p>}
+    </div>
+    <div class="kg__graf">
       {data.obrazek ? (
         <img src={data.obrazek} alt="" loading="lazy" />
       ) : (
-        <BarChart polozky={data.polozky.slice(0, 6)} barvy={data.barvy} desetinna={data.desetinna} velikost="mala" />
+        <BarChart polozky={polozky} barvy={data.barvy} desetinna={data.desetinna} velikost="mala" />
       )}
     </div>
-    <div class="kg__text">
-      <span class="stitek">{data.tema}</span>
-      <h3>{data.titul}</h3>
-      <p class="drobne">{data.perex}</p>
+    <div class="kg__pata">
+      <span>Zdroj: {data.zdroj}</span>
+      <span>{datum(data.datum)}</span>
     </div>
   </a>
 </li>
 
 <style>
-  .kg { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; overflow: hidden; transition: transform 0.15s ease, box-shadow 0.15s ease; }
-  .kg:hover { transform: translateY(-2px); box-shadow: 0 10px 24px rgba(27, 42, 74, 0.08); }
+  .kg { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin-maly); overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .kg:hover { transform: translateY(-3px); box-shadow: var(--stin); }
   .kg__odkaz { display: flex; flex-direction: column; height: 100%; text-decoration: none; color: var(--navy); }
   .kg__odkaz:hover { color: var(--navy); }
-  .kg__nahled { height: 190px; display: flex; align-items: center; padding: 1.1rem 1.1rem; background: var(--cream); border-bottom: 1px solid var(--line); }
-  .kg__nahled img { width: 100%; height: 100%; object-fit: cover; border-radius: 8px; }
-  .kg__text { display: flex; flex-direction: column; gap: 0.5rem; padding: 1.25rem 1.25rem 1.5rem; }
-  .kg__text h3 { font-size: 1.12rem; line-height: 1.35; }
+  .kg__hlava { display: flex; flex-direction: column; gap: 0.35rem; padding: 1.3rem 1.3rem 0; }
+  .kg__hlava h3 { font-size: 1.12rem; line-height: 1.4; }
+  .kg__popis { font-size: 0.82rem; line-height: 1.5; }
+  .kg__graf { flex-grow: 1; display: flex; align-items: center; padding: 1.1rem 1.3rem 1.2rem; }
+  .kg__graf img { width: 100%; border-radius: 10px; }
+  .kg__pata { display: flex; justify-content: space-between; gap: 1rem; padding: 0.8rem 1.3rem; border-top: 1px solid var(--line); background: var(--plocha-2); font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+  .kg__pata span:first-child { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .kg__pata span:last-child { flex-shrink: 0; white-space: nowrap; }
   @media (prefers-reduced-motion: reduce) { .kg { transition: none; } .kg:hover { transform: none; } }
 </style>

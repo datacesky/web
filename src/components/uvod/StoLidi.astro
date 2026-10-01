@@ -1,0 +1,77 @@
+---
+// Kdyby Česko bylo 100 lidí: 10 × 10 postaviček, přepínání pohlaví a věku.
+// Data: ČSÚ, stav k 31. 12. 2025 (díl 1 série „Kdyby Česko bylo 100 lidí").
+const POHLED = {
+  pohlavi: { nazev: 'Pohlaví', skupiny: [ { n: 'žen', p: 51, b: '#1B2A4A' }, { n: 'mužů', p: 49, b: '#8792AA' } ] },
+  vek: { nazev: 'Věk', skupiny: [ { n: 'dětí do 14 let', p: 15, b: '#C2C9D6' }, { n: 'lidí 15 až 64 let', p: 64, b: '#1B2A4A' }, { n: 'seniorů 65+', p: 21, b: '#8792AA' } ] },
+};
+const data = JSON.stringify(POHLED);
+const lide = Array.from({ length: 100 }, (_, i) => i);
+---
+
+<div class="sl" data-sl data-json={data}>
+  <div class="sl__text">
+    <div class="nadpis">
+      <span class="nadpis__stitek">Série · díl 1</span>
+      <h2>Kdyby Česko bylo 100 lidí</h2>
+    </div>
+    <div class="prepinac-sl" role="group" aria-label="Rozdělení">
+      <button type="button" aria-pressed="true" data-sl-pohled="pohlavi">Pohlaví</button>
+      <button type="button" aria-pressed="false" data-sl-pohled="vek">Věk</button>
+    </div>
+    <ul class="sl__legenda" data-sl-legenda></ul>
+    <p class="drobne">Zdroj: ČSÚ, obyvatelstvo k 31. 12. 2025, zaokrouhleno na celé lidi.</p>
+  </div>
+  <div class="sl__mrizka odhal-graf" aria-hidden="true">
+    {lide.map((i) => (
+      <svg viewBox="0 0 20 32" style={`--i: ${i};`} data-sl-clovek>
+        <circle cx="10" cy="6" r="5" />
+        <path d="M3 30v-11a7 7 0 0 1 14 0v11z" />
+      </svg>
+    ))}
+  </div>
+</div>
+
+<style>
+  .sl { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 5fr); gap: clamp(1.5rem, 5vw, 4rem); align-items: center; }
+  @media (max-width: 860px) { .sl { grid-template-columns: 1fr; } }
+  .sl__text { display: flex; flex-direction: column; gap: 1.25rem; align-items: flex-start; }
+  .prepinac-sl { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); }
+  .prepinac-sl button { min-height: 42px; padding: 0 1.2rem; border: 0; border-radius: 999px; background: transparent; color: var(--navy); font-family: inherit; font-size: 0.92rem; font-weight: 800; cursor: pointer; }
+  .prepinac-sl button[aria-pressed='true'] { background: var(--navy); color: var(--cream); }
+  .sl__legenda { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.65rem; }
+  :global(.sl__legenda li) { display: flex; align-items: baseline; gap: 0.7rem; font-size: 1.05rem; font-weight: 700; }
+  :global(.sl__legenda strong) { font-size: 2rem; font-weight: 900; line-height: 1.1; min-width: 2.6ch; text-align: right; }
+  :global(.sl__legenda i) { width: 14px; height: 14px; border-radius: 4px; display: inline-block; transform: translateY(-2px); }
+  .sl__mrizka { display: grid; grid-template-columns: repeat(10, 1fr); gap: clamp(4px, 1vw, 10px); padding: clamp(1.1rem, 3vw, 2rem); background: var(--paper); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--stin); }
+  .sl__mrizka svg { width: 100%; height: auto; display: block; fill: var(--barva, #D9DEE6); transition: fill 0.7s ease calc(var(--i) * 9ms); }
+  :global(.js) .sl__mrizka svg { opacity: 0; transform: translateY(6px); }
+  :global(.js) .sl__mrizka:global(.odhal--videt) svg { opacity: 1; transform: none; transition: fill 0.7s ease calc(var(--i) * 9ms), opacity 0.5s ease calc(var(--i) * 14ms), transform 0.5s ease calc(var(--i) * 14ms); }
+  @media (prefers-reduced-motion: reduce) { .sl__mrizka svg, :global(.js) .sl__mrizka svg { opacity: 1; transform: none; transition: none !important; } }
+</style>
+
+<script>
+  const koren = document.querySelector<HTMLElement>('[data-sl]');
+  if (koren) {
+    const P = JSON.parse(koren.dataset.json!) as Record<string, { nazev: string; skupiny: { n: string; p: number; b: string }[] }>;
+    const lide = Array.from(koren.querySelectorAll<SVGElement>('[data-sl-clovek]'));
+    const legenda = koren.querySelector<HTMLElement>('[data-sl-legenda]')!;
+    function ukaz(id: string) {
+      const s = P[id].skupiny;
+      let i = 0;
+      for (const g of s) for (let k = 0; k < g.p; k++) lide[i++]?.style.setProperty('--barva', g.b);
+      legenda.replaceChildren(...s.map((g) => {
+        const li = document.createElement('li');
+        const strong = document.createElement('strong');
+        strong.textContent = String(g.p);
+        const tecka = document.createElement('i');
+        tecka.style.background = g.b;
+        li.append(strong, tecka, g.n);
+        return li;
+      }));
+      for (const b of koren!.querySelectorAll<HTMLButtonElement>('[data-sl-pohled]')) b.setAttribute('aria-pressed', String(b.dataset.slPohled === id));
+    }
+    for (const b of koren.querySelectorAll<HTMLButtonElement>('[data-sl-pohled]')) b.addEventListener('click', () => ukaz(b.dataset.slPohled!));
+    ukaz('pohlavi');
+  }
+</script>

@@ -1,4 +1,5 @@
 // Díly série Česko vs. svět. a3 = třípísmenný kód země (ISO 3166-1).
+// Nový díl přidáš na konec seznamu. Vlajka a srovnání s Českem se doplní samy podle kódu země.
 export type Epizoda = { a3: string; dil: number; nazev: string; popis: string; datum: string; instagram: string };
 
 export const epizody: Epizoda[] = [

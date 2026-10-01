@@ -10,7 +10,7 @@ const kraje = [...geo.kraje].sort((a, b) => Number(a.id === 'praha') - Number(b.
 
 <svg viewBox={`0 0 ${geo.sirka} ${geo.vyska}`} class="mapa-nahled" role="img" aria-label={`Mapa krajů Česka: ${vrstva.nazev}`}>
   {kraje.map((k) => (
-    <path d={k.d} fill={barvaKraje(vrstva, k.id, hr)} fill-rule="evenodd" stroke="#F2EDE3" stroke-width="2" stroke-linejoin="round" />
+    <path d={k.d} fill={barvaKraje(vrstva, k.id, hr)} fill-rule="evenodd" stroke="#FFFFFF" stroke-width="2" stroke-linejoin="round" />
   ))}
 </svg>
 

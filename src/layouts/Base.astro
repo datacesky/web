@@ -116,11 +116,11 @@ const FB = 'https://www.facebook.com/data.cesky';
       </div>
     </footer>
     <script>
-      const prvky = document.querySelectorAll('.odhal');
+      const prvky = document.querySelectorAll('.odhal, .odhal-graf');
       if ('IntersectionObserver' in window) {
         const pozorovatel = new IntersectionObserver((zaznamy) => {
           for (const z of zaznamy) if (z.isIntersecting) { z.target.classList.add('odhal--videt'); pozorovatel.unobserve(z.target); }
-        }, { rootMargin: '0px 0px -8% 0px' });
+        }, { rootMargin: '0px 0px -10% 0px' });
         prvky.forEach((p) => pozorovatel.observe(p));
       } else prvky.forEach((p) => p.classList.add('odhal--videt'));
     </script>

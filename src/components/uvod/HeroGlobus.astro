@@ -1,0 +1,76 @@
+---
+// Statický glóbus pro úvodní stránku: Česko oranžově, země ze série Česko vs. svět modře,
+// oblouky z Prahy ke každé z nich. Vykreslí se už při sestavení webu, bez JavaScriptu.
+import { geoOrthographic, geoPath, geoGraticule10, geoCentroid, geoInterpolate } from 'd3-geo';
+import { feature } from 'topojson-client';
+import svet from '../../data/svet.json';
+import { epizody } from '../../data/epizody';
+
+const zeme = (feature(svet.topo as any, (svet.topo as any).objects.countries) as any).features;
+const proj = geoOrthographic().rotate([-17, -36]).fitExtent([[20, 20], [580, 580]], { type: 'Sphere' } as any);
+const cesta = geoPath(proj);
+const sfera = cesta({ type: 'Sphere' } as any) ?? '';
+const sit = cesta(geoGraticule10()) ?? '';
+const ep = new Set(epizody.map((e) => e.a3));
+const pole = zeme.map((f: any) => ({
+  d: cesta(f) ?? '',
+  fill: f.id === 'CZE' ? '#F08829' : ep.has(f.id) ? '#1B2A4A' : '#EFE8DA',
+  cz: f.id === 'CZE',
+}));
+const PRAHA: [number, number] = [14.42, 50.08];
+const oblouky = epizody
+  .map((e) => {
+    const f = zeme.find((z: any) => z.id === e.a3);
+    if (!f) return null;
+    const cil = geoCentroid(f) as [number, number];
+    const i = geoInterpolate(PRAHA, cil);
+    const body = Array.from({ length: 41 }, (_, k) => i(k / 40));
+    return cesta({ type: 'LineString', coordinates: body } as any) ?? '';
+  })
+  .filter(Boolean);
+const [px, py] = proj(PRAHA)!;
+---
+
+<svg class="hg" viewBox="0 0 600 640" role="img" aria-label="Glóbus: Česko a země ze série Česko vs. svět">
+  <defs>
+    <radialGradient id="hg-more" cx="40%" cy="34%" r="72%">
+      <stop offset="0%" stop-color="#CFE3F1" />
+      <stop offset="62%" stop-color="#A7C9E2" />
+      <stop offset="100%" stop-color="#8DB6D4" />
+    </radialGradient>
+    <radialGradient id="hg-lesk" cx="34%" cy="26%" r="70%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.4" />
+      <stop offset="45%" stop-color="#FFFFFF" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#1B2A4A" stop-opacity="0.16" />
+    </radialGradient>
+    <radialGradient id="hg-stin" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#1B2A4A" stop-opacity="0.22" />
+      <stop offset="100%" stop-color="#1B2A4A" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+  <ellipse cx="300" cy="612" rx="210" ry="20" fill="url(#hg-stin)" />
+  <g class="hg__koule">
+    <path d={sfera} fill="url(#hg-more)" />
+    <path d={sit} fill="none" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="0.7" />
+    {pole.map((p: any) => <path d={p.d} fill={p.fill} stroke="#FFFFFF" stroke-width={p.cz ? 1 : 0.5} stroke-linejoin="round" />)}
+    {oblouky.map((d, i) => <path class="hg__oblouk" d={d} style={`--i: ${i};`} />)}
+    <circle class="hg__puls" cx={px} cy={py} r="7" />
+    <circle cx={px} cy={py} r="4.5" fill="#F08829" stroke="#FFFFFF" stroke-width="1.6" />
+    <path d={sfera} fill="url(#hg-lesk)" />
+    <path d={sfera} fill="none" stroke="rgba(27,42,74,0.18)" />
+  </g>
+</svg>
+
+<style>
+  .hg { width: 100%; height: auto; display: block; overflow: visible; }
+  .hg__koule { animation: hg-vznas 7s ease-in-out infinite; }
+  .hg__oblouk { fill: none; stroke: #F08829; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 600; stroke-dashoffset: 600; animation: hg-car 2.4s cubic-bezier(0.22, 0.8, 0.24, 1) forwards; animation-delay: calc(0.6s + var(--i) * 0.25s); }
+  .hg__puls { fill: #F08829; opacity: 0.45; transform-box: fill-box; transform-origin: center; animation: hg-puls 2.4s ease-out infinite; }
+  @keyframes hg-car { to { stroke-dashoffset: 0; } }
+  @keyframes hg-puls { from { transform: scale(1); opacity: 0.5; } to { transform: scale(3.4); opacity: 0; } }
+  @keyframes hg-vznas { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .hg__koule, .hg__puls { animation: none; }
+    .hg__oblouk { animation: none; stroke-dashoffset: 0; }
+  }
+</style>

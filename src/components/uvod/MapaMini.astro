@@ -1,0 +1,121 @@
+---
+// Malá interaktivní mapa krajů pro úvodní stránku: přepínání vrstev, pořadí krajů vedle mapy.
+import geo from '../../data/kraje.json';
+import { vrstvy } from '../../data/vrstvy';
+import { hranice, barvaKraje } from '../../lib/mapa';
+
+const ciselne = vrstvy.filter((v) => v.typ === 'ciselna');
+const prvni = ciselne[0];
+const hr = hranice(Object.values(prvni.hodnoty).map(Number));
+const kraje = [...geo.kraje].sort((a, b) => Number(a.id === 'praha') - Number(b.id === 'praha'));
+const data = JSON.stringify({ vrstvy: ciselne, kraje: Object.fromEntries(geo.kraje.map((k) => [k.id, k.nazev])) });
+---
+
+<div class="mm" data-mm data-json={data}>
+  <div class="mm__chipy" role="group" aria-label="Vrstva mapy">
+    {ciselne.map((v) => (
+      <button type="button" class="chip" data-mm-vrstva={v.id} aria-pressed={v.id === prvni.id ? 'true' : 'false'}>{v.nazev}</button>
+    ))}
+  </div>
+  <div class="mm__telo">
+    <div class="mm__mapa">
+      <div class="sloupec" style="gap: 0.2rem;">
+        <span class="nadpis-grafu" data-mm-titul>{prvni.nazev}</span>
+        <span class="stitek" data-mm-popis>{prvni.popis}, {prvni.obdobi}</span>
+      </div>
+      <svg viewBox={`0 0 ${geo.sirka} ${geo.vyska}`} role="img" aria-label="Mapa krajů Česka">
+        {kraje.map((k) => (
+          <path class="mm__kraj" d={k.d} fill={barvaKraje(prvni, k.id, hr)} fill-rule="evenodd" data-mm-kraj={k.id}><title>{k.nazev}</title></path>
+        ))}
+      </svg>
+      <div class="rada rada--mezi">
+        <span class="drobne" data-mm-zdroj>Zdroj: {prvni.zdroj}</span>
+        <span class="znacka">@data<span>.cesky</span></span>
+      </div>
+    </div>
+    <ol class="mm__poradi" data-mm-poradi></ol>
+  </div>
+</div>
+
+<style>
+  .mm { display: flex; flex-direction: column; gap: 1.1rem; }
+  .mm__chipy { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+  .mm__telo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 1.25rem; align-items: stretch; }
+  @media (max-width: 880px) { .mm__telo { grid-template-columns: 1fr; } }
+  .mm__mapa { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin); padding: clamp(1.1rem, 3vw, 1.75rem); display: flex; flex-direction: column; gap: 1rem; text-align: center; }
+  .mm__mapa svg { width: 100%; height: auto; display: block; }
+  .mm__kraj { stroke: #FFFFFF; stroke-width: 2; stroke-linejoin: round; transition: fill 0.8s ease, opacity 0.2s ease; }
+  .mm__kraj:hover { opacity: 0.8; }
+  .mm__poradi { list-style: none; margin: 0; padding: 1.1rem; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin); display: flex; flex-direction: column; justify-content: center; gap: 0.35rem; }
+  :global(.mm__poradi li) { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; font-size: 0.8rem; font-weight: 700; }
+  :global(.mm__poradi .p) { color: var(--muted); font-size: 0.74rem; text-align: right; }
+  :global(.mm__poradi .s) { display: flex; flex-direction: column; gap: 0.18rem; min-width: 0; }
+  :global(.mm__poradi .j) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.4; }
+  :global(.mm__poradi .d) { display: block; height: 7px; border-radius: 999px; background: #F3EEE5; overflow: hidden; }
+  :global(.mm__poradi .b) { display: block; height: 100%; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(27, 42, 74, 0.22); transition: width 0.9s cubic-bezier(0.22, 0.8, 0.24, 1), background 0.8s ease; }
+  :global(.mm__poradi .h) { font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { .mm__kraj, :global(.mm__poradi .b) { transition: none; } }
+</style>
+
+<script>
+  import { hranice, barvaKraje, type Vrstva } from '../../lib/mapa';
+  const koren = document.querySelector<HTMLElement>('[data-mm]');
+  if (koren) {
+    const { vrstvy, kraje } = JSON.parse(koren.dataset.json!) as { vrstvy: Vrstva[]; kraje: Record<string, string> };
+    const cesty = Array.from(koren.querySelectorAll<SVGPathElement>('[data-mm-kraj]'));
+    const ol = koren.querySelector<HTMLElement>('[data-mm-poradi]')!;
+    const cislo = (v: number, d = 0) => new Intl.NumberFormat('cs-CZ', { minimumFractionDigits: d, maximumFractionDigits: d }).format(v);
+    const kratce = (v: Vrstva, h: number) => {
+      if (v.jednotka === 'obyvatel') return `${cislo(h / 1e6, 2)} mil.`;
+      if (h >= 10000) return `${cislo(h / 1000, 1)} tis.`;
+      return cislo(h, v.desetinna ?? 0);
+    };
+    let radky = new Map<string, HTMLLIElement>();
+
+    function ukaz(v: Vrstva) {
+      const hod = v.hodnoty as Record<string, number>;
+      const hr = hranice(Object.values(hod).map(Number));
+      for (const c of cesty) c.style.fill = barvaKraje(v, c.dataset.mmKraj!, hr);
+      koren!.querySelector('[data-mm-titul]')!.textContent = v.nazev;
+      koren!.querySelector('[data-mm-popis]')!.textContent = `${v.popis}, ${v.obdobi}`;
+      koren!.querySelector('[data-mm-zdroj]')!.textContent = `Zdroj: ${v.zdroj}`;
+      for (const b of koren!.querySelectorAll<HTMLButtonElement>('[data-mm-vrstva]')) b.setAttribute('aria-pressed', String(b.dataset.mmVrstva === v.id));
+      const serazene = Object.keys(kraje).sort((a, b) => hod[b] - hod[a]);
+      const max = hod[serazene[0]];
+      // Řádky se při přepnutí plynule přesunou na nové místo (FLIP).
+      const predtim = new Map([...radky].map(([id, li]) => [id, li.getBoundingClientRect().top]));
+      const nove = new Map<string, HTMLLIElement>();
+      ol.replaceChildren(...serazene.map((id, i) => {
+        let li = radky.get(id);
+        if (!li) {
+          li = document.createElement('li');
+          li.innerHTML = '<span class="p"></span><span class="s"><span class="j"></span><span class="d"><span class="b" style="width:0"></span></span></span><span class="h"></span>';
+        }
+        li.querySelector('.p')!.textContent = `${i + 1}.`;
+        li.querySelector('.j')!.textContent = kraje[id];
+        li.querySelector('.h')!.textContent = kratce(v, hod[id]);
+        const b = li.querySelector<HTMLElement>('.b')!;
+        requestAnimationFrame(() => {
+          b.style.width = `${(hod[id] / max) * 100}%`;
+          b.style.background = barvaKraje(v, id, hr);
+        });
+        nove.set(id, li);
+        return li;
+      }));
+      if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        for (const [id, li] of nove) {
+          const a = predtim.get(id);
+          if (a === undefined) continue;
+          const d = a - li.getBoundingClientRect().top;
+          if (!d) continue;
+          li.animate([{ transform: `translateY(${d}px)` }, { transform: 'none' }], { duration: 800, easing: 'cubic-bezier(0.22, 0.8, 0.24, 1)' });
+        }
+      }
+      radky = nove;
+    }
+    for (const b of koren.querySelectorAll<HTMLButtonElement>('[data-mm-vrstva]')) {
+      b.addEventListener('click', () => ukaz(vrstvy.find((v) => v.id === b.dataset.mmVrstva)!));
+    }
+    ukaz(vrstvy[0]);
+  }
+</script>

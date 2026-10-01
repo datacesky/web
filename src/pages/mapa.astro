@@ -145,7 +145,7 @@ const data = JSON.stringify({
   .mapa__detail { background: var(--navy); color: var(--cream); border-radius: var(--radius); padding: 1.5rem; min-height: 190px; display: flex; flex-direction: column; gap: 0.45rem; }
   .poradi { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.15rem; }
 
-  :global(.kraj) { stroke: var(--cream); stroke-width: 2; stroke-linejoin: round; cursor: pointer; transition: fill 0.45s ease, opacity 0.2s ease; }
+  :global(.kraj) { stroke: #FFFFFF; stroke-width: 2; stroke-linejoin: round; cursor: pointer; transition: fill 0.45s ease, opacity 0.2s ease; }
   :global(.kraj:focus-visible) { outline: none; stroke: var(--orange); stroke-width: 4; }
   :global(.kraj--hover) { opacity: 0.78; }
   :global(.kraj--vybrany) { stroke: var(--orange); stroke-width: 4.5; }
@@ -162,7 +162,7 @@ const data = JSON.stringify({
     padding: 0.35rem 0.5rem; border: 0; border-radius: 10px; background: transparent; color: var(--navy);
     font-family: inherit; font-size: 0.86rem; font-weight: 700; text-align: left; cursor: pointer;
   }
-  :global(.poradi button:hover), :global(.poradi button[aria-pressed='true']) { background: var(--cream); }
+  :global(.poradi button:hover), :global(.poradi button[aria-pressed='true']) { background: var(--plocha-2); }
   :global(.poradi .p-jmeno) { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
   :global(.poradi .p-pruh) { display: block; height: 6px; border-radius: 999px; transition: width 0.45s ease, background 0.45s ease; }
   :global(.poradi .p-hodnota) { font-variant-numeric: tabular-nums; font-weight: 800; }

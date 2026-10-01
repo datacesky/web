@@ -1,5 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
+import { SVET_VRSTVY } from '../lib/svet';
+
+const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
 ---
 
 <Base
@@ -19,6 +22,20 @@ import Base from '../layouts/Base.astro';
     <h2>Zdroje, které používám nejčastěji</h2>
     <p>Český statistický úřad, Eurostat, ministerstva a jejich otevřená data, mezinárodní organizace a odborné žebříčky. Konkrétní zdroj najdeš u každého grafu.</p>
 
+    <h2 id="svet">Data na stránce Svět</h2>
+    <p>
+      Každá vrstva glóbusu má jeden zdroj a jeden ročník. U zemí, kde poslední rok chybí, beru nejbližší starší dostupný údaj
+      (typicky u Giniho indexu). Země bez dat jsou na mapě šrafované. Čísla ve videích můžou vycházet z jiného ročníku než web.
+    </p>
+    <ul class="zdroje">
+      {vrstvy.map((v) => (
+        <li>
+          <strong>{v.nazev}</strong>
+          <span>{v.zdrojUrl ? <a href={v.zdrojUrl}>{v.zdroj}</a> : v.zdroj}{v.obdobi ? `, ${v.obdobi}` : ''}</span>
+        </li>
+      ))}
+    </ul>
+
     <h2 id="opravy">Opravy</h2>
     <p>
       Když v grafu najdeš chybu, napiš na <a href="mailto:data.cesky@gmail.com">data.cesky@gmail.com</a>. Opravu udělám a poznamenám ji
@@ -32,3 +49,9 @@ import Base from '../layouts/Base.astro';
     </p>
   </section>
 </Base>
+
+<style>
+  .zdroje { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border-top: 1px solid var(--line); }
+  .zdroje li { display: grid; grid-template-columns: minmax(0, 13rem) minmax(0, 1fr); gap: 0.4rem 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--line); font-size: 0.92rem; line-height: 1.55; }
+  @media (max-width: 560px) { .zdroje li { grid-template-columns: 1fr; } }
+</style>

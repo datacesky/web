@@ -1,0 +1,78 @@
+---
+// Kde je Česko ve světových žebříčcích: každá čárka je jedna země, oranžový bod je Česko.
+import { vrstvaPodleId, zebricek, pocet, poradiZeme, jmeno, vlajka } from '../../lib/svet';
+
+const IDS = ['stesti', 'tisk', 'korupce', 'akad', 'gini', 'hdp', 'doziti', 'bm'];
+const radky = IDS.map((id) => {
+  const v = vrstvaPodleId(id)!;
+  const z = zebricek(id);
+  const n = pocet(id);
+  const r = poradiZeme(id, 'CZE')!;
+  const x = (k: number) => (n <= 1 ? 0 : ((k - 1) / (n - 1)) * 100);
+  return {
+    id,
+    nazev: v.nazev,
+    ikona: v.ikona,
+    obdobi: v.obdobi,
+    zdroj: v.zdroj.split(',')[0].split('(')[0].trim(),
+    r,
+    n,
+    slovo: v.poradiSlovo,
+    poloha: x(r),
+    carky: z.map((q) => x(q.r)),
+    prvni: z[0].a3,
+  };
+});
+---
+
+<ul class="cs">
+  {radky.map((r, i) => (
+    <li>
+      <a class="cs__radek" href={`/svet/#v=${r.id}`} style={`--i: ${i};`}>
+        <span class="cs__nazev">
+          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d={r.ikona} /></svg>
+          <span>
+            <strong>{r.nazev}</strong>
+            <small>{r.zdroj}{r.obdobi && r.id !== 'gini' ? `, ${r.obdobi}` : ''}</small>
+          </span>
+        </span>
+        <span class="cs__osa odhal-graf" aria-hidden="true">
+          <svg viewBox="0 0 1000 30" preserveAspectRatio="none">
+            <line x1="0" y1="15" x2="1000" y2="15" stroke="#E2D9C9" stroke-width="2" vector-effect="non-scaling-stroke" />
+            {r.carky.map((x) => <line x1={x * 10} y1="7" x2={x * 10} y2="23" stroke="#1B2A4A" stroke-opacity="0.22" stroke-width="1.4" vector-effect="non-scaling-stroke" />)}
+          </svg>
+          <span class="cs__bod" style={`--x: ${r.poloha}%;`}><span>{r.r}.</span></span>
+          <span class="cs__kraj cs__kraj--l"><img src={vlajka(r.prvni)} alt="" class="vlajka" width="20" height="15" loading="lazy" />1. {jmeno(r.prvni)}</span>
+          <span class="cs__kraj cs__kraj--p">{r.n}.</span>
+        </span>
+        <span class="cs__misto"><strong>{r.r}.</strong> {r.slovo}<br /><small>z {r.n} zemí</small></span>
+      </a>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .cs { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+  .cs li + li { border-top: 1px solid var(--line); }
+  .cs__radek { display: grid; grid-template-columns: minmax(170px, 230px) minmax(0, 1fr) 150px; gap: 1.5rem; align-items: center; padding: 1rem 0.5rem; text-decoration: none; color: var(--navy); border-radius: 12px; transition: background 0.2s ease; }
+  .cs__radek:hover { background: var(--plocha-2); color: var(--navy); }
+  @media (max-width: 760px) { .cs__radek { grid-template-columns: 1fr auto; gap: 0.6rem 1rem; } .cs__osa { grid-column: 1 / -1; grid-row: 2; } }
+  .cs__nazev { display: flex; align-items: center; gap: 0.7rem; }
+  .cs__nazev svg { color: var(--slate); flex-shrink: 0; }
+  .cs__nazev strong { display: block; font-size: 0.98rem; font-weight: 800; line-height: 1.35; }
+  .cs__nazev small { display: block; font-size: 0.74rem; font-weight: 600; color: var(--muted); line-height: 1.4; }
+  .cs__osa { position: relative; height: 54px; display: block; }
+  .cs__osa svg { position: absolute; left: 0; right: 0; top: 12px; width: 100%; height: 30px; }
+  .cs__bod { position: absolute; top: 27px; left: var(--x); width: 16px; height: 16px; margin: -8px 0 0 -8px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 4px rgba(240, 136, 41, 0.22), 0 2px 6px rgba(27, 42, 74, 0.25); }
+  .cs__bod span { position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); font-size: 0.8rem; font-weight: 900; color: var(--orange-text); white-space: nowrap; }
+  .cs__kraj { position: absolute; bottom: -4px; display: flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .cs__kraj .vlajka { width: 16px; height: 12px; border-radius: 2px; }
+  .cs__kraj--l { left: 0; }
+  .cs__kraj--p { right: 0; }
+  .cs__misto { font-size: 0.85rem; font-weight: 700; line-height: 1.35; text-align: right; }
+  .cs__misto strong { font-size: 1.35rem; font-weight: 900; color: var(--orange-text); }
+  .cs__misto small { color: var(--muted); font-weight: 600; }
+  :global(.js) .cs__osa .cs__bod { left: 0; opacity: 0; }
+  :global(.js) .cs__osa:global(.odhal--videt) .cs__bod { left: var(--x); opacity: 1; transition: left 1.8s cubic-bezier(0.22, 0.8, 0.24, 1) calc(var(--i, 0) * 120ms + 0.2s), opacity 0.4s ease calc(var(--i, 0) * 120ms); }
+  @media (prefers-reduced-motion: reduce) { :global(.js) .cs__osa .cs__bod { left: var(--x); opacity: 1; transition: none !important; } }
+</style>
