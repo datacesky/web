@@ -5,6 +5,8 @@ import '@fontsource/montserrat/700.css';
 import '@fontsource/montserrat/800.css';
 import '@fontsource/montserrat/900.css';
 import '../styles/global.css';
+import { web } from '../data/web';
+import { hlasovaniZapnute } from '../data/hlasovani';
 
 interface Props {
   titul: string;
@@ -19,7 +21,7 @@ const {
 } = Astro.props;
 
 const kanonicka = new URL(Astro.url.pathname, Astro.site);
-const ogObrazek = new URL(obrazek ?? '/logo.png', Astro.site);
+const ogObrazek = new URL(obrazek ?? '/og/uvod.png', Astro.site);
 const cesta = Astro.url.pathname;
 const aktivni = (prefix: string) => (cesta.startsWith(prefix) ? 'page' : undefined);
 const rok = new Date().getFullYear();
@@ -47,6 +49,13 @@ const FB = 'https://www.facebook.com/data.cesky';
     <meta property="og:url" content={kanonicka} />
     <meta property="og:image" content={ogObrazek} />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="theme-color" content="#F2EDE3" />
+    {web.google && <meta name="google-site-verification" content={web.google} />}
+    {web.seznam && <meta name="seznam-wmt" content={web.seznam} />}
+    {cesta === '/' && (
+      <script is:inline type="application/ld+json" set:html={JSON.stringify({ '@context': 'https://schema.org', '@type': 'WebSite', name: 'data.cesky', alternateName: 'Data Česky', url: 'https://datacesky.cz/', inLanguage: 'cs', description: popis, sameAs: [IG, TT, FB] })} />
+    )}
+    {web.goatcounter && <script is:inline data-goatcounter={`https://${web.goatcounter}.goatcounter.com/count`} async src="//gc.zgo.at/count.js"></script>}
   </head>
   <body>
     <header class="hlavicka">
@@ -58,6 +67,7 @@ const FB = 'https://www.facebook.com/data.cesky';
           <a href="/svet/" aria-current={aktivni('/svet')}>Svět</a>
           <a href="/serie/" aria-current={aktivni('/serie')}>Série</a>
           <a href="/metodika/" aria-current={aktivni('/metodika')}>Metodika</a>
+          {hlasovaniZapnute && <a href="/hlasovani/" class="navigace__hlasuj" aria-current={aktivni('/hlasovani')}>Hlasuj</a>}
         </nav>
         <div class="hlavicka__site">
           <a href={IG}>Instagram</a>
@@ -87,6 +97,7 @@ const FB = 'https://www.facebook.com/data.cesky';
               <li><a href="/mapa/">Mapa Česka</a></li>
               <li><a href="/svet/">Svět</a></li>
               <li><a href="/serie/">Série</a></li>
+              {hlasovaniZapnute && <li><a href="/hlasovani/">Hlasuj o dalším dílu</a></li>}
             </ul>
           </div>
           <div class="sloupec">

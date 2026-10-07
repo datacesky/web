@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import { SVET_VRSTVY } from '../lib/svet';
+import { vrstvy as vrstvyCesko } from '../data/vrstvy';
 
 const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
 ---
@@ -35,6 +36,27 @@ const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
         </li>
       ))}
     </ul>
+
+    <h2 id="mapa">Data na Mapě Česka</h2>
+    <p>
+      Krajské vrstvy s vývojem v čase pocházejí z Eurostatu (kraje jsou tam regiony NUTS 3), ostatní z ČSÚ. Počty obyvatel měst jsou
+      z databáze ČSÚ za vybraná města a platí vždy v hranicích města v daném roce, takže skoky můžou způsobit i připojení obcí.
+      Hranice krajů a řeky jsou z Natural Earth, satelitní podklad je snímek NASA Blue Marble s jemným stínováním reliéfu.
+    </p>
+    <ul class="zdroje">
+      {vrstvyCesko.map((v) => (
+        <li>
+          <strong>{v.nazev}</strong>
+          <span><a href={v.zdrojUrl}>{v.zdroj}</a>, {v.obdobi}</span>
+        </li>
+      ))}
+    </ul>
+
+    <h2 id="soukromi">Soukromí</h2>
+    <p>
+      Web nepoužívá reklamní ani sledovací cookies. Hlasování si do tvého prohlížeče uloží jen náhodné číslo a zemi, pro kterou jsi
+      hlasoval(a), aby šlo hlasovat jednou za 30 dní. Nic z toho tě neidentifikuje.
+    </p>
 
     <h2 id="opravy">Opravy</h2>
     <p>

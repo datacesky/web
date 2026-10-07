@@ -1,11 +1,9 @@
 ---
 import Base from '../layouts/Base.astro';
-import Hlasovani from '../components/Hlasovani.astro';
-import { epizody } from '../data/epizody';
-import { hlasovaniZapnute } from '../data/hlasovani';
+import HlasovaniPozvanka from '../components/HlasovaniPozvanka.astro';
+import { epizody, odkazDilu } from '../data/epizody';
 import { SVET_VRSTVY, SKUPINY, hodnota, poradiZeme, vlajka, vrstvaPodleId, cislo } from '../lib/svet';
 
-const ukazHlasovani = hlasovaniZapnute || import.meta.env.DEV;
 
 // Srovnání s Českem pro každý díl série (stejné zdroje pro všechny země)
 const METRIKY = ['pop', 'area', 'hdp', 'doziti'];
@@ -32,6 +30,7 @@ const czPoradi = Object.fromEntries(
 ---
 
 <Base
+  obrazek="/og/svet.png"
   titul="Svět vedle Česka — data.cesky"
   popis="Interaktivní glóbus: štěstí, svoboda tisku, korupce, rovnost příjmů, HDP a další. Klikni na stát a porovnej ho s Českem."
 >
@@ -68,6 +67,15 @@ const czPoradi = Object.fromEntries(
       </div>
 
       <div class="scena">
+        <div class="scena__hledani">
+          <div class="hledani">
+            <div class="hledani__pole">
+              <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
+              <input type="search" placeholder="Najdi stát, třeba Japonsko" aria-label="Najdi stát" data-hledat-stat />
+            </div>
+            <ul class="naseptavac" data-naseptavac hidden></ul>
+          </div>
+        </div>
         <div class="scena__obal" data-obal>
           <svg class="scena__svg" data-svg role="img" aria-label="Mapa světa">
             <defs>
@@ -100,6 +108,14 @@ const czPoradi = Object.fromEntries(
             <path class="scena__okraj" data-okraj></path>
           </svg>
           <div class="scena__tooltip" data-tooltip hidden></div>
+          <div class="zoom-ovladani" role="group" aria-label="Přiblížení">
+            <button type="button" data-zoom="plus" aria-label="Přiblížit">+</button>
+            <button type="button" data-zoom="minus" aria-label="Oddálit">−</button>
+            <button type="button" data-zoom="reset" aria-label="Zobrazit celý svět" title="Celý svět">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5" /></svg>
+            </button>
+          </div>
+          <div class="zoom-napoveda" data-zoom-napoveda hidden>Přiblížíš podržením Ctrl a kolečkem</div>
           <noscript><p class="drobne">Glóbus potřebuje zapnutý JavaScript.</p></noscript>
         </div>
         <div class="scena__pod">
@@ -156,7 +172,7 @@ const czPoradi = Object.fromEntries(
             ))}
           </ul>
           <div class="dil__akce">
-            <a class="tlacitko tlacitko--male tlacitko--plny" href={d.instagram}>Přehrát díl</a>
+            <a class="tlacitko tlacitko--male tlacitko--plny" href={odkazDilu(d)}>{d.instagram ? 'Přehrát díl' : 'Na Instagramu'}</a>
             <button type="button" class="tlacitko tlacitko--male" data-zeme-kod={d.a3}>Ukázat na glóbusu</button>
           </div>
         </li>
@@ -165,11 +181,9 @@ const czPoradi = Object.fromEntries(
     <p class="drobne">Srovnání používá pro všechny země stejné zdroje: Světová banka (obyvatelé 2025, rozloha 2023, HDP na obyvatele v paritě kupní síly 2025, naděje dožití 2024). Čísla ve videích můžou vycházet z jiného ročníku.</p>
   </section>
 
-  {ukazHlasovani && (
-    <section class="obal sekce--mala" id="hlasovani">
-      <Hlasovani />
-    </section>
-  )}
+  <section class="obal sekce--mala" id="hlasovani">
+    <HlasovaniPozvanka />
+  </section>
 </Base>
 
 <style>
@@ -224,9 +238,14 @@ const czPoradi = Object.fromEntries(
   @media (max-width: 1180px) { .svet { grid-template-columns: minmax(0, 1fr) 380px; } }
   @media (max-width: 1020px) { .svet { grid-template-columns: 1fr; } }
   .scena { display: flex; flex-direction: column; gap: 0.9rem; }
-  .scena__obal { position: relative; display: flex; justify-content: center; }
+  .scena__hledani { display: flex; justify-content: center; position: relative; z-index: 12; }
+  .scena__hledani .hledani { width: min(100%, 400px); }
+  .scena__obal { position: relative; display: flex; justify-content: center; border-radius: 28px; transition: box-shadow 0.3s ease; }
+  .scena__obal.je-priblizeno { overflow: hidden; box-shadow: inset 0 0 0 1px var(--line), var(--stin); background: #B9D6EA; }
+  .scena__obal.je-priblizeno .scena__svg { overflow: hidden; }
   .scena__svg { width: 100%; height: auto; display: block; max-height: 76vh; cursor: grab; user-select: none; overflow: visible; }
-  .scena__svg--globus { touch-action: none; }
+  .scena__svg--globus, .scena__svg.je-priblizeno { touch-action: none; }
+  .scena__svg--mapa:not(.je-priblizeno) { cursor: default; touch-action: pan-y; }
   .scena__svg:active { cursor: grabbing; }
   .scena__more { fill: url(#g-more); }
   .scena__svg--mapa .scena__more { fill: url(#g-more-plocha); }
@@ -335,12 +354,13 @@ const czPoradi = Object.fromEntries(
 </style>
 
 <script>
-  import { geoOrthographic, geoEqualEarth, geoPath, geoGraticule10, geoCentroid } from 'd3-geo';
+  import { geoOrthographic, geoEqualEarth, geoPath, geoGraticule10, geoCentroid, geoArea } from 'd3-geo';
   import { feature } from 'topojson-client';
   import svet from '../data/svet.json';
-  import { epizody } from '../data/epizody';
+  import { epizody, odkazDilu } from '../data/epizody';
   import { hranice, trida } from '../lib/mapa';
-  import { SVET_VRSTVY, zebricek, pocet, hodnota, rok, poradiZeme, jmeno, vlajka, vrstvaPodleId, cislo, type SvetVrstva } from '../lib/svet';
+  import { SVET_VRSTVY, ZEME, zebricek, pocet, hodnota, rok, poradiZeme, jmeno, vlajka, vrstvaPodleId, cislo, type SvetVrstva } from '../lib/svet';
+  import { naseptavac } from '../lib/naseptavac';
 
   type Zeme = { type: 'Feature'; id?: string; properties: { n: string; a2?: string }; geometry: any };
   const zeme = (feature(svet.topo as any, (svet.topo as any).objects.countries) as any).features as Zeme[];
@@ -407,20 +427,72 @@ const czPoradi = Object.fromEntries(
     return { f, p };
   });
 
+  // --- kamera: přiblížení glóbusu (měřítko projekce) a ploché mapy (měřítko + posun)
+  let G0 = 1, G0t: [number, number] = [400, 390];
+  let M0 = 1, M0t: [number, number] = [500, 264];
+  let zoomG = 1;
+  let mS = 1, mT: [number, number] = [500, 264];
+  const MAX_ZOOM = 8;
+  const priblizeno = () => (rezim === 'globus' ? zoomG > 1.02 : mS > M0 * 1.02);
+  function omezMapu() {
+    plocha.scale(mS).translate(mT);
+    const [[x0, y0], [x1, y1]] = geoPath(plocha).bounds(sfera);
+    let dx = 0, dy = 0;
+    if (x1 - x0 <= 984) dx = 500 - (x0 + x1) / 2; else { if (x0 > 8) dx = 8 - x0; if (x1 < 992) dx = 992 - x1; }
+    if (y1 - y0 <= 512) dy = 264 - (y0 + y1) / 2; else { if (y0 > 8) dy = 8 - y0; if (y1 < 520) dy = 520 - y1; }
+    mT = [mT[0] + dx, mT[1] + dy];
+    plocha.translate(mT);
+  }
+  function kamera() {
+    if (rezim === 'globus') globus.scale(G0 * zoomG).translate(G0t);
+    else omezMapu();
+    const p = priblizeno();
+    obal.classList.toggle('je-priblizeno', p);
+    svg.classList.toggle('je-priblizeno', p);
+    const minus = document.querySelector<HTMLButtonElement>('[data-zoom="minus"]');
+    const reset = document.querySelector<HTMLButtonElement>('[data-zoom="reset"]');
+    if (minus) minus.disabled = !p;
+    if (reset) reset.disabled = !p;
+  }
+  // Přiblíží o faktor k kolem bodu c (souřadnice SVG)
+  function priblizKolem(k: number, c: [number, number]) {
+    if (rezim === 'globus') {
+      zoomG = Math.min(MAX_ZOOM, Math.max(1, zoomG * k));
+    } else {
+      const ns = Math.min(M0 * MAX_ZOOM, Math.max(M0, mS * k));
+      const kk = ns / mS;
+      mT = [c[0] - (c[0] - mT[0]) * kk, c[1] - (c[1] - mT[1]) * kk];
+      mS = ns;
+    }
+    kamera();
+    kresli();
+  }
+  function doSvg(cx: number, cy: number): [number, number] {
+    const m = svg.getScreenCTM();
+    if (!m) return rezim === 'globus' ? [400, 400] : [500, 270];
+    const p = new DOMPoint(cx, cy).matrixTransform(m.inverse());
+    return [p.x, p.y];
+  }
+
   function nastavRezim(r: 'globus' | 'mapa') {
     rezim = r;
     if (r === 'globus') {
       svg.setAttribute('viewBox', '0 0 800 800');
-      globus.fitExtent([[40, 30], [760, 750]], sfera);
+      globus.scale(1).translate([0, 0]).fitExtent([[40, 30], [760, 750]], sfera);
+      G0 = globus.scale(); G0t = globus.translate() as [number, number];
+      zoomG = 1;
       cesta.projection(globus);
     } else {
       svg.setAttribute('viewBox', '0 0 1000 540');
-      plocha.fitExtent([[8, 8], [992, 520]], sfera);
+      plocha.scale(1).translate([0, 0]).fitExtent([[8, 8], [992, 520]], sfera);
+      M0 = plocha.scale(); M0t = plocha.translate() as [number, number];
+      mS = M0; mT = [...M0t];
       cesta.projection(plocha);
     }
+    kamera();
     svg.classList.toggle('scena__svg--globus', r === 'globus');
     svg.classList.toggle('scena__svg--mapa', r === 'mapa');
-    $<HTMLElement>('[data-napoveda]').textContent = r === 'globus' ? 'Táhni myší nebo prstem a glóbus se otočí. Kliknutím vybereš stát.' : 'Klikni na stát a uvidíš ho vedle Česka.';
+    $<HTMLElement>('[data-napoveda]').textContent = r === 'globus' ? 'Táhni myší nebo prstem a glóbus se otočí. Přiblížíš tlačítkem +, dvojklikem nebo sevřením prstů.' : 'Klikni na stát a uvidíš ho vedle Česka. Přiblížíš tlačítkem +, dvojklikem nebo sevřením prstů.';
     for (const b of document.querySelectorAll<HTMLButtonElement>('[data-rezim]')) b.setAttribute('aria-pressed', String(b.dataset.rezim === r));
     kresli();
   }
@@ -593,7 +665,8 @@ const czPoradi = Object.fromEntries(
       const box = el('div', 'video');
       box.append(el('span', 'stitek', `Česko vs. svět, díl ${ep.dil}`), el('p', undefined, ep.popis));
       const odkaz = el('a', 'tlacitko tlacitko--male tlacitko--plny', 'Přehrát díl') as HTMLAnchorElement;
-      odkaz.href = ep.instagram;
+      odkaz.href = odkazDilu(ep);
+      if (!ep.instagram) odkaz.textContent = 'Na Instagramu';
       odkaz.style.alignSelf = 'flex-start';
       box.append(odkaz);
       pohledStat.append(box);
@@ -644,31 +717,56 @@ const czPoradi = Object.fromEntries(
 
   let rotace: [number, number] = [-15, -35];
   let interakce = false;
-  let animace: number | null = null;
   function otoc(r: [number, number]) {
     rotace = r;
     globus.rotate(r);
     if (rezim === 'globus') kresli();
   }
-  function letNa(a3: string) {
-    if (rezim !== 'globus') return;
+  let animace: number | null = null;
+  function animuj(trvani: number, krok: (e: number) => void) {
+    if (animace) cancelAnimationFrame(animace);
+    if (klidne) { krok(1); return; }
+    const start = performance.now();
+    const f = (t: number) => {
+      const k = Math.min(1, (t - start) / trvani);
+      krok(k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
+      if (k < 1) animace = requestAnimationFrame(f);
+    };
+    animace = requestAnimationFrame(f);
+  }
+  // Natočí glóbus na stát; s priblizit=true ho i přiblíží podle velikosti státu.
+  function letNa(a3: string, priblizit = false) {
     const f = zeme.find((z) => z.id === a3);
     if (!f) return;
-    const [lon, lat] = geoCentroid(f);
-    const z = rotace.slice() as [number, number];
-    let dl = -lon - z[0];
-    dl = ((dl + 540) % 360) - 180;
-    const cil: [number, number] = [z[0] + dl, Math.max(-60, Math.min(60, -lat))];
-    if (klidne) return otoc(cil);
-    const start = performance.now();
-    if (animace) cancelAnimationFrame(animace);
-    const krok = (t: number) => {
-      const k = Math.min(1, (t - start) / 1100);
-      const e = k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2;
-      otoc([z[0] + (cil[0] - z[0]) * e, z[1] + (cil[1] - z[1]) * e]);
-      if (k < 1) animace = requestAnimationFrame(krok);
-    };
-    animace = requestAnimationFrame(krok);
+    if (rezim === 'globus') {
+      const [lon, lat] = geoCentroid(f);
+      const z = rotace.slice() as [number, number];
+      let dl = -lon - z[0];
+      dl = ((dl + 540) % 360) - 180;
+      const cil: [number, number] = [z[0] + dl, Math.max(-60, Math.min(60, -lat))];
+      const polomer = Math.sqrt(geoArea(f) / Math.PI);
+      const cilZoom = priblizit ? Math.min(5, Math.max(1, 0.22 / Math.sin(Math.min(Math.PI / 2, polomer * 1.7)))) : zoomG;
+      const z0 = zoomG;
+      animuj(1100, (e) => {
+        zoomG = z0 + (cilZoom - z0) * e;
+        kamera();
+        otoc([z[0] + (cil[0] - z[0]) * e, z[1] + (cil[1] - z[1]) * e]);
+      });
+    } else if (priblizit) {
+      plocha.scale(M0).translate(M0t);
+      const [[x0, y0], [x1, y1]] = geoPath(plocha).bounds(f);
+      const k = Math.min(MAX_ZOOM, Math.max(1, Math.min(984 / ((x1 - x0) * 2.6 || 1), 512 / ((y1 - y0) * 2.6 || 1))));
+      const cS = M0 * k;
+      const cT: [number, number] = [500 - k * ((x0 + x1) / 2 - M0t[0]), 264 - k * ((y0 + y1) / 2 - M0t[1])];
+      plocha.scale(mS).translate(mT);
+      const s0 = mS, t0: [number, number] = [...mT];
+      animuj(900, (e) => {
+        mS = s0 + (cS - s0) * e;
+        mT = [t0[0] + (cT[0] - t0[0]) * e, t0[1] + (cT[1] - t0[1]) * e];
+        kamera();
+        kresli();
+      });
+    }
   }
   let posledni = 0;
   function samoOtaceni(t: number) {
@@ -682,34 +780,66 @@ const czPoradi = Object.fromEntries(
     if (vybrana) p.set('z', vybrana);
     history.replaceState(null, '', p.toString() ? `#${p}` : location.pathname);
   }
-  function vyber(a3: string | null, letet = true) {
+  function vyber(a3: string | null, letet = true, priblizit = false) {
     vybrana = a3 && jmeno(a3) !== a3 ? a3 : null;
     if (vybrana) interakce = true;
     obarvi();
     statPanel();
     if (!vybrana) zebricekPanel();
-    if (vybrana && letet) letNa(vybrana);
+    if (vybrana && letet) letNa(vybrana, priblizit);
     ulozOdkaz();
   }
   function zvyrazni(kod: string | null) {
     for (const { f, p } of prvky) p.classList.toggle('zeme--hover', !!kod && f.id === kod);
   }
 
-  let tah: { x: number; y: number; r: [number, number]; posun: number } | null = null;
+  const prsty = new Map<number, { x: number; y: number }>();
+  let tah: { x: number; y: number; r: [number, number]; t: [number, number]; posun: number } | null = null;
+  let stisk: { d: number; zG: number; s: number; t: [number, number]; c: [number, number] } | null = null;
+  let poStisku = 0;
   svg.addEventListener('pointerdown', (e) => {
     interakce = true;
-    tah = { x: e.clientX, y: e.clientY, r: rotace, posun: 0 };
-    if (rezim === 'globus') svg.setPointerCapture(e.pointerId);
+    prsty.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (prsty.size === 2) {
+      const [a, b] = [...prsty.values()];
+      stisk = { d: Math.hypot(a.x - b.x, a.y - b.y), zG: zoomG, s: mS, t: [...mT], c: doSvg((a.x + b.x) / 2, (a.y + b.y) / 2) };
+      tah = null;
+    } else {
+      tah = { x: e.clientX, y: e.clientY, r: rotace, t: [...mT], posun: 0 };
+    }
+    if (rezim === 'globus' || priblizeno() || prsty.size === 2) { try { svg.setPointerCapture(e.pointerId); } catch {} }
   });
   svg.addEventListener('pointermove', (e) => {
-    if (tah && rezim === 'globus') {
+    if (prsty.has(e.pointerId)) prsty.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (stisk && prsty.size === 2) {
+      const [a, b] = [...prsty.values()];
+      const k = Math.hypot(a.x - b.x, a.y - b.y) / Math.max(1, stisk.d);
+      if (rezim === 'globus') { zoomG = Math.min(MAX_ZOOM, Math.max(1, stisk.zG * k)); }
+      else {
+        mS = Math.min(M0 * MAX_ZOOM, Math.max(M0, stisk.s * k));
+        const kk = mS / stisk.s;
+        mT = [stisk.c[0] - (stisk.c[0] - stisk.t[0]) * kk, stisk.c[1] - (stisk.c[1] - stisk.t[1]) * kk];
+      }
+      kamera();
+      kresli();
+      poStisku = performance.now();
+      return;
+    }
+    if (tah && prsty.has(e.pointerId)) {
       const dx = e.clientX - tah.x, dy = e.clientY - tah.y;
       tah.posun = Math.max(tah.posun, Math.hypot(dx, dy));
-      const k = 0.32 * (800 / svg.getBoundingClientRect().width);
-      otoc([tah.r[0] + dx * k, Math.max(-70, Math.min(70, tah.r[1] - dy * k))]);
+      const jednotek = (rezim === 'globus' ? 800 : 1000) / svg.getBoundingClientRect().width;
+      if (rezim === 'globus') {
+        const k = (0.32 * jednotek) / zoomG;
+        otoc([tah.r[0] + dx * k, Math.max(-75, Math.min(75, tah.r[1] - dy * k))]);
+      } else if (priblizeno() && tah.posun > 4) {
+        mT = [tah.t[0] + dx * jednotek, tah.t[1] + dy * jednotek];
+        kamera();
+        kresli();
+      }
     }
     if (e.pointerType === 'mouse') {
-      const cil = tah && rezim === 'globus' ? null : (document.elementFromPoint(e.clientX, e.clientY) as SVGPathElement | null);
+      const cil = tah && (rezim === 'globus' || priblizeno()) && tah.posun > 4 ? null : (document.elementFromPoint(e.clientX, e.clientY) as SVGPathElement | null);
       const kod = cil?.dataset?.kod;
       if (kod) {
         const r = obal.getBoundingClientRect();
@@ -721,14 +851,66 @@ const czPoradi = Object.fromEntries(
     }
   });
   svg.addEventListener('pointerleave', () => (tooltip.hidden = true));
+  const pustit = (e: PointerEvent) => {
+    prsty.delete(e.pointerId);
+    if (prsty.size < 2 && stisk) { stisk = null; tah = null; return; }
+  };
+  svg.addEventListener('pointercancel', pustit);
   svg.addEventListener('pointerup', (e) => {
-    const kliknuti = !tah || tah.posun < 6;
+    const bylStisk = !!stisk || performance.now() - poStisku < 300;
+    pustit(e);
+    const kliknuti = !bylStisk && (!tah || tah.posun < 6);
     tah = null;
     if (!kliknuti) return;
     const cil = document.elementFromPoint(e.clientX, e.clientY) as SVGPathElement | null;
     const kod = cil?.dataset?.kod;
     vyber(kod && kod !== vybrana ? kod : null);
   });
+  let napovedaCas: number | undefined;
+  svg.addEventListener('wheel', (e) => {
+    if (!(e.ctrlKey || e.metaKey)) {
+      const n = $<HTMLElement>('[data-zoom-napoveda]');
+      n.hidden = false;
+      clearTimeout(napovedaCas);
+      napovedaCas = window.setTimeout(() => (n.hidden = true), 1400);
+      return;
+    }
+    e.preventDefault();
+    interakce = true;
+    priblizKolem(Math.exp(-e.deltaY * (e.deltaMode === 1 ? 0.05 : 0.0025)), doSvg(e.clientX, e.clientY));
+  }, { passive: false });
+  svg.addEventListener('dblclick', (e) => {
+    e.preventDefault();
+    interakce = true;
+    priblizKolem(2, doSvg(e.clientX, e.clientY));
+  });
+  for (const b of document.querySelectorAll<HTMLButtonElement>('[data-zoom]')) {
+    b.addEventListener('click', () => {
+      interakce = true;
+      const stred: [number, number] = rezim === 'globus' ? [400, 390] : [500, 264];
+      if (b.dataset.zoom === 'plus') priblizKolem(1.6, stred);
+      else if (b.dataset.zoom === 'minus') priblizKolem(1 / 1.6, stred);
+      else {
+        const z0 = zoomG, s0 = mS, t0: [number, number] = [...mT];
+        animuj(500, (e) => {
+          if (rezim === 'globus') zoomG = z0 + (1 - z0) * e;
+          else { mS = s0 + (M0 - s0) * e; mT = [t0[0] + (M0t[0] - t0[0]) * e, t0[1] + (M0t[1] - t0[1]) * e]; }
+          kamera();
+          kresli();
+        });
+      }
+    });
+  }
+
+  // --- vyhledávání státu
+  const kody = new Set(zeme.map((f) => f.id).filter(Boolean));
+  const polozkyStatu = Object.keys(ZEME)
+    .filter((a3) => a3 !== 'EUZ' && (kody.has(a3) || hodnota('pop', a3) !== undefined))
+    .map((a3) => ({ kod: a3, nazev: jmeno(a3), vlajka: vlajka(a3), popis: epMapa.has(a3) ? `Česko vs. svět, díl ${epMapa.get(a3)!.dil}` : undefined }));
+  naseptavac($<HTMLInputElement>('[data-hledat-stat]'), $<HTMLElement>('[data-naseptavac]'), polozkyStatu, (p) => {
+    vyber(p.kod, true, true);
+    if (matchMedia('(max-width: 1020px)').matches) svg.scrollIntoView({ behavior: klidne ? 'auto' : 'smooth', block: 'center' });
+  }, { vymazat: true });
 
   seznam.addEventListener('click', (e) => {
     const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button[data-kod]');
@@ -755,7 +937,7 @@ const czPoradi = Object.fromEntries(
   }
   for (const b of document.querySelectorAll<HTMLButtonElement>('[data-zeme-kod]')) {
     b.addEventListener('click', () => {
-      vyber(b.dataset.zemeKod!);
+      vyber(b.dataset.zemeKod!, true, true);
       svg.scrollIntoView({ behavior: klidne ? 'auto' : 'smooth', block: 'center' });
     });
   }
@@ -763,6 +945,6 @@ const czPoradi = Object.fromEntries(
   nastavRezim('globus');
   obarvi();
   zebricekPanel();
-  if (vybrana) vyber(vybrana); else statPanel();
+  if (vybrana) vyber(vybrana, true, true); else statPanel();
   requestAnimationFrame(samoOtaceni);
 </script>

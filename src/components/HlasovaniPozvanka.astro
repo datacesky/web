@@ -1,0 +1,75 @@
+---
+// Pozvánka k hlasování o dalším dílu: úvodní stránka a Svět. Ukáže tři vedoucí země a odkaz na hlasování.
+import { ZEME } from '../lib/svet';
+import { epizody, posledniDil } from '../data/epizody';
+import { hlasovani, hlasovaniZapnute } from '../data/hlasovani';
+
+const hotove = new Set(epizody.map((e) => e.a3));
+const zeme = Object.fromEntries(Object.entries(ZEME).filter(([a3]) => a3 !== 'CZE' && a3 !== 'EUZ' && !hotove.has(a3)).map(([a3, [n, a2]]) => [a3, [n, a2]]));
+const nastaveni = JSON.stringify({ ...hlasovani, zapnute: hlasovaniZapnute, zeme });
+const [jmenoPosl, a2Posl] = ZEME[posledniDil.a3];
+---
+
+{hlasovaniZapnute && (
+  <div class="hp" data-pozvanka data-nastaveni={nastaveni}>
+    <div class="hp__text">
+      <span class="hp__stitek">Česko vs. svět · díl {epizody.length + 1}</span>
+      <h2 class="hp__titul">Kterou zemi chceš příště?</h2>
+      <p class="hp__perex">
+        Poslední díl: <img src={`/vlajky/${a2Posl}.svg`} alt="" class="vlajka hp__mala-vlajka" /> {jmenoPosl}. Vyber zemi, kterou postavíme vedle Česka v dalším dílu.
+      </p>
+      <a class="tlacitko tlacitko--oranzovy" href="/hlasovani/">Hlasovat</a>
+    </div>
+    <ol class="hp__poradi" data-hp-poradi aria-label="Zatím vedou">
+      <li class="hp__nic">Načítám hlasy…</li>
+    </ol>
+  </div>
+)}
+
+<style>
+  .hp { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.25rem, 4vw, 3rem); align-items: center; padding: clamp(1.5rem, 4vw, 2.75rem); border-radius: 26px; background: var(--navy); color: var(--cream); box-shadow: var(--stin); position: relative; overflow: hidden; }
+  .hp::after { content: ''; position: absolute; right: -80px; top: -80px; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle, rgba(240, 136, 41, 0.28), transparent 70%); pointer-events: none; }
+  @media (max-width: 760px) { .hp { grid-template-columns: 1fr; } }
+  .hp__text { display: flex; flex-direction: column; gap: 0.9rem; align-items: flex-start; position: relative; z-index: 1; }
+  .hp__stitek { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #F6C08C; }
+  .hp__titul { color: var(--cream); font-size: clamp(1.6rem, 3.4vw, 2.3rem); }
+  .hp__perex { margin: 0; color: #D9D3C7; font-size: 1rem; line-height: 1.6; }
+  .hp__mala-vlajka { width: 22px; height: 16px; border-radius: 3px; vertical-align: -2px; }
+  .hp__poradi { list-style: none; margin: 0; padding: 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; border-radius: 18px; background: rgba(255, 255, 255, 0.06); position: relative; z-index: 1; }
+  :global(.hp__poradi .r) { display: grid; grid-template-columns: 1.4rem 30px minmax(70px, 140px) minmax(0, 1fr) 2.6rem; gap: 0.6rem; align-items: center; font-weight: 800; font-size: 0.95rem; }
+  :global(.hp__poradi .p) { color: #B9B3A7; font-size: 0.85rem; text-align: right; }
+  :global(.hp__poradi .j) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :global(.hp__poradi .d) { height: 12px; border-radius: 999px; background: rgba(255, 255, 255, 0.12); overflow: hidden; }
+  :global(.hp__poradi .b) { display: block; height: 100%; border-radius: 999px; background: var(--cream); }
+  :global(.hp__poradi .r:first-child .b) { background: var(--orange); }
+  :global(.hp__poradi .h) { text-align: right; font-variant-numeric: tabular-nums; }
+  :global(.hp__poradi .vlajka) { width: 30px; height: 22px; }
+  :global(.hp__nic) { color: #D9D3C7; font-size: 0.92rem; font-weight: 600; }
+</style>
+
+<script>
+  import { nactiVysledky } from '../lib/hlasy';
+  import { bezDiakritiky } from '../lib/naseptavac';
+  const koren = document.querySelector<HTMLElement>('[data-pozvanka]');
+  if (koren) {
+    const N = JSON.parse(koren.dataset.nastaveni!) as { skript: string; formular: string; pole: string; vysledky: string; zeme: Record<string, [string, string]> };
+    const ol = koren.querySelector<HTMLElement>('[data-hp-poradi]')!;
+    const jmena = new Map(Object.entries(N.zeme).map(([a3, [n]]) => [bezDiakritiky(n), a3]));
+    const nic = (t: string) => ol.replaceChildren(Object.assign(document.createElement('li'), { className: 'hp__nic', textContent: t }));
+    nactiVysledky(N, jmena)
+      .then(({ pocty }) => {
+        const top = [...pocty.entries()].filter(([k]) => N.zeme[k]).sort((a, b) => b[1] - a[1]).slice(0, 3);
+        if (!top.length) return nic('Zatím nikdo nehlasoval. Buď první.');
+        const max = top[0][1];
+        ol.replaceChildren(...top.map(([k, n], i) => {
+          const [jm, a2] = N.zeme[k];
+          const li = document.createElement('li');
+          li.className = 'r';
+          li.innerHTML = `<span class="p">${i + 1}.</span><img class="vlajka" alt="" src="/vlajky/${a2}.svg"><span class="j"></span><span class="d"><span class="b" style="width:${(n / max) * 100}%"></span></span><span class="h">${n}</span>`;
+          li.querySelector('.j')!.textContent = jm;
+          return li;
+        }));
+      })
+      .catch(() => nic('Výsledky uvidíš na stránce hlasování.'));
+  }
+</script>

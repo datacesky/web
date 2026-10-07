@@ -1,6 +1,8 @@
 ---
 import Base from '../layouts/Base.astro';
 import geo from '../data/kraje.json';
+import podklad from '../data/cesko-mapa.json';
+import mestaData from '../data/mesta.json';
 import { vrstvy } from '../data/vrstvy';
 import { hranice, barvaKraje } from '../lib/mapa';
 
@@ -10,80 +12,202 @@ const hr = prvni.typ === 'ciselna' ? hranice(Object.values(prvni.hodnoty).map(Nu
 const kraje = [...geo.kraje].sort((a, b) => Number(a.id === 'praha') - Number(b.id === 'praha'));
 const abecedne = [...geo.kraje].sort((a, b) => a.nazev.localeCompare(b.nazev, 'cs'));
 const skupiny = [...new Set(vrstvy.map((v) => v.skupina))];
+const KRATCE: Record<string, [string, string]> = {
+  praha: ['Praha', 'PHA'], stredocesky: ['Středočeský', 'STČ'], jihocesky: ['Jihočeský', 'JHČ'], plzensky: ['Plzeňský', 'PLK'],
+  karlovarsky: ['Karlovarský', 'KVK'], ustecky: ['Ústecký', 'ÚLK'], liberecky: ['Liberecký', 'LBK'], kralovehradecky: ['Královéhradecký', 'HKK'],
+  pardubicky: ['Pardubický', 'PAK'], vysocina: ['Vysočina', 'VYS'], jihomoravsky: ['Jihomoravský', 'JHM'], olomoucky: ['Olomoucký', 'OLK'],
+  zlinsky: ['Zlínský', 'ZLK'], moravskoslezsky: ['Moravskoslezský', 'MSK'],
+};
+// Krajská města pro orientaci (Praha je zároveň sídlem Středočeského kraje)
+const KRAJSKA = ['Praha', 'Brno', 'Ostrava', 'Plzeň', 'Liberec', 'Olomouc', 'České Budějovice', 'Hradec Králové', 'Pardubice', 'Ústí nad Labem', 'Zlín', 'Jihlava', 'Karlovy Vary'];
+const mesta = mestaData.mesta.map((m, i) => ({ ...m, i, krajske: KRAJSKA.includes(m.n) }));
+// 50 km v souřadnicích mapy (Mercator na 49,8° s. š.)
+const KM50 = (podklad.projekce.k / (6371 * Math.cos((49.8 * Math.PI) / 180))) * 50;
+
 const data = JSON.stringify({
   vrstvy,
   kraje: Object.fromEntries(geo.kraje.map((k) => [k.id, k.nazev])),
+  kratce: KRATCE,
+  mesta: mestaData,
   sirka: geo.sirka,
   vyska: geo.vyska,
 });
 ---
 
 <Base
+  obrazek="/og/mapa.png"
   titul="Mapa Česka po krajích — data.cesky"
-  popis="Interaktivní mapa krajů Česka: obyvatelé, mzdy, ceny bytů, jména. Přepínej vrstvy, porovnej svůj kraj a stáhni si mapu."
+  popis="Interaktivní mapa Česka: obyvatelé, hustota, věk, plodnost, mzdy, ceny bytů, HDP a 40 největších měst od roku 1971. Satelitní podklad, řeky a hory."
 >
-  <section class="obal sekce--mala sloupec" style="gap: 1.5rem;">
+  <section class="obal sekce--mala sloupec mapa-stranka" style="gap: 1.25rem; --obal: 1320px;">
     <div class="mapa-hlava">
-      <div class="sloupec" style="gap: 0.5rem; max-width: 60ch;">
-        <h1>Mapa Česka</h1>
-        <p class="perex">Přepínej vrstvy, najeď na kraj, nebo si nastav ten svůj a porovnej ho se zbytkem Česka.</p>
+      <div class="sloupec" style="gap: 0.5rem; max-width: 62ch;">
+        <h1 class="mapa-titul">Mapa Česka</h1>
+        <p class="perex">Vyber, co chceš vidět. U krajů se mapa přebarví, u měst naskočí bubliny. Přepni na satelit nebo zapni řeky a hory.</p>
       </div>
-      <div class="sloupec" style="gap: 0.4rem;">
-        <label for="muj-kraj">Můj kraj</label>
-        <select id="muj-kraj" data-muj>
-          <option value="">Nevybráno</option>
-          {abecedne.map((k) => <option value={k.id}>{k.nazev}</option>)}
-        </select>
-      </div>
-    </div>
-
-    <div class="vrstvy" role="group" aria-label="Vrstvy mapy">
-      {skupiny.map((s) => (
-        <div class="vrstvy__skupina">
-          <span class="vrstvy__nazev">{s}</span>
-          <div class="rada" style="gap: 0.5rem;">
-            {vrstvy.filter((v) => v.skupina === s).map((v) => (
-              <button type="button" class="chip" data-vrstva={v.id} aria-pressed={v.id === prvni.id ? 'true' : 'false'}>{v.nazev}</button>
-            ))}
+      <div class="mapa-hlava__nastroje">
+        <div class="nastroj">
+          <span class="nastroj__popisek" aria-hidden="true">Hledat</span>
+          <div class="hledani" style="width: min(100%, 290px);">
+          <div class="hledani__pole">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
+            <input type="search" placeholder="Najdi kraj nebo město" aria-label="Najdi kraj nebo město" data-hledat />
+          </div>
+          <ul class="naseptavac" data-naseptavac hidden></ul>
           </div>
         </div>
-      ))}
+        <label class="nastroj">
+          <span class="nastroj__popisek">Můj kraj</span>
+          <select data-muj>
+            <option value="">Nevybráno</option>
+            {abecedne.map((k) => <option value={k.id}>{k.nazev}</option>)}
+          </select>
+        </label>
+      </div>
     </div>
 
-    <div class="mapa">
-      <div class="karta mapa__platno">
-        <div class="sloupec" style="gap: 0.25rem;">
-          <h2 class="mapa__titul" data-titul>{prvni.nazev}</h2>
-          <p class="drobne" data-popis>{prvni.popis}, {prvni.obdobi}</p>
+    <div class="mc">
+      <div class="mc__karta">
+        <div class="mc__vyber" role="group" aria-label="Co zobrazit">
+          {skupiny.map((s) => (
+            <div class="mc__skupina">
+              <span class="mc__skupina-nazev">{s}</span>
+              <div class="mc__dlazdice">
+                {vrstvy.filter((v) => v.skupina === s).map((v) => (
+                  <button type="button" class="dlazdice" data-vrstva={v.id} aria-pressed={v.id === prvni.id ? 'true' : 'false'}>
+                    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d={v.ikona ?? ''} /></svg>
+                    <span class="dlazdice__nazev">{v.nazev}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
         </div>
 
-        <div class="mapa__svg-obal" data-obal>
-          <svg viewBox={`0 0 ${geo.sirka} ${geo.vyska}`} class="mapa__svg" role="group" aria-label="Kraje Česka" data-svg>
-            {kraje.map((k) => (
-              <path
-                class="kraj"
-                d={k.d}
-                fill={barvaKraje(prvni, k.id, hr)}
-                fill-rule="evenodd"
-                data-kraj={k.id}
-                tabindex="0"
-                role="button"
-                aria-label={k.nazev}
-              />
-            ))}
+        <div class="mc__hlava">
+          <div class="sloupec" style="gap: 0.2rem; min-width: 0;">
+            <h2 class="mc__titul" data-titul>{prvni.nazev}</h2>
+            <p class="drobne" data-popis>{prvni.popis}, {prvni.obdobi}</p>
+          </div>
+          <div class="segment" role="group" aria-label="Podklad mapy">
+            <button type="button" data-podklad="mapa" aria-pressed="true">Mapa</button>
+            <button type="button" data-podklad="satelit" aria-pressed="false">Satelit</button>
+          </div>
+        </div>
+
+        <div class="mc__platno" data-obal>
+          <svg viewBox={`0 0 ${geo.sirka} ${geo.vyska}`} class="mc-svg ukaz-popisky" data-svg role="group" aria-label="Mapa Česka" data-podklad="mapa">
+            <defs>
+              <clipPath id="mc-orez"><rect x="0" y="0" width={geo.sirka} height={geo.vyska} rx="14" /></clipPath>
+              <filter id="mc-stin" x="-10%" y="-10%" width="120%" height="130%">
+                <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#1B2A4A" flood-opacity="0.16" />
+              </filter>
+            </defs>
+            <g clip-path="url(#mc-orez)">
+              <g data-zoom>
+                <g class="mc-satelit" aria-hidden="true">
+                  <image href="/mapa/satelit.webp" x="0" y="0" width={geo.sirka} height={geo.vyska} preserveAspectRatio="none" loading="lazy" decoding="async" data-satelit />
+                  <path class="mc-satelit__zaclona" d={`M-50,-50H1050V630H-50Z${podklad.obrys}`} fill-rule="evenodd" />
+                </g>
+                <g class="mc-sousede" aria-hidden="true">
+                  {podklad.sousede.map((s) => <text x={s.x} y={s.y}>{s.n}</text>)}
+                </g>
+                <path class="mc-podstin" d={podklad.obrys} filter="url(#mc-stin)" aria-hidden="true" />
+                <g data-kraje>
+                  {kraje.map((k) => (
+                    <path
+                      class="kraj"
+                      d={k.d}
+                      fill={barvaKraje(prvni, k.id, hr)}
+                      fill-rule="evenodd"
+                      data-kraj={k.id}
+                      tabindex="0"
+                      role="button"
+                      aria-label={k.nazev}
+                    />
+                  ))}
+                </g>
+                <g class="mc-reky" aria-hidden="true">
+                  {podklad.jezera.map((d) => <path class="mc-jezero" d={d} />)}
+                  {podklad.reky.map((r) => <path class="mc-reka" d={r.d} style={`--w: ${r.w};`}><title>{r.n}</title></path>)}
+                </g>
+                <path class="mc-obrys" d={podklad.obrys} aria-hidden="true" />
+                <g class="mc-hory" aria-hidden="true">
+                  {podklad.pohori.map((p) => <text class="mc-pohori" transform={`translate(${p.x} ${p.y}) rotate(${p.r})`}>{p.n}</text>)}
+                  {podklad.vrcholy.map((v) => (
+                    <g class="mc-vrchol" transform={`translate(${v.x} ${v.y})`}>
+                      <g class="mc-skaluj">
+                        <path d="M0,-6.5L6,4H-6Z" />
+                        <text x={v.vlevo ? -9 : 9} y="4" text-anchor={v.vlevo ? 'end' : 'start'}><tspan class="n">{v.n}</tspan> {v.m.toLocaleString('cs-CZ')} m</text>
+                      </g>
+                    </g>
+                  ))}
+                  <g class="mc-vrchol mc-vrchol--nizko" transform={`translate(${podklad.nejnizsi.x} ${podklad.nejnizsi.y})`}>
+                    <g class="mc-skaluj">
+                      <path d="M0,6.5L6,-4H-6Z" />
+                      <text x="-9" y="4" text-anchor="end"><tspan class="n">Hřensko</tspan> {podklad.nejnizsi.m} m</text>
+                    </g>
+                  </g>
+                </g>
+                <g class="mc-mesta" data-mesta>
+                  {mesta.map((m) => (
+                    <g class:list={['mesto', { 'mesto--krajske': m.krajske, 'mesto--praha': m.n === 'Praha' }]} data-mesto={m.i} transform={`translate(${m.x} ${m.y})`}>
+                      <circle class="mesto__bublina" r="1" />
+                      <g class="mc-skaluj">
+                        <circle class="mesto__tecka" r="3.4" />
+                        <text class="mesto__jmeno" x="6.5" y="4">{m.n}</text>
+                      </g>
+                    </g>
+                  ))}
+                </g>
+                <g class="mc-popisky" data-popisky aria-hidden="true">
+                  {Object.entries(podklad.popisky).map(([id, [x, y]]) => (
+                    <text class="kraj-popisek" data-popisek={id} x={x} y={y}>
+                      <tspan class="kp-jmeno" x={x}>{KRATCE[id][0]}</tspan>
+                      <tspan class="kp-zkratka" x={x}>{KRATCE[id][1]}</tspan>
+                      <tspan class="kp-hodnota" x={x} dy="1.2em"></tspan>
+                    </text>
+                  ))}
+                </g>
+                <g class="mc-meritko" transform={`translate(22 ${geo.vyska - 18})`} aria-hidden="true">
+                  <path d={`M0,-5V0H${KM50.toFixed(1)}V-5`} />
+                  <text x={KM50 / 2} y="-9">50 km</text>
+                </g>
+              </g>
+            </g>
           </svg>
           <div class="mapa__tooltip" data-tooltip hidden></div>
+          <div class="zoom-ovladani" role="group" aria-label="Přiblížení mapy">
+            <button type="button" data-zoom-plus aria-label="Přiblížit">+</button>
+            <button type="button" data-zoom-minus aria-label="Oddálit">−</button>
+            <button type="button" data-zoom-reset aria-label="Zobrazit celé Česko" title="Celé Česko">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5" /></svg>
+            </button>
+          </div>
+          <div class="zoom-napoveda" data-napoveda hidden>Přiblížíš podržením Ctrl a kolečkem</div>
         </div>
 
-        <div class="mapa__cas" data-cas hidden>
-          <button type="button" class="mapa__prehrat" data-prehrat aria-label="Přehrát vývoj v čase">▶</button>
-          <input type="range" data-posuvnik aria-label="Rok" />
-          <strong class="mapa__rok" data-rok></strong>
+        <div class="mc__ovladani">
+          <ul class="legenda" data-legenda></ul>
+          <div class="mc__prepinace" role="group" aria-label="Co ukázat v mapě">
+            <button type="button" class="prepinac-pilulka" data-prepni="popisky" aria-pressed="true">Názvy krajů</button>
+            <button type="button" class="prepinac-pilulka" data-prepni="mesta" aria-pressed="false">Krajská města</button>
+            <button type="button" class="prepinac-pilulka" data-prepni="reky" aria-pressed="false">Řeky a hory</button>
+          </div>
         </div>
 
-        <ul class="legenda" data-legenda></ul>
+        <div class="mc__cas" data-cas hidden>
+          <button type="button" class="mc__prehrat" data-prehrat aria-label="Přehrát vývoj v čase">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" /></svg>
+          </button>
+          <div class="mc__osa">
+            <input type="range" data-posuvnik aria-label="Rok" />
+            <div class="mc__osa-popisky"><span data-rok-od></span><span data-rok-do></span></div>
+          </div>
+          <strong class="mc__rok" data-rok></strong>
+        </div>
 
-        <div class="rada rada--mezi">
+        <div class="mc__pata">
           <span class="drobne" data-zdroj></span>
           <div class="rada" style="gap: 0.5rem;">
             <button type="button" class="tlacitko tlacitko--male" data-sdilet>Kopírovat odkaz</button>
@@ -92,10 +216,10 @@ const data = JSON.stringify({
         </div>
       </div>
 
-      <aside class="mapa__panel">
+      <aside class="mc__panel">
         <div class="mapa__detail" aria-live="polite" data-detail></div>
-        <div class="karta sloupec" style="gap: 0.75rem;">
-          <h2 style="font-size: 1.1rem;">Pořadí krajů</h2>
+        <div class="mc__poradi-karta">
+          <h2 class="mc__poradi-titul" data-poradi-titul>Pořadí krajů</h2>
           <ol class="poradi" data-poradi></ol>
         </div>
       </aside>
@@ -107,7 +231,7 @@ const data = JSON.stringify({
         <table>
           <thead>
             <tr>
-              <th scope="col">Kraj</th>
+              <th scope="col" data-hlavicka-nazev>Kraj</th>
               <th scope="col" class="cislo" data-hlavicka-hodnota>Hodnota</th>
             </tr>
           </thead>
@@ -115,71 +239,196 @@ const data = JSON.stringify({
         </table>
       </div>
     </details>
+    <p class="drobne">
+      Podklad: kraje a řeky Natural Earth, satelitní snímek NASA Blue Marble (s jemným stínováním reliéfu). Nejvyšší vrcholy a nejnižší bod Česka podle ČÚZK.
+      Čísla u každé vrstvy mají svůj zdroj a rok, najdeš je pod mapou.
+    </p>
   </section>
 
   <div id="mapa-data" data-json={data} hidden></div>
 </Base>
 
 <style>
+  .mapa-titul { font-size: clamp(2.1rem, 4.4vw, 3.2rem); }
   .mapa-hlava { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; align-items: flex-end; justify-content: space-between; }
-  .vrstvy { display: flex; flex-wrap: wrap; gap: 1rem 2rem; }
-  .vrstvy__skupina { display: flex; flex-direction: column; gap: 0.45rem; }
-  .vrstvy__nazev { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .mapa-hlava__nastroje { display: flex; flex-wrap: nowrap; gap: 0.75rem; align-items: flex-end; }
+  @media (max-width: 700px) { .mapa-hlava__nastroje { flex-wrap: wrap; width: 100%; } .mapa-hlava__nastroje .hledani { width: 100% !important; } .nastroj { flex: 1 1 100%; } .nastroj select { width: 100%; } }
+  .nastroj { display: flex; flex-direction: column; gap: 0.35rem; }
+  .nastroj__popisek { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding-left: 0.3rem; }
+  .nastroj select { min-height: 50px; border-radius: 999px; border-color: var(--line); box-shadow: var(--stin-maly); padding-left: 1.1rem; }
 
-  .mapa { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 1.5rem; align-items: start; }
-  @media (max-width: 980px) { .mapa { grid-template-columns: 1fr; } }
-  .mapa__platno { display: flex; flex-direction: column; gap: 1.1rem; }
-  .mapa__titul { font-size: clamp(1.3rem, 2.6vw, 1.7rem); }
-  .mapa__svg-obal { position: relative; }
-  .mapa__svg { width: 100%; height: auto; display: block; overflow: visible; touch-action: manipulation; }
+  .mc { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: clamp(1rem, 2vw, 1.5rem); align-items: start; }
+  @media (max-width: 1060px) { .mc { grid-template-columns: 1fr; } }
+  .mc__karta { background: var(--paper); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--stin); padding: clamp(0.9rem, 2.2vw, 1.5rem); display: flex; flex-direction: column; gap: 1rem; min-width: 0; }
+
+  /* Výběr vrstvy: jeden plynulý řádek dlaždic, skupina má malý štítek na začátku */
+  .mc__vyber { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; padding-bottom: 1rem; border-bottom: 1px solid var(--line); }
+  .mc__skupina { display: inline-flex; flex-wrap: wrap; align-items: center; gap: 0.4rem; }
+  .mc__dlazdice { display: contents; }
+  .mc__skupina-nazev { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); padding: 0 0.15rem 0 0.35rem; }
+  .mc__vyber { column-gap: 1.1rem; }
+  .dlazdice {
+    display: inline-flex; align-items: center; gap: 0.45rem; min-height: 38px;
+    padding: 0 0.8rem 0 0.6rem; border: 1.5px solid var(--line); border-radius: 999px;
+    background: var(--plocha-2); color: var(--navy); font-family: inherit; font-size: 0.82rem; font-weight: 800; line-height: 1.2; text-align: left; cursor: pointer; white-space: nowrap;
+    transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  }
+  .dlazdice svg { color: var(--slate); flex-shrink: 0; }
+  .dlazdice:hover { border-color: var(--navy); background: var(--paper); transform: translateY(-1px); }
+  .dlazdice__sub { display: none; }
+  .dlazdice[aria-pressed='true'] { background: var(--navy); border-color: var(--navy); color: var(--cream); }
+  .dlazdice[aria-pressed='true'] svg { color: var(--orange); }
+  @media (max-width: 700px) {
+    .mc__vyber {
+      flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; overscroll-behavior-x: contain; scroll-snap-type: x proximity;
+      margin-inline: calc(-1 * clamp(0.9rem, 2.2vw, 1.5rem)); padding-inline: clamp(0.9rem, 2.2vw, 1.5rem);
+      -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 0.9rem, #000 calc(100% - 2rem), transparent 100%);
+      mask-image: linear-gradient(90deg, transparent 0, #000 0.9rem, #000 calc(100% - 2rem), transparent 100%);
+    }
+    .mc__vyber::-webkit-scrollbar { display: none; }
+    .mc__skupina { flex-wrap: nowrap; flex: 0 0 auto; }
+    .dlazdice, .mc__skupina-nazev { flex: 0 0 auto; scroll-snap-align: start; }
+  }
+
+  .mc__hlava { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: flex-start; justify-content: space-between; }
+  .mc__titul { font-size: clamp(1.25rem, 2.4vw, 1.6rem); }
+
+  /* Plátno mapy */
+  .mc__platno { position: relative; border-radius: 16px; background: var(--plocha-2); }
+  .mc-svg { width: 100%; height: auto; max-height: 70vh; display: block; touch-action: pan-y; user-select: none; -webkit-user-select: none; --z: 1; --u: 1; --s: 1; }
+  .mc-svg.je-priblizeno { touch-action: none; cursor: grab; }
+  .mc-svg.se-taha { cursor: grabbing; }
+  .mc-satelit { display: none; }
+  .mc-svg[data-podklad='satelit'] .mc-satelit { display: inline; }
+  .mc-satelit__zaclona { fill: #F2EDE3; fill-opacity: 0.78; }
+  .mc-sousede text { font-size: calc(11px * var(--s)); font-weight: 800; letter-spacing: 0.18em; fill: #A79F8F; text-anchor: middle; }
+  .mc-svg[data-podklad='satelit'] .mc-sousede text { fill: #8D8578; }
+  @media (max-width: 640px) { .mc-sousede { display: none; } }
+  @media (max-width: 700px) { .mc__platno :global(.zoom-ovladani) { position: static; width: max-content; margin: 0.45rem 0 0 auto; } .mc__platno { background: transparent; } }
+  .mc-podstin { fill: #EFE8DA; }
+  .mc-svg[data-podklad='satelit'] .mc-podstin { display: none; }
+
+  :global(.kraj) { stroke: #FFFFFF; stroke-width: 1.4; vector-effect: non-scaling-stroke; stroke-linejoin: round; cursor: pointer; transition: fill 0.5s ease, fill-opacity 0.4s ease, opacity 0.2s ease; }
+  .mc-svg[data-podklad='satelit'] :global(.kraj) { fill-opacity: 0.58; stroke: rgba(255, 255, 255, 0.9); }
+  .mc-svg.rezim-mesta :global(.kraj) { fill: #EFE8DA !important; cursor: default; }
+  .mc-svg.rezim-mesta[data-podklad='satelit'] :global(.kraj) { fill-opacity: 0; stroke: rgba(255, 255, 255, 0.85); }
+  :global(.kraj:focus-visible) { outline: none; stroke: var(--orange); stroke-width: 3.5; }
+  :global(.kraj--hover) { opacity: 0.8; }
+  :global(.kraj--vybrany) { stroke: var(--orange); stroke-width: 3.5; }
+  :global(.kraj--muj) { stroke: var(--navy); stroke-width: 2.6; stroke-dasharray: 6 4; }
+  :global(.mc-svg--vyber .kraj:not(.kraj--vybrany):not(.kraj--hover)) { opacity: 0.45; }
+
+  .mc-obrys { fill: none; stroke: var(--navy); stroke-width: 1.6; stroke-opacity: 0.5; vector-effect: non-scaling-stroke; pointer-events: none; }
+  .mc-reky, .mc-hory { display: none; pointer-events: none; }
+  .mc-svg.ukaz-reky .mc-reky, .mc-svg.ukaz-reky .mc-hory { display: inline; }
+  .mc-reka { fill: none; stroke: #3F7FBF; stroke-width: calc(var(--w) * 1px); stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; opacity: 0.9; }
+  .mc-jezero { fill: #3F7FBF; opacity: 0.9; }
+  .mc-svg[data-podklad='satelit'] .mc-reka { stroke: #8EC3F0; }
+  .mc-svg[data-podklad='satelit'] .mc-jezero { fill: #8EC3F0; }
+  .mc-pohori { font-size: calc(11px * var(--s)); font-style: italic; font-weight: 700; letter-spacing: 0.12em; fill: #6B5E45; text-anchor: middle; paint-order: stroke; stroke: rgba(255, 255, 255, 0.7); stroke-width: calc(2.5px * var(--s)); }
+  .mc-skaluj { transform: scale(var(--s)); }
+  .mc-vrchol path { fill: #6B5E45; stroke: #FFFFFF; stroke-width: 1; }
+  .mc-vrchol--nizko path { fill: #3F7FBF; }
+  .mc-vrchol text { font-size: 10.5px; font-weight: 700; fill: var(--navy); paint-order: stroke; stroke: rgba(255, 255, 255, 0.88); stroke-width: 3px; stroke-linejoin: round; }
+  .mc-vrchol text .n { font-weight: 800; }
+
+  /* Města */
+  .mc-mesta :global(.mesto) { display: none; cursor: pointer; }
+  .mc-svg.ukaz-mesta .mc-mesta :global(.mesto--krajske) { display: inline; }
+  .mc-svg.rezim-mesta .mc-mesta :global(.mesto) { display: inline; }
+  .mesto__bublina { display: none; fill: var(--navy); fill-opacity: 0.82; stroke: #FFFFFF; stroke-width: 1.2; vector-effect: non-scaling-stroke; transition: transform 0.35s ease, fill 0.25s ease; }
+  .mc-svg.rezim-mesta .mesto__bublina { display: inline; }
+  .mc-svg.rezim-mesta .mesto__tecka { display: none; }
+  .mesto__tecka { fill: var(--navy); stroke: #FFFFFF; stroke-width: 1.4; }
+  .mesto__jmeno { font-size: 10.5px; font-weight: 800; fill: var(--navy); paint-order: stroke; stroke: rgba(255, 255, 255, 0.92); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+  .mc-svg.rezim-mesta .mesto__jmeno { display: none; }
+  .mc-svg.ukaz-popisky:not(.rezim-mesta) :global(.mesto--praha) .mesto__jmeno { display: none; }
+  .mc-svg.rezim-mesta :global(.mesto--popis) .mesto__jmeno { display: inline; }
+  :global(.mesto--vybrane) .mesto__bublina, :global(.mesto--hover) .mesto__bublina { fill: var(--orange); fill-opacity: 1; }
+  :global(.mesto--vybrane) .mesto__jmeno, :global(.mesto--hover) .mesto__jmeno { display: inline !important; }
+
+  /* Popisky krajů */
+  .mc-popisky { pointer-events: none; display: none; }
+  .mc-svg.ukaz-popisky .mc-popisky { display: inline; }
+  .mc-svg.rezim-mesta .mc-popisky { display: none; }
+  .kraj-popisek { font-size: calc(11.5px * var(--s)); font-weight: 800; text-anchor: middle; paint-order: stroke; stroke-width: calc(3px * var(--s)); stroke-linejoin: round; fill: var(--navy); stroke: rgba(255, 255, 255, 0.85); }
+  .mc-popisky :global(.kraj-popisek--tmave) { fill: #FFFFFF; stroke: rgba(27, 42, 74, 0.7); }
+  .kp-hodnota { font-size: 0.92em; font-weight: 700; }
+  .kp-zkratka { display: none; }
+  @media (max-width: 640px) {
+    .kp-jmeno, .kp-hodnota { display: none; }
+    .kp-zkratka { display: inline; }
+    .kraj-popisek { font-size: calc(10px * var(--s)); }
+  }
+  .mc-meritko path { fill: none; stroke: var(--navy); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+  .mc-meritko text { font-size: calc(10px * var(--s)); font-weight: 800; fill: var(--navy); text-anchor: middle; }
+  .mc-svg[data-podklad='satelit'] .mc-meritko text { fill: var(--navy); }
+
   .mapa__tooltip {
-    position: absolute; pointer-events: none; z-index: 5; transform: translate(-50%, calc(-100% - 14px));
+    position: absolute; pointer-events: none; z-index: 8; transform: translate(-50%, calc(-100% - 14px));
     background: var(--navy); color: var(--cream); padding: 0.5rem 0.8rem; border-radius: 10px;
     font-size: 0.85rem; font-weight: 700; white-space: nowrap; box-shadow: 0 8px 20px rgba(27, 42, 74, 0.25);
   }
-  .mapa__cas { display: flex; align-items: center; gap: 1rem; }
-  .mapa__cas input { flex-grow: 1; accent-color: var(--orange); }
-  .mapa__prehrat { width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--navy); color: var(--cream); font-size: 1rem; cursor: pointer; }
-  .mapa__rok { font-size: 1.4rem; font-weight: 900; min-width: 4ch; }
-  .mapa__panel { display: flex; flex-direction: column; gap: 1rem; }
-  .mapa__detail { background: var(--navy); color: var(--cream); border-radius: var(--radius); padding: 1.5rem; min-height: 190px; display: flex; flex-direction: column; gap: 0.45rem; }
-  .poradi { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.15rem; }
 
-  :global(.kraj) { stroke: #FFFFFF; stroke-width: 2; stroke-linejoin: round; cursor: pointer; transition: fill 0.45s ease, opacity 0.2s ease; }
-  :global(.kraj:focus-visible) { outline: none; stroke: var(--orange); stroke-width: 4; }
-  :global(.kraj--hover) { opacity: 0.78; }
-  :global(.kraj--vybrany) { stroke: var(--orange); stroke-width: 4.5; }
-  :global(.kraj--muj) { stroke: var(--navy); stroke-width: 3; stroke-dasharray: 7 5; }
-  :global(.mapa__svg--vyber .kraj:not(.kraj--vybrany):not(.kraj--hover)) { opacity: 0.42; }
-  :global(.mapa__detail .maly) { font-size: 0.82rem; font-weight: 700; color: #D9D3C7; }
+  .mc__ovladani { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; justify-content: space-between; }
+  .mc__prepinace { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .mc__cas { display: flex; align-items: center; gap: 1rem; padding: 0.7rem 1rem; border-radius: 16px; background: var(--plocha-2); border: 1px solid var(--line); }
+  .mc__osa { flex-grow: 1; display: flex; flex-direction: column; gap: 0.15rem; }
+  .mc__osa input { width: 100%; accent-color: var(--orange); }
+  .mc__osa-popisky { display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: var(--muted); }
+  .mc__prehrat { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: 0; background: var(--navy); color: var(--cream); cursor: pointer; display: grid; place-items: center; }
+  .mc__rok { font-size: 1.6rem; font-weight: 900; min-width: 4ch; text-align: right; font-variant-numeric: tabular-nums; }
+  .mc__pata { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; padding-top: 0.9rem; border-top: 1px solid var(--line); }
+
+  /* Panel */
+  .mc__panel { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 84px; max-height: calc(100vh - 100px); }
+  @media (max-width: 1060px) { .mc__panel { position: static; max-height: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
+  @media (max-width: 700px) { .mc__panel { grid-template-columns: 1fr; } }
+  .mapa__detail { background: var(--navy); color: var(--cream); border-radius: 20px; padding: 1.4rem; min-height: 170px; display: flex; flex-direction: column; gap: 0.45rem; flex-shrink: 0; }
+  .mc__poradi-karta { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin-maly); padding: 1.1rem 0.9rem 0.9rem; display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; flex: 1 1 auto; }
+  .mc__poradi-titul { font-size: 1.05rem; padding-left: 0.4rem; }
+  .poradi { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.1rem; overflow-y: auto; min-height: 0; }
+  @media (max-width: 1060px) { .poradi { max-height: 460px; } }
+
+  :global(.mapa__detail .maly) { font-size: 0.8rem; font-weight: 700; color: #D9D3C7; }
   :global(.mapa__detail .jmeno) { font-size: 1.35rem; font-weight: 900; line-height: 1.25; }
   :global(.mapa__detail .velky) { font-size: 1.75rem; font-weight: 900; color: var(--orange); line-height: 1.2; }
-  :global(.mapa__detail .radek) { font-size: 0.92rem; font-weight: 600; color: #D9D3C7; }
-  :global(.mapa__detail .srovnani) { margin-top: 0.4rem; padding: 0.7rem 0.9rem; border-radius: 12px; background: var(--navy-2); font-size: 0.92rem; font-weight: 700; }
-  :global(.mapa__detail button) { align-self: flex-start; margin-top: 0.5rem; min-height: 40px; padding: 0 1rem; border: 1.5px solid var(--cream); border-radius: 999px; background: transparent; color: var(--cream); font-family: inherit; font-weight: 700; cursor: pointer; }
+  :global(.mapa__detail .radek) { font-size: 0.9rem; font-weight: 600; color: #D9D3C7; }
+  :global(.mapa__detail .srovnani) { margin-top: 0.4rem; padding: 0.7rem 0.9rem; border-radius: 12px; background: var(--navy-2); font-size: 0.9rem; font-weight: 700; }
+  :global(.mapa__detail button) { align-self: flex-start; margin-top: 0.5rem; min-height: 38px; padding: 0 1rem; border: 1.5px solid var(--cream); border-radius: 999px; background: transparent; color: var(--cream); font-family: inherit; font-weight: 700; cursor: pointer; }
+  :global(.mapa__detail .krivka) { width: 100%; height: 70px; margin-top: 0.3rem; overflow: visible; }
+  :global(.mapa__detail .krivka-osa) { display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: #B9B3A7; }
   :global(.poradi button) {
-    display: grid; grid-template-columns: 1.6rem minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; width: 100%;
+    display: grid; grid-template-columns: 1.7rem minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; width: 100%;
     padding: 0.35rem 0.5rem; border: 0; border-radius: 10px; background: transparent; color: var(--navy);
-    font-family: inherit; font-size: 0.86rem; font-weight: 700; text-align: left; cursor: pointer;
+    font-family: inherit; font-size: 0.85rem; font-weight: 700; text-align: left; cursor: pointer;
   }
   :global(.poradi button:hover), :global(.poradi button[aria-pressed='true']) { background: var(--plocha-2); }
+  :global(.poradi .p-poz) { color: var(--muted); font-size: 0.78rem; text-align: right; }
   :global(.poradi .p-jmeno) { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
-  :global(.poradi .p-pruh) { display: block; height: 6px; border-radius: 999px; transition: width 0.45s ease, background 0.45s ease; }
-  :global(.poradi .p-hodnota) { font-variant-numeric: tabular-nums; font-weight: 800; }
-  @media (prefers-reduced-motion: reduce) { :global(.kraj), :global(.poradi .p-pruh) { transition: none; } }
+  :global(.poradi .p-jmeno > span:first-child) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :global(.poradi .p-pruh) { display: block; height: 6px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(27, 42, 74, 0.18); transition: width 0.45s ease, background 0.45s ease; }
+  :global(.poradi .p-hodnota) { font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }
+  @media (prefers-reduced-motion: reduce) { :global(.kraj), :global(.poradi .p-pruh), .mesto__bublina { transition: none; } }
 </style>
 
 <script>
-  import { hranice, barvaKraje, barvaTridy, type Vrstva } from '../lib/mapa';
+  import { hranice, barvaKraje, barvaTridy, trida, type Vrstva } from '../lib/mapa';
+  import { zoomSkupiny } from '../lib/zoom';
+  import { naseptavac, type Polozka } from '../lib/naseptavac';
 
-  const { vrstvy, kraje, sirka } = JSON.parse(document.getElementById('mapa-data')!.dataset.json!) as {
-    vrstvy: Vrstva[]; kraje: Record<string, string>; sirka: number; vyska: number;
+  type Mesta = { roky: number[]; mesta: { n: string; kraj: string; x: number; y: number; h: number[] }[] };
+  const { vrstvy, kraje, kratce, mesta: M, sirka, vyska } = JSON.parse(document.getElementById('mapa-data')!.dataset.json!) as {
+    vrstvy: Vrstva[]; kraje: Record<string, string>; kratce: Record<string, [string, string]>; mesta: Mesta; sirka: number; vyska: number;
   };
   const $ = <T extends Element>(s: string) => document.querySelector<T>(s)!;
   const svg = $<SVGSVGElement>('[data-svg]');
   const obal = $<HTMLElement>('[data-obal]');
   const tooltip = $<HTMLElement>('[data-tooltip]');
   const cesty = Array.from(svg.querySelectorAll<SVGPathElement>('.kraj'));
+  const skupinaKraju = $<SVGGElement>('[data-kraje]');
+  const popisky = new Map(Array.from(svg.querySelectorAll<SVGTextElement>('[data-popisek]')).map((t) => [t.dataset.popisek!, t]));
+  const mestaEl = Array.from(svg.querySelectorAll<SVGGElement>('[data-mesto]'));
   const tlacitka = Array.from(document.querySelectorAll<HTMLButtonElement>('[data-vrstva]'));
   const elMuj = $<HTMLSelectElement>('[data-muj]');
   const elCas = $<HTMLElement>('[data-cas]');
@@ -187,10 +436,14 @@ const data = JSON.stringify({
   const elPrehrat = $<HTMLButtonElement>('[data-prehrat]');
   const elRok = $<HTMLElement>('[data-rok]');
   const pocet = Object.keys(kraje).length;
+  const klidne = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const IKONA_PLAY = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>';
+  const IKONA_PAUZA = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7z M13.5 5H17v14h-3.5z" fill="currentColor"/></svg>';
 
   const cislo = (v: number, d = 0) => new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: d, minimumFractionDigits: d }).format(v);
-  const krajuText = (n: number) => (n === 1 ? '1 kraj' : n >= 2 && n <= 4 ? `${n} kraje` : `${n} krajů`);
+  const kratceCislo = (v: number) => (v >= 1e6 ? `${cislo(v / 1e6, 2)} mil.` : v >= 1e4 ? `${cislo(v / 1e3, 0)} tis.` : cislo(v));
   const vKrajich = (n: number) => (n === 1 ? 'v 1 kraji' : `v ${n} krajích`);
+  const krajuText = (n: number) => (n === 1 ? '1 kraj' : n >= 2 && n <= 4 ? `${n} kraje` : `${n} krajů`);
   const el = (tag: string, trida?: string, text?: string) => {
     const e = document.createElement(tag);
     if (trida) e.className = trida;
@@ -198,45 +451,83 @@ const data = JSON.stringify({
     return e;
   };
 
-  // --- stav (z odkazu, případně z paměti prohlížeče)
-  const parametry = new URLSearchParams(location.hash.slice(1).includes('=') ? location.hash.slice(1) : `v=${location.hash.slice(1)}`);
-  let vrstva: Vrstva = vrstvy.find((v) => v.id === parametry.get('v')) ?? vrstvy[0];
-  let vybrany: string | null = kraje[parametry.get('k') ?? ''] ? parametry.get('k') : null;
-  let muj: string | null = kraje[parametry.get('m') ?? ''] ? parametry.get('m') : null;
-  if (!muj) { try { const m = localStorage.getItem('dc-muj-kraj'); if (m && kraje[m]) muj = m; } catch {} }
-  let rok: string | null = parametry.get('r');
-  let hover: string | null = null;
-  let prehravani: number | null = null;
-  let legendaPolozky: { barva: string; text: string }[] = [];
+  // Velikost písma v mapě držíme v pixelech obrazovky bez ohledu na šířku mapy.
+  let u = 1, zAkt = 1;
+  const nastavS = () => svg.style.setProperty('--s', (u / zAkt).toFixed(4));
+  const meritko = () => { u = sirka / Math.max(240, svg.getBoundingClientRect().width); svg.style.setProperty('--u', u.toFixed(3)); nastavS(); };
+  new ResizeObserver(() => { meritko(); if (typeof kresliMesta === 'function') kresliMesta(); }).observe(svg);
+  meritko();
 
-  const roky = (v: Vrstva) => (v.roky ? Object.keys(v.roky).sort() : []);
-  const hodnoty = (v: Vrstva): Record<string, number | string> => {
-    if (!v.roky) return v.hodnoty;
-    const r = rok && v.roky[rok] ? rok : roky(v).at(-1)!;
-    return v.roky[r];
-  };
+  // --- stav (z odkazu, případně z paměti prohlížeče)
+  const par = new URLSearchParams(location.hash.slice(1).includes('=') ? location.hash.slice(1) : `v=${location.hash.slice(1)}`);
+  let vrstva: Vrstva = vrstvy.find((v) => v.id === par.get('v')) ?? vrstvy[0];
+  let vybrany: string | null = kraje[par.get('k') ?? ''] ? par.get('k') : null;
+  let vybraneMesto: number | null = par.get('c') !== null && M.mesta[Number(par.get('c'))] ? Number(par.get('c')) : null;
+  let muj: string | null = kraje[par.get('m') ?? ''] ? par.get('m') : null;
+  if (!muj) { try { const m = localStorage.getItem('dc-muj-kraj'); if (m && kraje[m]) muj = m; } catch {} }
+  let rok: string | null = par.get('r');
+  let podklad: 'mapa' | 'satelit' = par.get('p') === 'satelit' ? 'satelit' : 'mapa';
+  const zapnuto = { popisky: par.get('n') !== '0', mesta: par.get('mc') === '1', reky: par.get('rh') === '1' };
+  let hover: string | null = null;
+  let hoverMesto: number | null = null;
+  let prehravani: number | null = null;
+  let legendaPolozky: { barva: string; text: string; kruh?: number }[] = [];
+
+  const jeMesta = (v: Vrstva) => v.typ === 'mesta';
+  const roky = (v: Vrstva) => (jeMesta(v) ? M.roky.map(String) : v.roky ? Object.keys(v.roky).sort() : []);
+  const aktRok = (v: Vrstva) => { const r = roky(v); return rok && r.includes(rok) ? rok : r.at(-1) ?? ''; };
+  const hodnoty = (v: Vrstva): Record<string, number | string> => (v.roky ? v.roky[aktRok(v)] : v.hodnoty);
   const text = (v: Vrstva, h: number | string | undefined) => {
     if (h === undefined) return 'bez dat';
     return typeof h === 'number' ? `${cislo(h, v.desetinna ?? 0)}${v.jednotka ? ' ' + v.jednotka : ''}` : String(h);
   };
-  const obdobi = (v: Vrstva) => (v.roky ? (rok && v.roky[rok] ? rok : roky(v).at(-1)!) : v.obdobi);
+  const obdobi = (v: Vrstva) => (roky(v).length ? aktRok(v) : v.obdobi);
   const serazene = (v: Vrstva, h: Record<string, number | string>) => {
     const ids = Object.keys(kraje);
     if (v.typ === 'ciselna') return ids.sort((a, b) => Number(h[b] ?? -Infinity) - Number(h[a] ?? -Infinity));
     return ids.sort((a, b) => String(h[a]).localeCompare(String(h[b]), 'cs') || kraje[a].localeCompare(kraje[b], 'cs'));
   };
+  // Města: index roku a pořadí
+  const iRoku = () => Math.max(0, M.roky.indexOf(Number(aktRok(vrstva))));
+  const MAX_OBYV = Math.max(...M.mesta.flatMap((m) => m.h));
+  const polomer = (v: number) => 34 * Math.sqrt(v / MAX_OBYV);
+  const poradiMest = () => M.mesta.map((_, i) => i).sort((a, b) => M.mesta[b].h[iRoku()] - M.mesta[a].h[iRoku()]);
 
-  function detail(v: Vrstva, h: Record<string, number | string>, poradi: string[]) {
+  // --- přiblížení
+  const zoom = zoomSkupiny(svg, $<SVGGElement>('[data-zoom]'), {
+    sirka, vyska, max: 7, napoveda: $<HTMLElement>('[data-napoveda]'),
+    onZmena: (z) => {
+      zAkt = z;
+      nastavS();
+      $<HTMLButtonElement>('[data-zoom-minus]').disabled = z <= 1.01;
+      $<HTMLButtonElement>('[data-zoom-reset]').disabled = z <= 1.01;
+      svg.classList.toggle('zoom-vic', z >= 2);
+      kresliMesta();
+    },
+  });
+  $<HTMLButtonElement>('[data-zoom-plus]').addEventListener('click', () => zoom.plus());
+  $<HTMLButtonElement>('[data-zoom-minus]').addEventListener('click', () => zoom.minus());
+  $<HTMLButtonElement>('[data-zoom-reset]').addEventListener('click', () => zoom.reset());
+
+  // --- detail v panelu
+  function detailKraje(v: Vrstva, h: Record<string, number | string>, poradi: string[]) {
     const box = $<HTMLElement>('[data-detail]');
     box.replaceChildren();
     const zobrazeny = vybrany ?? muj;
     if (zobrazeny) {
-      box.append(el('span', 'maly', zobrazeny === muj && !vybrany ? 'Můj kraj' : v.nazev), el('span', 'jmeno', kraje[zobrazeny]), el('span', 'velky', text(v, h[zobrazeny])));
+      box.append(el('span', 'maly', zobrazeny === muj && !vybrany ? 'Můj kraj' : `${v.nazev}, ${obdobi(v)}`), el('span', 'jmeno', kraje[zobrazeny]), el('span', 'velky', text(v, h[zobrazeny])));
       if (v.typ === 'ciselna') {
         box.append(el('span', 'radek', `${poradi.indexOf(zobrazeny) + 1}. místo ze ${pocet} krajů`));
         if (v.soucet) {
           const celkem = Object.values(h).reduce<number>((s, x) => s + Number(x), 0);
           box.append(el('span', 'radek', `${cislo((Number(h[zobrazeny]) / celkem) * 100, 1)} % z celého Česka`));
+        }
+        const r = roky(v);
+        if (r.length > 1 && v.roky) {
+          const prvniRok = r[0];
+          const a = Number(v.roky[prvniRok][zobrazeny]), b = Number(h[zobrazeny]);
+          if (Number.isFinite(a) && aktRok(v) !== prvniRok) box.append(el('span', 'radek', `V roce ${prvniRok}: ${text(v, a)}`));
+          if (Number.isFinite(a) && Number.isFinite(b)) box.append(krivka(r.map((y) => Number(v.roky![y][zobrazeny])), r, r.indexOf(aktRok(v))));
         }
         if (muj && zobrazeny !== muj && h[muj] !== undefined) {
           const rozdil = Number(h[zobrazeny]) - Number(h[muj]);
@@ -259,8 +550,8 @@ const data = JSON.stringify({
     if (v.typ === 'ciselna') {
       if (v.soucet) {
         const celkem = Object.values(h).reduce<number>((s, x) => s + Number(x), 0);
-        box.append(el('span', 'maly', 'Česko celkem'), el('span', 'velky', text(v, celkem)));
-      }
+        box.append(el('span', 'maly', `Česko celkem, ${obdobi(v)}`), el('span', 'velky', text(v, celkem)));
+      } else box.append(el('span', 'maly', `${v.nazev}, ${obdobi(v)}`));
       box.append(
         el('span', 'radek', `Nejvíc: ${kraje[poradi[0]]} (${text(v, h[poradi[0]])})`),
         el('span', 'radek', `Nejméně: ${kraje[poradi.at(-1)!]} (${text(v, h[poradi.at(-1)!])})`),
@@ -274,33 +565,113 @@ const data = JSON.stringify({
     box.append(el('span', 'radek', 'Klikni na kraj v mapě, nebo si nahoře nastav ten svůj.'));
   }
 
+  // Malý spojnicový graf vývoje v detailu
+  function krivka(hod: number[], popisy: string[], aktivni: number) {
+    const obal = el('div');
+    const W = 280, H = 70, min = Math.min(...hod), max = Math.max(...hod);
+    const x = (i: number) => (i / Math.max(1, hod.length - 1)) * W;
+    const y = (v: number) => H - 6 - ((v - min) / Math.max(1e-9, max - min)) * (H - 14);
+    const ns = 'http://www.w3.org/2000/svg';
+    const s = document.createElementNS(ns, 'svg');
+    s.setAttribute('viewBox', `0 0 ${W} ${H}`);
+    s.setAttribute('class', 'krivka');
+    s.setAttribute('preserveAspectRatio', 'none');
+    const p = document.createElementNS(ns, 'path');
+    p.setAttribute('d', hod.map((v, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join(''));
+    p.setAttribute('fill', 'none'); p.setAttribute('stroke', '#F08829'); p.setAttribute('stroke-width', '2.5');
+    p.setAttribute('vector-effect', 'non-scaling-stroke'); p.setAttribute('stroke-linejoin', 'round');
+    const b = document.createElementNS(ns, 'circle');
+    b.setAttribute('cx', String(x(aktivni))); b.setAttribute('cy', String(y(hod[aktivni]))); b.setAttribute('r', '4.5');
+    b.setAttribute('fill', '#F2EDE3'); b.setAttribute('stroke', '#F08829'); b.setAttribute('stroke-width', '2');
+    s.append(p, b);
+    const osa = el('div', 'krivka-osa');
+    osa.append(el('span', undefined, popisy[0]), el('span', undefined, popisy.at(-1)));
+    obal.append(s, osa);
+    return obal;
+  }
+
+  function detailMesta() {
+    const box = $<HTMLElement>('[data-detail]');
+    box.replaceChildren();
+    const i = iRoku(), r = aktRok(vrstva);
+    const poradi = poradiMest();
+    const zobrazene = vybraneMesto;
+    if (zobrazene !== null) {
+      const m = M.mesta[zobrazene];
+      box.append(el('span', 'maly', `${kraje[m.kraj]}, ${r}`), el('span', 'jmeno', m.n), el('span', 'velky', `${cislo(m.h[i])} obyvatel`));
+      box.append(el('span', 'radek', `${poradi.indexOf(zobrazene) + 1}. největší ze 40 měst v roce ${r}`));
+      const z = m.h[0], zmena = ((m.h[i] - z) / z) * 100;
+      if (i > 0) box.append(el('span', 'radek', `Od roku ${M.roky[0]}: ${zmena >= 0 ? '+' : '−'}${cislo(Math.abs(zmena), 1)} % (tehdy ${cislo(z)})`));
+      box.append(krivka(m.h, M.roky.map(String), i));
+      const zrusit = el('button', undefined, 'Zrušit výběr') as HTMLButtonElement;
+      zrusit.type = 'button';
+      zrusit.addEventListener('click', () => { vybraneMesto = null; vykresli(); });
+      box.append(zrusit);
+      return;
+    }
+    const celkem = M.mesta.reduce((s, m) => s + m.h[i], 0);
+    box.append(el('span', 'maly', `40 největších měst, ${r}`), el('span', 'velky', `${cislo(celkem)} lidí`));
+    const zmeny = M.mesta.map((m, k) => ({ k, z: (m.h[i] - m.h[0]) / m.h[0] })).sort((a, b) => b.z - a.z);
+    if (i > 0) {
+      box.append(
+        el('span', 'radek', `Nejvíc vyrostla od roku ${M.roky[0]}: ${M.mesta[zmeny[0].k].n} (+${cislo(zmeny[0].z * 100, 0)} %)`),
+        el('span', 'radek', `Nejvíc lidí ubylo: ${M.mesta[zmeny.at(-1)!.k].n} (${zmeny.at(-1)!.z >= 0 ? '+' : '−'}${cislo(Math.abs(zmeny.at(-1)!.z) * 100, 0)} %)`),
+      );
+    }
+    box.append(el('span', 'radek', 'Klikni na bublinu a uvidíš vývoj města.'));
+  }
+
   function poradiKraju(v: Vrstva, h: Record<string, number | string>, poradi: string[], hr: number[]) {
     const ol = $<HTMLElement>('[data-poradi]');
+    $<HTMLElement>('[data-poradi-titul]').textContent = `Pořadí krajů, ${obdobi(v)}`;
     const max = v.typ === 'ciselna' ? Math.max(...poradi.map((id) => Number(h[id]))) : 1;
-    ol.replaceChildren();
-    poradi.forEach((id, i) => {
+    ol.replaceChildren(...poradi.map((id, i) => {
       const li = el('li');
       const b = el('button') as HTMLButtonElement;
       b.type = 'button';
+      b.dataset.kraj = id;
       b.setAttribute('aria-pressed', String(id === vybrany));
       const jmeno = el('span', 'p-jmeno');
       const pruh = el('span', 'p-pruh');
-      pruh.style.width = v.typ === 'ciselna' ? `${(Number(h[id]) / max) * 100}%` : '100%';
+      pruh.style.width = v.typ === 'ciselna' ? `${Math.max(3, (Number(h[id]) / max) * 100)}%` : '100%';
       pruh.style.background = barvaKraje({ ...v, hodnoty: h }, id, hr);
       jmeno.append(el('span', undefined, kraje[id] + (id === muj ? ' (můj)' : '')), pruh);
-      b.append(el('span', 'drobne', v.typ === 'ciselna' ? `${i + 1}.` : ''), jmeno, el('span', 'p-hodnota', typeof h[id] === 'number' ? cislo(Number(h[id]), v.desetinna ?? 0) : String(h[id] ?? '')));
-      b.addEventListener('click', () => vyber(vybrany === id ? null : id));
-      b.addEventListener('mouseenter', () => { hover = id; zvyrazni(); });
-      b.addEventListener('mouseleave', () => { hover = null; zvyrazni(); });
+      b.append(el('span', 'p-poz', v.typ === 'ciselna' ? `${i + 1}.` : ''), jmeno, el('span', 'p-hodnota', typeof h[id] === 'number' ? cislo(Number(h[id]), v.desetinna ?? 0) : String(h[id] ?? '')));
       li.append(b);
-      ol.append(li);
-    });
+      return li;
+    }));
+  }
+
+  function poradiMestPanel() {
+    const ol = $<HTMLElement>('[data-poradi]');
+    const i = iRoku();
+    $<HTMLElement>('[data-poradi-titul]').textContent = `Pořadí měst, ${aktRok(vrstva)}`;
+    const poradi = poradiMest();
+    const max = M.mesta[poradi[0]].h[i];
+    ol.replaceChildren(...poradi.map((k, p) => {
+      const m = M.mesta[k];
+      const li = el('li');
+      const b = el('button') as HTMLButtonElement;
+      b.type = 'button';
+      b.dataset.mestoIdx = String(k);
+      b.setAttribute('aria-pressed', String(k === vybraneMesto));
+      const jmeno = el('span', 'p-jmeno');
+      const pruh = el('span', 'p-pruh');
+      pruh.style.width = `${Math.max(2, (m.h[i] / max) * 100)}%`;
+      pruh.style.background = k === vybraneMesto ? '#F08829' : '#1B2A4A';
+      jmeno.append(el('span', undefined, m.n), pruh);
+      b.append(el('span', 'p-poz', `${p + 1}.`), jmeno, el('span', 'p-hodnota', kratceCislo(m.h[i])));
+      li.append(b);
+      return li;
+    }));
   }
 
   function legenda(v: Vrstva, h: Record<string, number | string>, hr: number[]) {
     const ul = $<HTMLElement>('[data-legenda]');
     legendaPolozky = [];
-    if (v.typ === 'ciselna') {
+    if (jeMesta(v)) {
+      for (const [val, t] of [[1000000, '1 mil.'], [300000, '300 tis.'], [50000, '50 tis.']] as [number, string][]) legendaPolozky.push({ barva: '#1B2A4A', text: t, kruh: polomer(val) });
+    } else if (v.typ === 'ciselna') {
       const n = hr.length + 1;
       const d = v.desetinna ?? 0;
       for (let i = 0; i < n; i++) {
@@ -316,8 +687,12 @@ const data = JSON.stringify({
       const li = el('li');
       const t = el('span', 'legenda__tecka');
       t.style.background = p.barva;
-      t.style.borderRadius = '4px';
-      t.style.width = '22px';
+      if (p.kruh) {
+        const d = Math.max(6, p.kruh * 0.9);
+        t.style.width = `${d}px`; t.style.height = `${d}px`; t.style.borderRadius = '50%'; t.style.opacity = '0.85';
+      } else {
+        t.style.borderRadius = '4px'; t.style.width = '22px'; t.style.boxShadow = 'inset 0 0 0 1px rgba(27,42,74,0.12)';
+      }
       li.append(t, p.text);
       return li;
     }));
@@ -325,84 +700,213 @@ const data = JSON.stringify({
 
   function zvyrazni() {
     for (const c of cesty) c.classList.toggle('kraj--hover', c.dataset.kraj === hover);
+    for (const g of mestaEl) g.classList.toggle('mesto--hover', Number(g.dataset.mesto) === hoverMesto);
+  }
+
+  // U měst popíšeme největší, při přiblížení víc
+  function popisMest() {
+    const poradi = poradiMest();
+    const n = zAkt >= 3 ? 40 : zAkt >= 1.8 ? 24 : 12;
+    const popsane = new Set(poradi.slice(0, n));
+    for (const g of mestaEl) g.classList.toggle('mesto--popis', popsane.has(Number(g.dataset.mesto)));
+  }
+
+  function kresliMesta() {
+    const i = iRoku();
+    for (const g of mestaEl) {
+      const k = Number(g.dataset.mesto);
+      const m = M.mesta[k];
+      const r = polomer(m.h[i]);
+      const c = g.querySelector<SVGCircleElement>('.mesto__bublina')!;
+      c.style.transform = `scale(${r.toFixed(2)})`;
+      const t = g.querySelector<SVGTextElement>('.mesto__jmeno')!;
+      // Kladno leží těsně vedle Prahy, jeho jméno dáme doleva
+      const vlevo = m.n === 'Kladno' || m.n === 'Most' || m.n === 'Cheb';
+      // text je ve skupině, která drží stálou velikost na obrazovce – odstup od bubliny převedeme
+      const odstup = jeMesta(vrstva) ? r / (u / zAkt) + 4 : 6.5;
+      t.setAttribute('x', String(vlevo ? -odstup : odstup));
+      t.setAttribute('text-anchor', vlevo ? 'end' : 'start');
+      g.classList.toggle('mesto--vybrane', k === vybraneMesto);
+    }
+    // větší bubliny dozadu, ať jdou malé vidět
+    const g0 = $<SVGGElement>('[data-mesta]');
+    [...mestaEl].sort((a, b) => M.mesta[Number(b.dataset.mesto)].h[i] - M.mesta[Number(a.dataset.mesto)].h[i]).forEach((g) => g0.append(g));
+    if (vybraneMesto !== null) g0.append(mestaEl[vybraneMesto]);
+    popisMest();
+  }
+
+  function popiskyKraju(v: Vrstva, h: Record<string, number | string>, hr: number[]) {
+    for (const [id, t] of popisky) {
+      const hod = t.querySelector<SVGTSpanElement>('.kp-hodnota')!;
+      hod.textContent = v.typ === 'ciselna' && h[id] !== undefined ? (v.jednotka === 'obyvatel' ? kratceCislo(Number(h[id])) : `${cislo(Number(h[id]), v.desetinna ?? 0)}${v.jednotka === '%' || v.jednotka === '% průměru EU' ? ' %' : ''}`) : '';
+      const tmave = podklad === 'mapa' && v.typ === 'ciselna' && h[id] !== undefined && trida(Number(h[id]), hr) >= Math.ceil((hr.length + 1) * 0.6);
+      t.classList.toggle('kraj-popisek--tmave', tmave);
+    }
   }
 
   function vykresli() {
     const v = vrstva;
-    const h = hodnoty(v);
+    const mestaRezim = jeMesta(v);
+    svg.classList.toggle('rezim-mesta', mestaRezim);
+    svg.dataset.podklad = podklad;
+    svg.classList.toggle('ukaz-popisky', zapnuto.popisky);
+    svg.classList.toggle('ukaz-mesta', zapnuto.mesta);
+    svg.classList.toggle('ukaz-reky', zapnuto.reky);
+    for (const b of document.querySelectorAll<HTMLButtonElement>('[data-prepni]')) {
+      b.setAttribute('aria-pressed', String(zapnuto[b.dataset.prepni as keyof typeof zapnuto]));
+      if (b.dataset.prepni !== 'reky') b.hidden = mestaRezim;
+    }
+    for (const b of document.querySelectorAll<HTMLButtonElement>('[data-podklad]')) b.setAttribute('aria-pressed', String(b.dataset.podklad === podklad));
+
+    const h = mestaRezim ? {} : hodnoty(v);
     const hr = v.typ === 'ciselna' ? hranice(Object.values(h).map(Number)) : [];
-    const poradi = serazene(v, h);
+    const poradi = mestaRezim ? [] : serazene(v, h);
     const vrstvaNaRok = { ...v, hodnoty: h };
 
     for (const c of cesty) {
       const id = c.dataset.kraj!;
-      c.style.fill = barvaKraje(vrstvaNaRok, id, hr);
-      c.classList.toggle('kraj--vybrany', id === vybrany);
+      if (!mestaRezim) c.style.fill = barvaKraje(vrstvaNaRok, id, hr);
+      c.classList.toggle('kraj--vybrany', !mestaRezim && id === vybrany);
       c.classList.toggle('kraj--muj', id === muj && id !== vybrany);
       c.setAttribute('aria-pressed', String(id === vybrany));
-      c.setAttribute('aria-label', `${kraje[id]}: ${text(v, h[id])}`);
+      c.setAttribute('aria-label', mestaRezim ? kraje[id] : `${kraje[id]}: ${text(v, h[id])}`);
+      c.tabIndex = mestaRezim ? -1 : 0;
     }
-    const nahoru = [muj, vybrany].filter(Boolean) as string[];
-    for (const id of nahoru) { const c = cesty.find((x) => x.dataset.kraj === id); if (c) svg.append(c); }
-    svg.classList.toggle('mapa__svg--vyber', !!vybrany);
+    const nahoru = [muj, mestaRezim ? null : vybrany, 'praha'].filter(Boolean) as string[];
+    for (const id of nahoru) { const c = cesty.find((x) => x.dataset.kraj === id); if (c) skupinaKraju.append(c); }
+    svg.classList.toggle('mc-svg--vyber', !mestaRezim && !!vybrany);
     for (const t of tlacitka) t.setAttribute('aria-pressed', String(t.dataset.vrstva === v.id));
 
     $<HTMLElement>('[data-titul]').textContent = v.nazev;
-    $<HTMLElement>('[data-popis]').textContent = `${v.popis}, ${obdobi(v)}`;
+    $<HTMLElement>('[data-popis]').textContent = `${v.popis}, ${roky(v).length ? aktRok(v) : v.obdobi}`;
     const zdroj = $<HTMLElement>('[data-zdroj]');
     const odkaz = el('a', undefined, v.zdroj) as HTMLAnchorElement;
     odkaz.href = v.zdrojUrl;
-    zdroj.replaceChildren('Zdroj: ', odkaz);
+    zdroj.replaceChildren('Zdroj: ', odkaz, roky(v).length ? `, ${roky(v)[0]}–${roky(v).at(-1)}` : `, ${v.obdobi}`);
 
     const r = roky(v);
     elCas.hidden = r.length < 2;
     if (r.length > 1) {
       elPosuvnik.min = '0';
       elPosuvnik.max = String(r.length - 1);
-      elPosuvnik.value = String(Math.max(0, r.indexOf(obdobi(v))));
-      elRok.textContent = obdobi(v);
+      elPosuvnik.value = String(Math.max(0, r.indexOf(aktRok(v))));
+      elRok.textContent = aktRok(v);
+      $<HTMLElement>('[data-rok-od]').textContent = r[0];
+      $<HTMLElement>('[data-rok-do]').textContent = r.at(-1)!;
     }
 
     legenda(v, h, hr);
-    detail(v, h, poradi);
-    poradiKraju(v, h, poradi, hr);
+    if (mestaRezim) {
+      kresliMesta();
+      detailMesta();
+      poradiMestPanel();
+    } else {
+      kresliMesta();
+      popiskyKraju(v, h, hr);
+      detailKraje(v, h, poradi);
+      poradiKraju(v, h, poradi, hr);
+    }
 
     const tbody = $<HTMLElement>('[data-tabulka]');
-    $<HTMLElement>('[data-hlavicka-hodnota]').textContent = v.typ === 'ciselna' ? `${v.nazev}${v.jednotka ? ` (${v.jednotka})` : ''}` : v.nazev;
-    tbody.replaceChildren(...poradi.map((id) => {
+    $<HTMLElement>('[data-hlavicka-nazev]').textContent = mestaRezim ? 'Město' : 'Kraj';
+    $<HTMLElement>('[data-hlavicka-hodnota]').textContent = mestaRezim ? `Obyvatel, ${aktRok(v)}` : v.typ === 'ciselna' ? `${v.nazev}${v.jednotka ? ` (${v.jednotka})` : ''}, ${obdobi(v)}` : v.nazev;
+    const radky: [string, string][] = mestaRezim
+      ? poradiMest().map((k) => [M.mesta[k].n, cislo(M.mesta[k].h[iRoku()])])
+      : poradi.map((id) => [kraje[id], typeof h[id] === 'number' ? cislo(Number(h[id]), v.desetinna ?? 0) : String(h[id] ?? '')]);
+    tbody.replaceChildren(...radky.map(([a, b]) => {
       const tr = el('tr');
-      const td = el('td', 'cislo', typeof h[id] === 'number' ? cislo(Number(h[id]), v.desetinna ?? 0) : String(h[id] ?? ''));
+      const td = el('td', 'cislo', b);
       td.style.fontWeight = '800';
-      tr.append(el('td', undefined, kraje[id]), td);
+      tr.append(el('td', undefined, a), td);
       return tr;
     }));
 
     const p = new URLSearchParams({ v: v.id });
-    if (vybrany) p.set('k', vybrany);
+    if (!mestaRezim && vybrany) p.set('k', vybrany);
+    if (mestaRezim && vybraneMesto !== null) p.set('c', String(vybraneMesto));
     if (muj) p.set('m', muj);
-    if (v.roky && rok) p.set('r', rok);
+    if (r.length && rok && rok !== r.at(-1)) p.set('r', rok);
+    if (podklad === 'satelit') p.set('p', 'satelit');
+    if (!zapnuto.popisky) p.set('n', '0');
+    if (zapnuto.mesta) p.set('mc', '1');
+    if (zapnuto.reky) p.set('rh', '1');
     history.replaceState(null, '', `#${p}`);
   }
 
   function vyber(id: string | null) { vybrany = id; vykresli(); }
+  function vyberMesto(k: number | null) { vybraneMesto = k; vykresli(); }
 
-  // --- ovládání
-  for (const c of cesty) {
-    const id = c.dataset.kraj!;
-    c.addEventListener('click', () => vyber(vybrany === id ? null : id));
-    c.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); vyber(vybrany === id ? null : id); } });
-    c.addEventListener('pointermove', (e) => {
-      if (e.pointerType !== 'mouse') return;
-      const r = obal.getBoundingClientRect();
-      tooltip.hidden = false;
-      tooltip.textContent = `${kraje[id]}: ${text(vrstva, hodnoty(vrstva)[id])}`;
-      tooltip.style.left = `${e.clientX - r.left}px`;
-      tooltip.style.top = `${e.clientY - r.top}px`;
-      if (hover !== id) { hover = id; zvyrazni(); }
-    });
-    c.addEventListener('pointerleave', () => { tooltip.hidden = true; hover = null; zvyrazni(); });
-  }
-  for (const t of tlacitka) t.addEventListener('click', () => { vrstva = vrstvy.find((v) => v.id === t.dataset.vrstva) ?? vrstvy[0]; rok = null; zastav(); vykresli(); });
+  // --- ovládání mapy
+  const najdi = (e: Event) => {
+    const t = e.target as Element;
+    const m = t.closest<SVGGElement>('[data-mesto]');
+    if (m && getComputedStyle(m).display !== 'none') return { mesto: Number(m.dataset.mesto) };
+    const k = t.closest<SVGPathElement>('[data-kraj]');
+    return k ? { kraj: k.dataset.kraj! } : {};
+  };
+  svg.addEventListener('click', (e) => {
+    if (zoom.poTazeni()) return;
+    const f = najdi(e);
+    if (f.mesto !== undefined) {
+      if (!jeMesta(vrstva)) { vrstva = vrstvy.find((v) => v.typ === 'mesta')!; zastav(); }
+      return vyberMesto(vybraneMesto === f.mesto ? null : f.mesto);
+    }
+    if (f.kraj && !jeMesta(vrstva)) vyber(vybrany === f.kraj ? null : f.kraj);
+  });
+  svg.addEventListener('keydown', (e) => {
+    const c = (e.target as Element).closest<SVGPathElement>('[data-kraj]');
+    if (c && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); vyber(vybrany === c.dataset.kraj ? null : c.dataset.kraj!); }
+  });
+  svg.addEventListener('pointermove', (e) => {
+    if (e.pointerType !== 'mouse') return;
+    const f = najdi(e);
+    const r = obal.getBoundingClientRect();
+    let t = '';
+    if (f.mesto !== undefined) {
+      const m = M.mesta[f.mesto];
+      t = `${m.n}: ${cislo(m.h[iRoku()])} obyvatel (${jeMesta(vrstva) ? aktRok(vrstva) : M.roky.at(-1)})`;
+    } else if (f.kraj) t = jeMesta(vrstva) ? kraje[f.kraj] : `${kraje[f.kraj]}: ${text(vrstva, hodnoty(vrstva)[f.kraj])}`;
+    tooltip.hidden = !t;
+    tooltip.textContent = t;
+    tooltip.style.left = `${e.clientX - r.left}px`;
+    tooltip.style.top = `${e.clientY - r.top}px`;
+    const nh = f.kraj ?? null, nm = f.mesto ?? null;
+    if (nh !== hover || nm !== hoverMesto) { hover = jeMesta(vrstva) ? null : nh; hoverMesto = nm; zvyrazni(); }
+  });
+  svg.addEventListener('pointerleave', () => { tooltip.hidden = true; hover = null; hoverMesto = null; zvyrazni(); });
+
+  const poradiEl = $<HTMLElement>('[data-poradi]');
+  poradiEl.addEventListener('click', (e) => {
+    const b = (e.target as Element).closest<HTMLButtonElement>('button');
+    if (!b) return;
+    if (b.dataset.kraj) vyber(vybrany === b.dataset.kraj ? null : b.dataset.kraj);
+    else if (b.dataset.mestoIdx) vyberMesto(vybraneMesto === Number(b.dataset.mestoIdx) ? null : Number(b.dataset.mestoIdx));
+  });
+  poradiEl.addEventListener('mouseover', (e) => {
+    const b = (e.target as Element).closest<HTMLButtonElement>('button');
+    hover = b?.dataset.kraj ?? null;
+    hoverMesto = b?.dataset.mestoIdx ? Number(b.dataset.mestoIdx) : null;
+    zvyrazni();
+  });
+  poradiEl.addEventListener('mouseleave', () => { hover = null; hoverMesto = null; zvyrazni(); });
+
+  for (const t of tlacitka) t.addEventListener('click', () => {
+    const nova = vrstvy.find((v) => v.id === t.dataset.vrstva) ?? vrstvy[0];
+    if (nova.id !== vrstva.id) rok = null;
+    vrstva = nova;
+    zastav();
+    vykresli();
+  });
+  for (const b of document.querySelectorAll<HTMLButtonElement>('[data-podklad]')) b.addEventListener('click', () => {
+    podklad = b.dataset.podklad as 'mapa' | 'satelit';
+    // satelitní snímek načteme až ve chvíli, kdy ho někdo chce vidět
+    vykresli();
+  });
+  for (const b of document.querySelectorAll<HTMLButtonElement>('[data-prepni]')) b.addEventListener('click', () => {
+    const k = b.dataset.prepni as keyof typeof zapnuto;
+    zapnuto[k] = !zapnuto[k];
+    vykresli();
+  });
   elMuj.value = muj ?? '';
   elMuj.addEventListener('change', () => {
     muj = elMuj.value || null;
@@ -410,20 +914,46 @@ const data = JSON.stringify({
     vykresli();
   });
   elPosuvnik.addEventListener('input', () => { rok = roky(vrstva)[Number(elPosuvnik.value)]; vykresli(); });
-  function zastav() { if (prehravani) { clearInterval(prehravani); prehravani = null; elPrehrat.textContent = '▶'; } }
+  function zastav() { if (prehravani) { clearInterval(prehravani); prehravani = null; } elPrehrat.innerHTML = IKONA_PLAY; elPrehrat.setAttribute('aria-label', 'Přehrát vývoj v čase'); }
   elPrehrat.addEventListener('click', () => {
     if (prehravani) return zastav();
     const r = roky(vrstva);
-    let i = r.indexOf(obdobi(vrstva));
+    let i = r.indexOf(aktRok(vrstva));
     if (i >= r.length - 1) i = -1;
-    elPrehrat.textContent = '❚❚';
+    elPrehrat.innerHTML = IKONA_PAUZA;
+    elPrehrat.setAttribute('aria-label', 'Zastavit');
+    const krok = Math.max(220, Math.min(900, 9000 / r.length));
     prehravani = window.setInterval(() => {
       i++;
       if (i >= r.length) return zastav();
       rok = r[i];
       vykresli();
-    }, 900);
+    }, klidne ? 900 : krok);
   });
+
+  // --- vyhledávání kraje nebo města
+  const polozky: Polozka[] = [
+    ...Object.entries(kraje).map(([id, n]) => ({ kod: `k:${id}`, nazev: n, popis: 'kraj' })),
+    ...M.mesta.map((m, i) => ({ kod: `m:${i}`, nazev: m.n, popis: `město, ${kraje[m.kraj]}` })),
+  ];
+  naseptavac($<HTMLInputElement>('[data-hledat]'), $<HTMLElement>('[data-naseptavac]'), polozky, (p) => {
+    const [typ, id] = p.kod.split(':');
+    if (typ === 'k') {
+      if (jeMesta(vrstva)) vrstva = vrstvy[0];
+      vybrany = id;
+      vykresli();
+      const b = cesty.find((c) => c.dataset.kraj === id)!.getBBox();
+      zoom.naObdelnik([b.x, b.y, b.x + b.width, b.y + b.height], 3);
+    } else {
+      const k = Number(id);
+      if (!jeMesta(vrstva)) { vrstva = vrstvy.find((v) => v.typ === 'mesta')!; zastav(); }
+      vybraneMesto = k;
+      vykresli();
+      const m = M.mesta[k];
+      zoom.naObdelnik([m.x - 60, m.y - 35, m.x + 60, m.y + 35], 3);
+    }
+    obal.scrollIntoView({ behavior: klidne ? 'auto' : 'smooth', block: 'nearest' });
+  }, { vymazat: true });
 
   const sdilet = $<HTMLButtonElement>('[data-sdilet]');
   sdilet.addEventListener('click', async () => {
@@ -443,22 +973,43 @@ const data = JSON.stringify({
     x.fillStyle = '#1B2A4A'; x.font = '900 60px Montserrat, sans-serif';
     x.fillText(vrstva.nazev.toUpperCase(), W / 2, 110);
     x.fillStyle = '#9A520E'; x.font = '700 28px Montserrat, sans-serif';
-    x.fillText(`${vrstva.popis}, ${obdobi(vrstva)}`, W / 2, 162);
+    x.fillText(`${vrstva.popis.split(',')[0]}, ${obdobi(vrstva)}`, W / 2, 162);
     const s = 1400 / sirka;
     x.save(); x.translate(100, 210); x.scale(s, s);
+    const mestaRezim = jeMesta(vrstva);
     for (const p of Array.from(svg.querySelectorAll<SVGPathElement>('.kraj'))) {
       const cesta = new Path2D(p.getAttribute('d')!);
-      x.fillStyle = p.style.fill || p.getAttribute('fill')!;
+      x.fillStyle = mestaRezim ? '#E6DDCB' : p.style.fill || p.getAttribute('fill')!;
       x.fill(cesta, 'evenodd');
       x.strokeStyle = '#F2EDE3'; x.lineWidth = 2.5 / s * 1.4; x.lineJoin = 'round';
       x.stroke(cesta);
+    }
+    if (mestaRezim) {
+      const i = iRoku();
+      const poradi = poradiMest();
+      for (const k of [...poradi].reverse()) {
+        const m = M.mesta[k];
+        x.beginPath(); x.arc(m.x, m.y, polomer(m.h[i]), 0, Math.PI * 2);
+        x.fillStyle = 'rgba(27,42,74,0.85)'; x.fill();
+        x.strokeStyle = '#FFFFFF'; x.lineWidth = 1.4 / s * 1.4; x.stroke();
+      }
+      x.font = '800 11px Montserrat, sans-serif'; x.textAlign = 'left'; x.lineJoin = 'round';
+      for (const k of poradi.slice(0, 12)) {
+        const m = M.mesta[k], r = polomer(m.h[iRoku()]);
+        const vlevo = m.n === 'Kladno' || m.n === 'Most' || m.n === 'Cheb';
+        x.textAlign = vlevo ? 'right' : 'left';
+        x.strokeStyle = 'rgba(255,255,255,0.92)'; x.lineWidth = 3; x.strokeText(m.n, m.x + (vlevo ? -r - 3 : r + 3), m.y + 4);
+        x.fillStyle = '#1B2A4A'; x.fillText(m.n, m.x + (vlevo ? -r - 3 : r + 3), m.y + 4);
+      }
     }
     x.restore();
     x.font = '600 24px Montserrat, sans-serif'; x.textAlign = 'left';
     const sirky = legendaPolozky.map((p) => 40 + x.measureText(p.text).width + 36);
     let lx = (W - sirky.reduce((a, b) => a + b, 0)) / 2;
     legendaPolozky.forEach((p, i) => {
-      x.fillStyle = p.barva; x.beginPath(); x.roundRect(lx, 1052, 30, 20, 5); x.fill();
+      x.fillStyle = p.barva; x.beginPath();
+      if (p.kruh) x.arc(lx + 12, 1062, Math.max(5, p.kruh * 0.6), 0, Math.PI * 2); else x.roundRect(lx, 1052, 30, 20, 5);
+      x.fill();
       x.fillStyle = '#1B2A4A'; x.fillText(p.text, lx + 40, 1070);
       lx += sirky[i];
     });
@@ -474,7 +1025,7 @@ const data = JSON.stringify({
       if (!b) return;
       const a = document.createElement('a');
       a.href = URL.createObjectURL(b);
-      a.download = `data-cesky-mapa-${vrstva.id}.png`;
+      a.download = `data-cesky-mapa-${vrstva.id}${roky(vrstva).length ? '-' + aktRok(vrstva) : ''}.png`;
       a.click();
       setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     }, 'image/png');

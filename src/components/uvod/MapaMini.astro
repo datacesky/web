@@ -1,10 +1,13 @@
 ---
 // Malá interaktivní mapa krajů pro úvodní stránku: přepínání vrstev, pořadí krajů vedle mapy.
 import geo from '../../data/kraje.json';
-import { vrstvy } from '../../data/vrstvy';
+import { vrstvy, UVOD } from '../../data/vrstvy';
 import { hranice, barvaKraje } from '../../lib/mapa';
 
-const ciselne = vrstvy.filter((v) => v.typ === 'ciselna');
+// Jen pár vrstev a bez historie, ať je úvodní stránka lehká. Období = poslední rok.
+const ciselne = UVOD.map((id) => vrstvy.find((v) => v.id === id))
+  .filter((v): v is (typeof vrstvy)[number] => !!v && v.typ === 'ciselna')
+  .map((v) => ({ ...v, roky: undefined, obdobi: v.roky ? Object.keys(v.roky).sort().at(-1)! : v.obdobi }));
 const prvni = ciselne[0];
 const hr = hranice(Object.values(prvni.hodnoty).map(Number));
 const kraje = [...geo.kraje].sort((a, b) => Number(a.id === 'praha') - Number(b.id === 'praha'));

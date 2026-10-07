@@ -1,43 +1,33 @@
-# Astro Starter Kit: Minimal
+# datacesky.cz
+
+Web projektu @data.cesky: Astro, statický web na GitHub Pages.
+
+## Spuštění
 
 ```sh
-npm create astro@latest -- --template minimal
+npm install
+npm run dev      # náhled na localhost:4321
+npm run build    # sestavení do dist/
 ```
 
-> 🧑‍🚀 **Seasoned astronaut?** Delete this file. Have fun!
+Po `git push` do větve main se web sám nasadí.
 
-## 🚀 Project Structure
+## Kde co upravit
 
-Inside of your Astro project, you'll see the following folders and files:
+| Co | Soubor |
+| :-- | :-- |
+| Nový díl Česko vs. svět | `src/data/epizody.ts` (kód země, číslo dílu, popis, datum, odkaz na reel) |
+| Vrstvy Mapy Česka | `src/data/vrstvy.ts` |
+| Města na mapě | `src/data/mesta.json` (ČSÚ, Databáze demografických údajů za vybraná města) |
+| Podklad mapy (popisky krajů, řeky, vrcholy) | `src/data/cesko-mapa.json` |
+| Světová data pro glóbus | `src/data/svet.json` |
+| Ostatní série | `src/data/serie.ts` |
+| Hlasování o dalším dílu | `src/data/hlasovani.ts`, skript `navody/hlasovani-apps-script.gs` |
+| Ověření pro Google, Seznam a měření návštěvnosti | `src/data/web.ts` |
+| Náhledové obrázky pro sdílení | `public/og/` |
 
-```text
-/
-├── public/
-├── src/
-│   └── pages/
-│       └── index.astro
-└── package.json
-```
+## Hlasování
 
-Astro looks for `.astro` or `.md` files in the `src/pages/` directory. Each page is exposed as a route based on its file name.
-
-There's nothing special about `src/components/`, but that's where we like to put any Astro/React/Vue/Svelte/Preact components.
-
-Any static assets, like images, can be placed in the `public/` directory.
-
-## 🧞 Commands
-
-All commands are run from the root of the project, from a terminal:
-
-| Command                   | Action                                           |
-| :------------------------ | :----------------------------------------------- |
-| `npm install`             | Installs dependencies                            |
-| `npm run dev`             | Starts local dev server at `localhost:4321`      |
-| `npm run build`           | Build your production site to `./dist/`          |
-| `npm run preview`         | Preview your build locally, before deploying     |
-| `npm run astro ...`       | Run CLI commands like `astro add`, `astro check` |
-| `npm run astro -- --help` | Get help using the Astro CLI                     |
-
-## 👀 Want to learn more?
-
-Feel free to check [our documentation](https://docs.astro.build) or jump into our [Discord server](https://astro.build/chat).
+Doporučené je zapojení přes Google Apps Script: hlasy se zapisují hned a web dostane výsledky okamžitě.
+Postup je přímo v hlavičce souboru `navody/hlasovani-apps-script.gs`. Adresu webové aplikace (končí `/exec`)
+vlož do `src/data/hlasovani.ts` jako `skript`. Dokud je prázdná, web používá Google Formulář a zveřejněnou tabulku.

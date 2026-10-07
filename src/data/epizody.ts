@@ -1,6 +1,10 @@
 // Díly série Česko vs. svět. a3 = třípísmenný kód země (ISO 3166-1).
 // Nový díl přidáš na konec seznamu. Vlajka a srovnání s Českem se doplní samy podle kódu země.
+// instagram: odkaz na reel. Dokud je prázdný, tlačítko vede na profil @data.cesky.
 export type Epizoda = { a3: string; dil: number; nazev: string; popis: string; datum: string; instagram: string };
+
+export const IG_PROFIL = 'https://www.instagram.com/data.cesky/';
+export const odkazDilu = (e: Epizoda) => e.instagram || IG_PROFIL;
 
 export const epizody: Epizoda[] = [
   { a3: 'PRT', dil: 1, nazev: 'Portugalsko', popis: 'Skoro stejně lidí, úplně jiná země.', datum: '2026-06-30', instagram: 'https://www.instagram.com/reel/DaNi-6Nq_zA/' },
@@ -11,4 +15,7 @@ export const epizody: Epizoda[] = [
   { a3: 'AZE', dil: 6, nazev: 'Ázerbájdžán', popis: 'Skoro stejně obyvatel, ale 85,5 % vývozu tvoří ropa a plyn.', datum: '2026-08-29', instagram: 'https://www.instagram.com/reel/Dcn_nhBonTt/' },
   { a3: 'TUN', dil: 7, nazev: 'Tunisko', popis: 'Dvakrát větší než Česko a druhý největší producent olivového oleje.', datum: '2026-09-10', instagram: 'https://www.instagram.com/reel/DdG5P8yoYwZ/' },
   { a3: 'BOL', dil: 8, nazev: 'Bolívie', popis: 'Vejde se do ní 14× Česko a má 37 úředních jazyků.', datum: '2026-09-24', instagram: 'https://www.instagram.com/reel/Ddq_wGyoRBc/' },
+  { a3: 'KHM', dil: 9, nazev: 'Kambodža', popis: '23 Pražských hradů v jednom chrámu, jezero, které se zvětší šestkrát, a král, který mluví česky.', datum: '2026-10-07', instagram: 'https://www.instagram.com/reel/DeMkb8GhUvM/' },
 ];
+
+export const posledniDil = epizody[epizody.length - 1];

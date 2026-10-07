@@ -1,4 +1,6 @@
 // Sekvenční paleta od světlé po navy. Tmavší = vyšší hodnota.
+// Promítání mapy krajů: d3.geoMercator().fitExtent([[10, 10], [990, 567.5]], kraje z Natural Earth 1:10m),
+// parametry jsou v src/data/cesko-mapa.json (projekce).
 export const PALETA = ['#DDE2EA', '#AEB9CB', '#7D8DA8', '#4B5E82', '#1B2A4A'];
 export const BEZ_DAT = '#E4DDCF';
 
@@ -41,7 +43,10 @@ export type Vrstva = {
   roky?: Record<string, Record<string, number>>;
   nazev: string;
   popis: string;
-  typ: 'ciselna' | 'kategorie';
+  // 'mesta' = bubliny ve městech, data jsou v src/data/mesta.json
+  typ: 'ciselna' | 'kategorie' | 'mesta';
+  // Ikona (cesta SVG ve stylu Tabler, 24×24)
+  ikona?: string;
   jednotka?: string;
   desetinna?: number;
   obdobi: string;

@@ -1,32 +1,48 @@
 ---
-import { ZEME } from '../lib/svet';
+// Hlasování o zemi pro další díl Česko vs. svět. Celá logika odesílání je v src/lib/hlasy.ts.
+import { ZEME, hodnota } from '../lib/svet';
 import { epizody } from '../data/epizody';
 import { hlasovani, hlasovaniZapnute } from '../data/hlasovani';
 
 const hotove = new Set(epizody.map((e) => e.a3));
 const moznosti = Object.entries(ZEME)
   .filter(([a3]) => a3 !== 'CZE' && a3 !== 'EUZ' && !hotove.has(a3))
-  .map(([a3, [n, a2]]) => ({ a3, n, a2 }))
+  .map(([a3, [n, a2]]) => ({ a3, n, a2, pop: hodnota('pop', a3) ?? null, area: hodnota('area', a3) ?? null, km: hodnota('km', a3) ?? null }))
   .sort((a, b) => a.n.localeCompare(b.n, 'cs'));
-const nastaveni = JSON.stringify({ ...hlasovani, zapnute: hlasovaniZapnute, moznosti });
+const cz = { pop: hodnota('pop', 'CZE')!, area: hodnota('area', 'CZE')! };
+const nastaveni = JSON.stringify({ ...hlasovani, zapnute: hlasovaniZapnute, moznosti, cz, hotove: [...hotove] });
+const dalsiDil = epizody.length + 1;
 ---
 
 <div class="hl" data-hlasovani data-nastaveni={nastaveni}>
   <div class="hl__volba">
-    <div class="nadpis">
-      <span class="nadpis__stitek">Česko vs. svět · díl {epizody.length + 1}</span>
-      <h2>Který stát chceš příště?</h2>
-      <p class="drobne">Napiš název země a vyber ji ze seznamu. Hlasovat jde jednou za 30 dní.</p>
+    <div class="hledani hl__hledani">
+      <div class="hledani__pole">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
+        <input type="search" placeholder="Napiš zemi, třeba Japonsko" aria-label="Země pro další díl" autocomplete="off" data-vstup />
+      </div>
+      <ul class="naseptavac" data-seznam hidden></ul>
     </div>
-    <div class="hl__hledani">
-      <label for="hl-vstup" class="hl__popisek">Země</label>
-      <input id="hl-vstup" type="text" autocomplete="off" placeholder="Například Japonsko" data-vstup role="combobox" aria-expanded="false" aria-controls="hl-seznam" />
-      <ul id="hl-seznam" class="hl__seznam" role="listbox" data-seznam hidden></ul>
+
+    <div class="hl__rychle" data-rychle hidden>
+      <span class="hl__rychle-titul">Lidé nejčastěji chtějí</span>
+      <div class="hl__chipy" data-chipy></div>
     </div>
-    <div class="hl__vybrano" data-vybrano hidden></div>
-    <button type="button" class="tlacitko tlacitko--plny" data-odeslat disabled>Hlasovat</button>
-    <p class="drobne" data-stav aria-live="polite"></p>
-    {!hlasovaniZapnute && <p class="drobne hl__pozn">Náhled: hlasování se zapne, až doplníš odkazy v src/data/hlasovani.ts.</p>}
+
+    <div class="hl__karta" data-karta hidden>
+      <img class="hl__vlajka" data-k-vlajka alt="" />
+      <div class="hl__karta-text">
+        <span class="hl__karta-stitek">Díl {dalsiDil}: Česko vs.</span>
+        <strong class="hl__karta-jmeno" data-k-jmeno></strong>
+        <span class="hl__karta-fakta" data-k-fakta></span>
+      </div>
+      <button type="button" class="hl__zrusit" data-zrusit aria-label="Vybrat jinou zemi">×</button>
+    </div>
+
+    <button type="button" class="tlacitko tlacitko--oranzovy hl__odeslat" data-odeslat disabled>Vyber zemi</button>
+    <p class="hl__stav" data-stav aria-live="polite"></p>
+    <button type="button" class="tlacitko tlacitko--male" data-sdilet hidden>Sdílet hlasování</button>
+    {!hlasovaniZapnute && <p class="drobne hl__pozn">Náhled: hlasování se zapne, až doplníš odkaz v src/data/hlasovani.ts.</p>}
   </div>
 
   <div class="hl__vysledky">
@@ -37,117 +53,141 @@ const nastaveni = JSON.stringify({ ...hlasovani, zapnute: hlasovaniZapnute, mozn
     <ol class="hl__poradi" data-poradi>
       <li class="drobne">Načítám hlasy…</li>
     </ol>
+    <p class="drobne hl__pata">Hlasovat jde jednou za 30 dní. Vítěz dostane vlastní díl.</p>
   </div>
 </div>
 
 <style>
   .hl { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
   @media (max-width: 860px) { .hl { grid-template-columns: 1fr; } }
-  .hl__volba { display: flex; flex-direction: column; gap: 1.1rem; align-items: flex-start; }
-  .hl__hledani { position: relative; width: min(100%, 380px); display: flex; flex-direction: column; gap: 0.35rem; }
-  .hl__hledani input { width: 100%; }
-  .hl__popisek { font-size: 0.85rem; }
-  .hl__seznam {
-    position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 10; list-style: none; margin: 0; padding: 0.35rem;
-    background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--stin);
-  }
-  :global(.hl__seznam button) {
-    display: flex; align-items: center; gap: 0.7rem; width: 100%; padding: 0.6rem 0.7rem; border: 0; border-radius: 10px;
-    background: transparent; color: var(--navy); font-family: inherit; font-size: 0.95rem; font-weight: 700; text-align: left; cursor: pointer;
-  }
-  :global(.hl__seznam button:hover), :global(.hl__seznam button[aria-selected='true']) { background: var(--plocha-2); }
-  .hl__vybrano { display: flex; align-items: center; gap: 0.7rem; padding: 0.7rem 1rem; border-radius: 14px; background: var(--plocha-2); border: 1px solid var(--line); font-weight: 800; }
+  .hl__volba { display: flex; flex-direction: column; gap: 1rem; align-items: stretch; min-width: 0; }
+  .hl__hledani { width: 100%; }
+  .hl__rychle { display: flex; flex-direction: column; gap: 0.5rem; }
+  .hl__rychle-titul { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .hl__chipy { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  :global(.hl__chip) { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 38px; padding: 0 0.85rem 0 0.5rem; border: 1.5px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--navy); font-family: inherit; font-size: 0.86rem; font-weight: 800; cursor: pointer; }
+  :global(.hl__chip:hover) { border-color: var(--navy); }
+  :global(.hl__chip .vlajka) { width: 24px; height: 18px; border-radius: 3px; }
+  .hl__karta { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: 1rem 1.1rem; border-radius: 20px; background: var(--navy); color: var(--cream); box-shadow: var(--stin); animation: hl-vjezd 0.35s ease both; }
+  .hl__vlajka { width: 64px; height: 48px; border-radius: 8px; object-fit: cover; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25); }
+  .hl__karta-text { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+  .hl__karta-stitek { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #F6C08C; }
+  .hl__karta-jmeno { font-size: 1.45rem; font-weight: 900; line-height: 1.2; }
+  .hl__karta-fakta { font-size: 0.86rem; font-weight: 600; color: #D9D3C7; line-height: 1.45; }
+  .hl__zrusit { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid rgba(242, 237, 227, 0.4); background: transparent; color: var(--cream); font-size: 1.3rem; line-height: 1; cursor: pointer; }
+  .hl__odeslat { width: 100%; min-height: 56px; font-size: 1.05rem; }
+  .hl__stav { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--navy); min-height: 1.4em; }
+  .hl__stav:empty { display: none; }
   .hl__pozn { color: var(--orange-text); }
-  .hl__vysledky { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin); padding: clamp(1.25rem, 3vw, 2rem); display: flex; flex-direction: column; gap: 1rem; }
-  .hl__vysledky h3 { font-size: 1.15rem; }
-  .hl__poradi { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.65rem; }
+  .hl__vysledky { background: var(--paper); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--stin); padding: clamp(1.25rem, 3vw, 2rem); display: flex; flex-direction: column; gap: 1rem; }
+  .hl__vysledky h3 { font-size: 1.2rem; }
+  .hl__pata { margin: 0; padding-top: 0.8rem; border-top: 1px solid var(--line); }
+  .hl__poradi { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
   :global(.hl__poradi .radek) { display: grid; grid-template-columns: 1.6rem 28px minmax(90px, 190px) minmax(0, 1fr) 3.2rem; gap: 0.6rem; align-items: center; font-weight: 700; font-size: 0.92rem; }
+  @media (max-width: 480px) { :global(.hl__poradi .radek) { grid-template-columns: 1.4rem 26px minmax(70px, 1fr) minmax(0, 1fr) 2.4rem; } }
   :global(.hl__poradi .poz) { color: var(--muted); font-size: 0.85rem; text-align: right; }
   :global(.hl__poradi .jm) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   :global(.hl__poradi .draha) { height: 16px; border-radius: 999px; background: var(--draha); overflow: hidden; }
   :global(.hl__poradi .pruh) { display: block; height: 100%; border-radius: 999px; background: var(--navy); transform-origin: left; animation: hl-rust 1.2s cubic-bezier(0.22, 0.8, 0.24, 1) both; }
-  :global(.hl__poradi .radek--muj .pruh) { background: var(--slate); }
+  :global(.hl__poradi .radek--prvni .pruh) { background: var(--orange); }
   :global(.hl__poradi .tvuj) { margin-left: 0.4rem; padding: 0.1rem 0.45rem; border-radius: 999px; background: var(--plocha-2); border: 1px solid var(--line); font-size: 0.68rem; font-weight: 800; color: var(--muted); vertical-align: middle; }
   :global(.hl__poradi .hlasy) { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
   @keyframes hl-rust { from { transform: scaleX(0); } }
-  @media (prefers-reduced-motion: reduce) { :global(.hl__poradi .pruh) { animation: none; } }
+  @keyframes hl-vjezd { from { opacity: 0; transform: translateY(6px); } }
+  @media (prefers-reduced-motion: reduce) { :global(.hl__poradi .pruh), .hl__karta { animation: none; } }
 </style>
 
 <script>
-  type Moznost = { a3: string; n: string; a2: string };
+  import { naseptavac, bezDiakritiky } from '../lib/naseptavac';
+  import { nactiVysledky, odesliHlas, mujHlas, ulozMujHlas, MESIC, type Vysledky } from '../lib/hlasy';
+
+  type Moznost = { a3: string; n: string; a2: string; pop: number | null; area: number | null; km: number | null };
   const koren = document.querySelector<HTMLElement>('[data-hlasovani]');
   if (koren) {
-    const N = JSON.parse(koren.dataset.nastaveni!) as { formular: string; pole: string; vysledky: string; zapnute: boolean; moznosti: Moznost[] };
+    const N = JSON.parse(koren.dataset.nastaveni!) as {
+      skript: string; formular: string; pole: string; vysledky: string; zapnute: boolean;
+      moznosti: Moznost[]; cz: { pop: number; area: number }; hotove: string[];
+    };
     const podleKodu = new Map(N.moznosti.map((m) => [m.a3, m]));
+    const podleJmena = new Map(N.moznosti.map((m) => [bezDiakritiky(m.n), m.a3]));
     const $ = <T extends Element>(s: string) => koren.querySelector<T>(s)!;
-    const vstup = $<HTMLInputElement>('[data-vstup]');
-    const seznam = $<HTMLElement>('[data-seznam]');
-    const vybranoEl = $<HTMLElement>('[data-vybrano]');
     const odeslat = $<HTMLButtonElement>('[data-odeslat]');
     const stav = $<HTMLElement>('[data-stav]');
     const poradiEl = $<HTMLElement>('[data-poradi]');
     const celkemEl = $<HTMLElement>('[data-celkem]');
-    const KLIC = 'dc-hlas';
-    const MESIC = 30 * 24 * 3600 * 1000;
+    const karta = $<HTMLElement>('[data-karta]');
+    const sdilet = $<HTMLButtonElement>('[data-sdilet]');
+    const cislo = (v: number, d = 0) => new Intl.NumberFormat('cs-CZ', { minimumFractionDigits: d, maximumFractionDigits: d }).format(v);
     let vybrana: Moznost | null = null;
-    let aktivni = -1;
-    let vysledky: [string, number][] = [];
+    let vysledky: Vysledky = { pocty: new Map(), celkem: 0 };
+    let odesila = false;
 
-    const bezDiakritiky = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
-    const vlajka = (a2: string) => {
+    const vlajka = (a2: string, trida = 'vlajka') => {
       const i = document.createElement('img');
-      i.src = `/vlajky/${a2}.svg`; i.alt = ''; i.className = 'vlajka'; i.loading = 'lazy';
+      i.src = `/vlajky/${a2}.svg`; i.alt = ''; i.className = trida; i.loading = 'lazy';
       return i;
     };
-    const muj = (): { a3: string; cas: number } | null => {
-      try { const x = JSON.parse(localStorage.getItem(KLIC) ?? 'null'); return x && Date.now() - x.cas < MESIC ? x : null; } catch { return null; }
-    };
+    const hlasuText = (n: number) => `${cislo(n)} ${n === 1 ? 'hlas' : n >= 2 && n <= 4 ? 'hlasy' : 'hlasů'}`;
+    const krat = (p: number) => (p >= 1.1 ? `${cislo(p, p >= 10 ? 0 : 1)}× víc` : p <= 1 / 1.1 ? `${cislo(1 / p, 1 / p >= 10 ? 0 : 1)}× míň` : 'skoro stejně');
 
-    function nabidni() {
-      const q = bezDiakritiky(vstup.value.trim());
-      const shody = q ? N.moznosti.filter((m) => bezDiakritiky(m.n).includes(q)).sort((a, b) => Number(!bezDiakritiky(a.n).startsWith(q)) - Number(!bezDiakritiky(b.n).startsWith(q))).slice(0, 7) : [];
-      aktivni = shody.length ? 0 : -1;
-      seznam.replaceChildren(...shody.map((m, i) => {
-        const li = document.createElement('li');
-        const b = document.createElement('button');
-        b.type = 'button'; b.setAttribute('role', 'option'); b.setAttribute('aria-selected', String(i === aktivni));
-        b.append(vlajka(m.a2), m.n);
-        b.addEventListener('mousedown', (e) => { e.preventDefault(); vyber(m); });
-        li.append(b);
-        return li;
-      }));
-      seznam.hidden = shody.length === 0;
-      vstup.setAttribute('aria-expanded', String(!seznam.hidden));
+    function fakta(m: Moznost) {
+      const casti: string[] = [];
+      if (m.pop) casti.push(`${krat(m.pop / N.cz.pop)} lidí než Česko`);
+      if (m.area) casti.push(`rozloha ${krat(m.area / N.cz.area).replace('víc', 'větší').replace('míň', 'menší')}`);
+      if (m.km) casti.push(`${cislo(Math.round(m.km / 10) * 10)} km od Prahy`);
+      return casti.join(' · ');
     }
-    function vyber(m: Moznost) {
+
+    function nastavTlacitko() {
+      const m = mujHlas();
+      if (!N.zapnute) { odeslat.disabled = true; odeslat.textContent = 'Hlasování zatím není zapnuté'; return; }
+      if (m) {
+        odeslat.disabled = true;
+        const dni = Math.ceil((MESIC - (Date.now() - m.cas)) / 86400000);
+        odeslat.textContent = `Hlasoval(a) jsi pro ${podleKodu.get(m.a3)?.n ?? m.a3}`;
+        if (!stav.textContent) stav.textContent = `Další hlas půjde za ${dni} ${dni === 1 ? 'den' : dni <= 4 ? 'dny' : 'dní'}.`;
+        sdilet.hidden = false;
+        return;
+      }
+      odeslat.disabled = !vybrana || odesila;
+      odeslat.textContent = vybrana ? `Hlasovat pro ${vybrana.n}` : 'Vyber zemi';
+    }
+
+    function vyber(m: Moznost | null) {
       vybrana = m;
-      vstup.value = m.n;
-      seznam.hidden = true;
-      vstup.setAttribute('aria-expanded', 'false');
-      vybranoEl.hidden = false;
-      vybranoEl.replaceChildren(vlajka(m.a2), m.n);
-      odeslat.disabled = !N.zapnute || !!muj();
+      karta.hidden = !m;
+      if (m) {
+        $<HTMLImageElement>('[data-k-vlajka]').src = `/vlajky/${m.a2}.svg`;
+        $<HTMLElement>('[data-k-jmeno]').textContent = m.n;
+        $<HTMLElement>('[data-k-fakta]').textContent = fakta(m);
+      }
+      nastavTlacitko();
     }
-    vstup.addEventListener('input', () => { vybrana = null; vybranoEl.hidden = true; odeslat.disabled = true; nabidni(); });
-    vstup.addEventListener('keydown', (e) => {
-      const tl = Array.from(seznam.querySelectorAll('button'));
-      if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
-        e.preventDefault();
-        if (!tl.length) return;
-        aktivni = (aktivni + (e.key === 'ArrowDown' ? 1 : -1) + tl.length) % tl.length;
-        tl.forEach((b, i) => b.setAttribute('aria-selected', String(i === aktivni)));
-      } else if (e.key === 'Enter' && aktivni >= 0 && tl[aktivni]) {
-        e.preventDefault();
-        tl[aktivni].dispatchEvent(new MouseEvent('mousedown'));
-      } else if (e.key === 'Escape') seznam.hidden = true;
-    });
-    vstup.addEventListener('blur', () => setTimeout(() => (seznam.hidden = true), 120));
+    $<HTMLButtonElement>('[data-zrusit]').addEventListener('click', () => vyber(null));
+
+    naseptavac(
+      $<HTMLInputElement>('[data-vstup]'),
+      $<HTMLElement>('[data-seznam]'),
+      N.moznosti.map((m) => ({ kod: m.a3, nazev: m.n, vlajka: `/vlajky/${m.a2}.svg` })),
+      (p) => vyber(podleKodu.get(p.kod) ?? null),
+      { vymazat: true },
+    );
 
     function vykresli() {
-      const m = muj();
-      const data = vysledky.filter(([k]) => podleKodu.has(k));
-      const celkem = data.reduce((s, [, n]) => s + n, 0);
-      celkemEl.textContent = celkem ? `${celkem} ${celkem === 1 ? 'hlas' : celkem < 5 ? 'hlasy' : 'hlasů'}` : '';
+      const m = mujHlas();
+      const data = [...vysledky.pocty.entries()].filter(([k]) => podleKodu.has(k)).sort((a, b) => b[1] - a[1] || podleKodu.get(a[0])!.n.localeCompare(podleKodu.get(b[0])!.n, 'cs'));
+      celkemEl.textContent = vysledky.celkem ? hlasuText(vysledky.celkem) : '';
+      // rychlá volba z nejčastějších návrhů
+      const rychle = data.slice(0, 6);
+      $<HTMLElement>('[data-rychle]').hidden = rychle.length < 2 || !!m;
+      $<HTMLElement>('[data-chipy]').replaceChildren(...rychle.map(([k]) => {
+        const z = podleKodu.get(k)!;
+        const b = document.createElement('button');
+        b.type = 'button'; b.className = 'hl__chip';
+        b.append(vlajka(z.a2), z.n);
+        b.addEventListener('click', () => vyber(z));
+        return b;
+      }));
       if (!data.length) {
         const li = document.createElement('li');
         li.className = 'drobne';
@@ -155,74 +195,78 @@ const nastaveni = JSON.stringify({ ...hlasovani, zapnute: hlasovaniZapnute, mozn
         poradiEl.replaceChildren(li);
         return;
       }
-      const top = data.slice(0, 8);
+      const top = data.slice(0, 10);
       const max = top[0][1];
       poradiEl.replaceChildren(...top.map(([k, n], i) => {
         const z = podleKodu.get(k)!;
         const li = document.createElement('li');
-        li.className = 'radek' + (m?.a3 === k ? ' radek--muj' : '');
+        li.className = 'radek' + (i === 0 ? ' radek--prvni' : '');
         const poz = document.createElement('span'); poz.className = 'poz'; poz.textContent = `${i + 1}.`;
         const jm = document.createElement('span'); jm.className = 'jm'; jm.textContent = z.n;
         if (m?.a3 === k) { const t = document.createElement('span'); t.className = 'tvuj'; t.textContent = 'tvůj hlas'; jm.append(t); }
         const draha = document.createElement('span'); draha.className = 'draha';
-        const pruh = document.createElement('span'); pruh.className = 'pruh'; pruh.style.width = `${(n / max) * 100}%`; pruh.style.animationDelay = `${i * 90}ms`;
+        const pruh = document.createElement('span'); pruh.className = 'pruh'; pruh.style.width = `${(n / max) * 100}%`; pruh.style.animationDelay = `${i * 80}ms`;
         draha.append(pruh);
-        const h = document.createElement('span'); h.className = 'hlasy'; h.textContent = String(n);
+        const h = document.createElement('span'); h.className = 'hlasy'; h.textContent = cislo(n);
         li.append(poz, vlajka(z.a2), jm, draha, h);
         return li;
       }));
     }
 
     async function nacti() {
-      if (!N.zapnute) { vysledky = []; return vykresli(); }
+      if (!N.zapnute) { vykresli(); return; }
       try {
-        const odp = await fetch(`${N.vysledky}${N.vysledky.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`);
-        const text = await odp.text();
-        if (!odp.ok || text.trimStart().startsWith('<')) throw new Error('Tabulka nevrátila CSV');
-        // V tabulce je kód země (JPN). Kdyby tam někdo ručně napsal název („Čína“), přiřadí se taky.
-        const podleJmena = new Map(N.moznosti.map((x) => [bezDiakritiky(x.n), x.a3]));
-        const pocty = new Map<string, number>();
-        for (const radek of text.split(/\r?\n/).slice(1)) {
-          const [hodnota, n] = radek.split(',').map((s) => s.replace(/"/g, '').trim());
-          const c = Number(n);
-          if (!hodnota || !Number.isFinite(c) || c <= 0) continue;
-          const kod = podleKodu.has(hodnota.toUpperCase()) ? hodnota.toUpperCase() : podleJmena.get(bezDiakritiky(hodnota));
-          if (kod) pocty.set(kod, (pocty.get(kod) ?? 0) + c);
-        }
-        // Vlastní hlas se v tabulce Google objeví se zpožděním, proto ho přičteme hned.
-        const m = muj();
-        if (m && sessionStorage.getItem('dc-hlas-cerstvy') === m.a3) pocty.set(m.a3, (pocty.get(m.a3) ?? 0) + 1);
-        vysledky = [...pocty.entries()].sort((a, b) => b[1] - a[1] || podleKodu.get(a[0])!.n.localeCompare(podleKodu.get(b[0])!.n, 'cs'));
+        vysledky = await nactiVysledky(N, podleJmena);
         vykresli();
-      } catch {
-        poradiEl.replaceChildren(Object.assign(document.createElement('li'), { className: 'drobne', textContent: 'Výsledky se teď nepodařilo načíst.' }));
+      } catch (e) {
+        console.warn('Hlasování: výsledky se nepodařilo načíst', e);
+        poradiEl.replaceChildren(Object.assign(document.createElement('li'), { className: 'drobne', textContent: 'Výsledky se teď nepodařilo načíst. Hlasovat ale jde.' }));
       }
     }
 
     odeslat.addEventListener('click', async () => {
-      if (!vybrana || !N.zapnute || muj()) return;
-      odeslat.disabled = true;
-      stav.textContent = 'Odesílám…';
+      if (!vybrana || !N.zapnute || mujHlas() || odesila) return;
+      odesila = true;
+      nastavTlacitko();
+      odeslat.textContent = 'Odesílám…';
+      const z = vybrana;
       try {
-        const data = new URLSearchParams({ [N.pole]: vybrana.a3 });
-        await fetch(N.formular, { method: 'POST', mode: 'no-cors', body: data });
-        try {
-          localStorage.setItem(KLIC, JSON.stringify({ a3: vybrana.a3, cas: Date.now() }));
-          sessionStorage.setItem('dc-hlas-cerstvy', vybrana.a3);
-        } catch {}
-        stav.textContent = `Díky! Tvůj hlas pro ${vybrana.n} je započítaný.`;
-        const i = vysledky.findIndex(([k]) => k === vybrana!.a3);
-        if (i >= 0) vysledky[i] = [vysledky[i][0], vysledky[i][1] + 1]; else vysledky.push([vybrana.a3, 1]);
-        vysledky.sort((a, b) => b[1] - a[1]);
+        const o = await odesliHlas(N, z.a3);
+        if (!o.ok && o.chyba === 'uz-hlasoval') {
+          ulozMujHlas(z.a3);
+          stav.textContent = 'Z tohoto prohlížeče už hlas v posledních 30 dnech přišel.';
+        } else if (!o.ok) {
+          throw new Error(o.chyba ?? 'chyba');
+        } else {
+          ulozMujHlas(z.a3);
+          stav.textContent = `Díky! Hlas pro ${z.n} je započítaný.`;
+          if (o.vysledky) vysledky = o.vysledky;
+          else {
+            vysledky.pocty.set(z.a3, (vysledky.pocty.get(z.a3) ?? 0) + 1);
+            vysledky.celkem += 1;
+          }
+        }
+        vyber(null);
         vykresli();
-      } catch {
+      } catch (e) {
+        console.warn('Hlasování: odeslání selhalo', e);
         stav.textContent = 'Hlas se nepodařilo odeslat. Zkus to prosím za chvíli.';
-        odeslat.disabled = false;
+      } finally {
+        odesila = false;
+        nastavTlacitko();
       }
     });
 
-    const m = muj();
-    if (m && podleKodu.has(m.a3)) stav.textContent = `Už jsi hlasoval(a) pro ${podleKodu.get(m.a3)!.n}. Další hlas půjde za ${Math.ceil((MESIC - (Date.now() - m.cas)) / 86400000)} dní.`;
+    sdilet.addEventListener('click', async () => {
+      const url = `${location.origin}/hlasovani/`;
+      const text = 'Vyber zemi pro další díl Česko vs. svět od @data.cesky';
+      try {
+        if (navigator.share) await navigator.share({ title: 'Hlasování · data.cesky', text, url });
+        else { await navigator.clipboard.writeText(url); sdilet.textContent = 'Odkaz zkopírován'; }
+      } catch {}
+    });
+
+    nastavTlacitko();
     nacti();
   }
 </script>
