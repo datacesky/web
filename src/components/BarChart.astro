@@ -64,13 +64,14 @@ const kategorie = [...new Set(polozky.map((p) => p.kategorie).filter(Boolean))] 
   .sg--mala .sg__draha { height: 13px; }
   .sg--mala .sg__hodnota { font-size: 0.78rem; }
 
-  /* Pruhy pomalu vyrostou, až graf vjede do obrazu */
-  :global(.js) .odhal-graf .sg__pruh { transform: scaleX(0); }
-  :global(.js) .odhal-graf .sg__hodnota { opacity: 0; }
-  :global(.js) .odhal-graf:global(.odhal--videt) .sg__pruh { transform: scaleX(1); transition: transform 1.4s cubic-bezier(0.22, 0.8, 0.24, 1) calc(var(--i) * 90ms); }
-  :global(.js) .odhal-graf:global(.odhal--videt) .sg__hodnota { opacity: 1; transition: opacity 0.6s ease calc(var(--i) * 90ms + 0.7s); }
+  /* Pruhy pomalu vyrostou, až graf vjede do obrazu. Rostou ořezem, ne roztažením,
+     takže zaoblený konec zůstává po celou dobu kulatý. */
+  :global(.js) .odhal-graf .sg__pruh { clip-path: inset(0 100% 0 0 round 999px); }
+  :global(.js) .odhal-graf .sg__hodnota { opacity: 0; transform: translateX(-6px); }
+  :global(.js) .odhal-graf:global(.odhal--videt) .sg__pruh { clip-path: inset(0 0 0 0 round 999px); transition: clip-path 1.4s cubic-bezier(0.22, 0.8, 0.24, 1) calc(var(--i) * 90ms); }
+  :global(.js) .odhal-graf:global(.odhal--videt) .sg__hodnota { opacity: 1; transform: none; transition: opacity 0.6s var(--ease-out) calc(var(--i) * 90ms + 0.7s), transform 0.6s var(--ease-out) calc(var(--i) * 90ms + 0.7s); }
   @media (prefers-reduced-motion: reduce) {
-    :global(.js) .odhal-graf .sg__pruh { transform: none; transition: none !important; }
-    :global(.js) .odhal-graf .sg__hodnota { opacity: 1; transition: none !important; }
+    :global(.js) .odhal-graf .sg__pruh { clip-path: none; transition: none !important; }
+    :global(.js) .odhal-graf .sg__hodnota { opacity: 1; transform: none; transition: none !important; }
   }
 </style>

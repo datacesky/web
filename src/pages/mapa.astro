@@ -51,7 +51,7 @@ const data = JSON.stringify({
           <div class="hledani" style="width: min(100%, 290px);">
           <div class="hledani__pole">
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
-            <input type="search" placeholder="Najdi kraj nebo město" aria-label="Najdi kraj nebo město" data-hledat />
+            <input type="search" enterkeyhint="search" placeholder="Najdi kraj nebo město" aria-label="Najdi kraj nebo město" data-hledat />
           </div>
           <ul class="naseptavac" data-naseptavac hidden></ul>
           </div>
@@ -271,10 +271,12 @@ const data = JSON.stringify({
     display: inline-flex; align-items: center; gap: 0.45rem; min-height: 38px;
     padding: 0 0.8rem 0 0.6rem; border: 1.5px solid var(--line); border-radius: 999px;
     background: var(--plocha-2); color: var(--navy); font-family: inherit; font-size: 0.82rem; font-weight: 800; line-height: 1.2; text-align: left; cursor: pointer; white-space: nowrap;
-    transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    transition: border-color 0.2s ease, transform 0.2s var(--ease-out), background-color 0.2s ease, color 0.2s ease;
+    touch-action: manipulation; -webkit-user-select: none; user-select: none;
   }
-  .dlazdice svg { color: var(--slate); flex-shrink: 0; }
-  .dlazdice:hover { border-color: var(--navy); background: var(--paper); transform: translateY(-1px); }
+  .dlazdice svg { color: var(--slate); flex-shrink: 0; transition: color 0.2s ease; }
+  @media (hover: hover) and (pointer: fine) { .dlazdice:hover { border-color: var(--navy); background: var(--paper); transform: translateY(-1px); } }
+  .dlazdice:active { transform: scale(0.97); transition-duration: 60ms; }
   .dlazdice__sub { display: none; }
   .dlazdice[aria-pressed='true'] { background: var(--navy); border-color: var(--navy); color: var(--cream); }
   .dlazdice[aria-pressed='true'] svg { color: var(--orange); }
@@ -295,7 +297,7 @@ const data = JSON.stringify({
 
   /* Plátno mapy */
   .mc__platno { position: relative; border-radius: 16px; background: var(--plocha-2); }
-  .mc-svg { width: 100%; height: auto; max-height: 70vh; display: block; touch-action: pan-y; user-select: none; -webkit-user-select: none; --z: 1; --u: 1; --s: 1; }
+  .mc-svg { width: 100%; height: auto; max-height: 70vh; max-height: 70svh; display: block; touch-action: pan-y; user-select: none; -webkit-user-select: none; --z: 1; --u: 1; --s: 1; }
   .mc-svg.je-priblizeno { touch-action: none; cursor: grab; }
   .mc-svg.se-taha { cursor: grabbing; }
   .mc-satelit { display: none; }
@@ -376,7 +378,8 @@ const data = JSON.stringify({
   .mc__osa { flex-grow: 1; display: flex; flex-direction: column; gap: 0.15rem; }
   .mc__osa input { width: 100%; accent-color: var(--orange); }
   .mc__osa-popisky { display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: var(--muted); }
-  .mc__prehrat { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: 0; background: var(--navy); color: var(--cream); cursor: pointer; display: grid; place-items: center; }
+  .mc__prehrat { width: 44px; height: 44px; flex-shrink: 0; border-radius: 50%; border: 0; background: var(--navy); color: var(--cream); cursor: pointer; display: grid; place-items: center; transition: transform var(--stisk) var(--ease-out); }
+  .mc__prehrat:active { transform: scale(0.94); }
   .mc__rok { font-size: 1.6rem; font-weight: 900; min-width: 4ch; text-align: right; font-variant-numeric: tabular-nums; }
   .mc__pata { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; padding-top: 0.9rem; border-top: 1px solid var(--line); }
 
@@ -395,15 +398,19 @@ const data = JSON.stringify({
   :global(.mapa__detail .velky) { font-size: 1.75rem; font-weight: 900; color: var(--orange); line-height: 1.2; }
   :global(.mapa__detail .radek) { font-size: 0.9rem; font-weight: 600; color: #D9D3C7; }
   :global(.mapa__detail .srovnani) { margin-top: 0.4rem; padding: 0.7rem 0.9rem; border-radius: 12px; background: var(--navy-2); font-size: 0.9rem; font-weight: 700; }
-  :global(.mapa__detail button) { align-self: flex-start; margin-top: 0.5rem; min-height: 38px; padding: 0 1rem; border: 1.5px solid var(--cream); border-radius: 999px; background: transparent; color: var(--cream); font-family: inherit; font-weight: 700; cursor: pointer; }
+  :global(.mapa__detail button) { align-self: flex-start; margin-top: 0.5rem; min-height: 38px; padding: 0 1rem; border: 1.5px solid var(--cream); border-radius: 999px; background: transparent; color: var(--cream); font-family: inherit; font-weight: 700; cursor: pointer; transition: transform var(--stisk) var(--ease-out); }
+  :global(.mapa__detail button:active) { transform: scale(0.97); }
   :global(.mapa__detail .krivka) { width: 100%; height: 70px; margin-top: 0.3rem; overflow: visible; }
   :global(.mapa__detail .krivka-osa) { display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: #B9B3A7; }
   :global(.poradi button) {
     display: grid; grid-template-columns: 1.7rem minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; width: 100%;
     padding: 0.35rem 0.5rem; border: 0; border-radius: 10px; background: transparent; color: var(--navy);
     font-family: inherit; font-size: 0.85rem; font-weight: 700; text-align: left; cursor: pointer;
+    touch-action: manipulation; transition: background-color 0.15s ease;
   }
-  :global(.poradi button:hover), :global(.poradi button[aria-pressed='true']) { background: var(--plocha-2); }
+  :global(.poradi button[aria-pressed='true']) { background: var(--plocha-2); }
+  @media (hover: hover) and (pointer: fine) { :global(.poradi button:hover) { background: var(--plocha-2); } }
+  :global(.poradi button:active) { background: var(--draha); transition-duration: 0s; }
   :global(.poradi .p-poz) { color: var(--muted); font-size: 0.78rem; text-align: right; }
   :global(.poradi .p-jmeno) { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
   :global(.poradi .p-jmeno > span:first-child) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }

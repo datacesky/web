@@ -48,7 +48,7 @@ const data = JSON.stringify({ vrstvy: ciselne, kraje: Object.fromEntries(geo.kra
   .mm__mapa { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin); padding: clamp(1.1rem, 3vw, 1.75rem); display: flex; flex-direction: column; gap: 1rem; text-align: center; }
   .mm__mapa svg { width: 100%; height: auto; display: block; }
   .mm__kraj { stroke: #FFFFFF; stroke-width: 2; stroke-linejoin: round; transition: fill 0.8s ease, opacity 0.2s ease; }
-  .mm__kraj:hover { opacity: 0.8; }
+  @media (hover: hover) and (pointer: fine) { .mm__kraj:hover { opacity: 0.8; } }
   .mm__poradi { list-style: none; margin: 0; padding: 1.1rem; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin); display: flex; flex-direction: column; justify-content: center; gap: 0.35rem; }
   :global(.mm__poradi li) { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; font-size: 0.8rem; font-weight: 700; }
   :global(.mm__poradi .p) { color: var(--muted); font-size: 0.74rem; text-align: right; }

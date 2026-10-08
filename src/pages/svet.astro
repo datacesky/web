@@ -40,7 +40,7 @@ const czPoradi = Object.fromEntries(
         <h1 class="svet-titul">Svět vedle Česka</h1>
         <p class="perex">Vyber, co chceš vidět. Glóbus se přebarví a vedle se seřadí žebříček. Klikni na stát a postav ho vedle Česka.</p>
       </div>
-      <div class="prepinac" role="group" aria-label="Zobrazení">
+      <div class="segment prepinac" role="group" aria-label="Zobrazení">
         <button type="button" aria-pressed="true" data-rezim="globus">Glóbus</button>
         <button type="button" aria-pressed="false" data-rezim="mapa">Mapa</button>
       </div>
@@ -71,7 +71,7 @@ const czPoradi = Object.fromEntries(
           <div class="hledani">
             <div class="hledani__pole">
               <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
-              <input type="search" placeholder="Najdi stát, třeba Japonsko" aria-label="Najdi stát" data-hledat-stat />
+              <input type="search" enterkeyhint="search" placeholder="Najdi stát, třeba Japonsko" aria-label="Najdi stát" data-hledat-stat />
             </div>
             <ul class="naseptavac" data-naseptavac hidden></ul>
           </div>
@@ -188,9 +188,9 @@ const czPoradi = Object.fromEntries(
 
 <style>
   .svet-hlava { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: flex-end; justify-content: space-between; }
-  .prepinac { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); }
-  .prepinac button { min-height: 44px; padding: 0 1.3rem; border: 0; border-radius: 999px; background: transparent; color: var(--navy); font-family: inherit; font-size: 0.95rem; font-weight: 800; cursor: pointer; }
-  .prepinac button[aria-pressed='true'] { background: var(--navy); color: var(--cream); }
+  /* Glóbus | Mapa: stejný segmentový přepínač jako jinde, jen větší */
+  .prepinac { gap: 4px; padding: 4px; }
+  .prepinac button { min-height: 44px; padding: 0 1.3rem; font-size: 0.95rem; }
 
   /* Výběr vrstvy – na širokém displeji svislý sloupec vlevo, jinak řádek nad glóbusem */
   .vyber { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 84px; }
@@ -202,10 +202,12 @@ const czPoradi = Object.fromEntries(
     display: grid; grid-template-columns: 20px minmax(0, 1fr); grid-template-rows: auto auto; column-gap: 0.55rem; align-items: center;
     width: 100%; padding: 0.42rem 0.75rem 0.42rem 0.65rem; border: 1.5px solid var(--line); border-radius: 12px;
     background: var(--paper); color: var(--navy); font-family: inherit; text-align: left; cursor: pointer;
-    box-shadow: var(--stin-maly); transition: border-color 0.2s ease, transform 0.2s ease, background 0.2s ease;
+    box-shadow: var(--stin-maly); transition: border-color 0.2s ease, transform 0.2s var(--ease-out), background-color 0.2s ease, color 0.2s ease;
+    touch-action: manipulation; -webkit-user-select: none; user-select: none;
   }
-  .dlazdice svg { grid-row: 1 / 3; color: var(--slate); }
-  .dlazdice:hover { border-color: var(--navy); transform: translateX(2px); }
+  .dlazdice svg { grid-row: 1 / 3; color: var(--slate); transition: color 0.2s ease; }
+  @media (hover: hover) and (pointer: fine) { .dlazdice:hover { border-color: var(--navy); transform: translateX(2px); } }
+  .dlazdice:active { transform: scale(0.97); transition-duration: 60ms; }
   .dlazdice__nazev { font-size: 0.84rem; font-weight: 800; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .dlazdice__cz { font-size: 0.7rem; font-weight: 700; color: var(--orange-text); line-height: 1.4; }
   .dlazdice__cz:empty { display: none; }
@@ -216,7 +218,7 @@ const czPoradi = Object.fromEntries(
     .vyber { grid-column: 1 / -1; position: static; flex-direction: row; flex-wrap: wrap; gap: 0.8rem 1.4rem; }
     .vyber__dlazdice { flex-direction: row; flex-wrap: wrap; }
     .dlazdice { width: auto; }
-    .dlazdice:hover { transform: translateY(-1px); }
+    @media (hover: hover) and (pointer: fine) { .dlazdice:hover { transform: translateY(-1px); } }
   }
   /* Mobil: všechny dlaždice v jednom řádku, posouvá se prstem do strany */
   @media (max-width: 700px) {
@@ -230,7 +232,6 @@ const czPoradi = Object.fromEntries(
     .vyber__skupina { flex: 0 0 auto; }
     .vyber__dlazdice { flex-wrap: nowrap; }
     .dlazdice { flex: 0 0 auto; scroll-snap-align: start; scroll-margin-inline: 1.25rem; }
-    .dlazdice:hover { transform: none; }
   }
 
   /* Glóbus sedí přímo na stránce */
@@ -243,7 +244,7 @@ const czPoradi = Object.fromEntries(
   .scena__obal { position: relative; display: flex; justify-content: center; border-radius: 28px; transition: box-shadow 0.3s ease; }
   .scena__obal.je-priblizeno { overflow: hidden; box-shadow: inset 0 0 0 1px var(--line), var(--stin); background: #B9D6EA; }
   .scena__obal.je-priblizeno .scena__svg { overflow: hidden; }
-  .scena__svg { width: 100%; height: auto; display: block; max-height: 76vh; cursor: grab; user-select: none; overflow: visible; }
+  .scena__svg { width: 100%; height: auto; display: block; max-height: 76vh; max-height: 76svh; cursor: grab; -webkit-user-select: none; user-select: none; overflow: visible; }
   .scena__svg--globus, .scena__svg.je-priblizeno { touch-action: none; }
   .scena__svg--mapa:not(.je-priblizeno) { cursor: default; touch-action: pan-y; }
   .scena__svg:active { cursor: grabbing; }
@@ -254,7 +255,8 @@ const czPoradi = Object.fromEntries(
   .scena__svg--mapa .scena__lesk { display: none; }
   .scena__okraj { fill: none; stroke: rgba(27, 42, 74, 0.18); stroke-width: 1; pointer-events: none; }
   :global(.zeme) { stroke: #FFFFFF; stroke-width: 0.55; stroke-linejoin: round; cursor: pointer; transition: fill 0.6s ease; }
-  :global(.zeme:hover), :global(.zeme--hover) { stroke: var(--navy); stroke-width: 1.6; }
+  :global(.zeme--hover) { stroke: var(--navy); stroke-width: 1.6; }
+  @media (hover: hover) and (pointer: fine) { :global(.zeme:hover) { stroke: var(--navy); stroke-width: 1.6; } }
   :global(.zeme--vybrana) { stroke: var(--orange); stroke-width: 2.6; }
   .scena__tooltip {
     position: absolute; pointer-events: none; z-index: 5; transform: translate(-50%, calc(-100% - 14px));
@@ -275,7 +277,9 @@ const czPoradi = Object.fromEntries(
   .cz-karta {
     display: grid; grid-template-columns: 36px 1fr auto; gap: 0.75rem; align-items: center; width: 100%; padding: 0.85rem 1rem;
     border: 0; border-radius: 14px; background: var(--navy); color: var(--cream); font-family: inherit; text-align: left; cursor: pointer;
+    transition: transform var(--stisk) var(--ease-out);
   }
+  .cz-karta:active { transform: scale(0.985); }
   :global(.cz-karta img) { width: 36px; height: 27px; border-radius: 4px; }
   :global(.cz-karta .velke) { font-size: 1.35rem; font-weight: 900; color: var(--orange); line-height: 1.2; }
   :global(.cz-karta .male) { font-size: 0.8rem; font-weight: 600; color: #D9D3C7; line-height: 1.45; }
@@ -286,8 +290,10 @@ const czPoradi = Object.fromEntries(
     display: grid; grid-template-columns: 2.1rem 26px minmax(0, 1fr) auto; gap: 0.6rem; align-items: center; width: 100%;
     padding: 0.42rem 0.5rem; border: 0; border-radius: 10px; background: transparent; color: var(--navy);
     font-family: inherit; font-size: 0.88rem; font-weight: 700; text-align: left; cursor: pointer;
+    touch-action: manipulation; transition: background-color 0.15s ease;
   }
-  :global(.zebricek button:hover) { background: var(--plocha-2); }
+  @media (hover: hover) and (pointer: fine) { :global(.zebricek button:hover) { background: var(--plocha-2); } }
+  :global(.zebricek button:active) { background: var(--draha); transition-duration: 0s; }
   :global(.zebricek .poz) { font-size: 0.8rem; color: var(--muted); text-align: right; font-variant-numeric: tabular-nums; }
   :global(.zebricek .vlajka) { width: 26px; height: 19.5px; }
   :global(.zebricek .stred) { display: flex; flex-direction: column; gap: 0.25rem; min-width: 0; }
@@ -304,7 +310,9 @@ const czPoradi = Object.fromEntries(
 
   /* Detail státu */
   :global(.panel__stat .zpet) { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.4rem; min-height: 38px; padding: 0 0.9rem; border: 1.5px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--navy); font-family: inherit; font-weight: 800; font-size: 0.85rem; cursor: pointer; }
-  :global(.panel__stat .zpet:hover) { border-color: var(--navy); }
+  @media (hover: hover) and (pointer: fine) { :global(.panel__stat .zpet:hover) { border-color: var(--navy); } }
+  :global(.panel__stat .zpet:active) { transform: scale(0.97); }
+  :global(.panel__stat .zpet) { transition: transform var(--stisk) var(--ease-out), border-color 0.2s ease; }
   :global(.panel__stat .hlava) { display: flex; align-items: center; gap: 0.9rem; }
   :global(.panel__stat .hlava img) { width: 58px; height: 43.5px; border-radius: 6px; box-shadow: 0 0 0 1px rgba(27, 42, 74, 0.15); }
   :global(.panel__stat .jmeno) { font-size: 1.5rem; font-weight: 900; line-height: 1.2; }
@@ -361,8 +369,9 @@ const czPoradi = Object.fromEntries(
   import { hranice, trida } from '../lib/mapa';
   import { SVET_VRSTVY, ZEME, zebricek, pocet, hodnota, rok, poradiZeme, jmeno, vlajka, vrstvaPodleId, cislo, type SvetVrstva } from '../lib/svet';
   import { naseptavac } from '../lib/naseptavac';
+  import { pruzina, setrvacnost, merickoRychlosti, gumove, zpetGumove } from '../lib/pohyb';
 
-  type Zeme = { type: 'Feature'; id?: string; properties: { n: string; a2?: string }; geometry: any };
+  type Zeme ={ type: 'Feature'; id?: string; properties: { n: string; a2?: string }; geometry: any };
   const zeme = (feature(svet.topo as any, (svet.topo as any).objects.countries) as any).features as Zeme[];
   const epMapa = new Map(epizody.map((e) => [e.a3, e]));
   const PALETA = ['#E8E1D1', '#B9BCC3', '#8792AA', '#4E5F84', '#1B2A4A'];
@@ -434,13 +443,23 @@ const czPoradi = Object.fromEntries(
   let mS = 1, mT: [number, number] = [500, 264];
   const MAX_ZOOM = 8;
   const priblizeno = () => (rezim === 'globus' ? zoomG > 1.02 : mS > M0 * 1.02);
-  function omezMapu() {
+  // O kolik je potřeba posunout plochou mapu, aby nevyjela z rámu.
+  function opravaMapy(): [number, number] {
     plocha.scale(mS).translate(mT);
     const [[x0, y0], [x1, y1]] = geoPath(plocha).bounds(sfera);
     let dx = 0, dy = 0;
     if (x1 - x0 <= 984) dx = 500 - (x0 + x1) / 2; else { if (x0 > 8) dx = 8 - x0; if (x1 < 992) dx = 992 - x1; }
     if (y1 - y0 <= 512) dy = 264 - (y0 + y1) / 2; else { if (y0 > 8) dy = 8 - y0; if (y1 < 520) dy = 520 - y1; }
-    mT = [mT[0] + dx, mT[1] + dy];
+    return [dx, dy];
+  }
+  // Okraj mapy: tvrdý (běžně), gumový (při tažení za okraj klade odpor), volný (pružina se vrací na hranu).
+  let okraj: 'tvrdy' | 'gumovy' | 'volny' = 'tvrdy';
+  function omezMapu() {
+    if (okraj === 'volny') { plocha.scale(mS).translate(mT); return; }
+    const [dx, dy] = opravaMapy();
+    mT = okraj === 'gumovy'
+      ? [mT[0] + dx + gumove(-dx, 1000), mT[1] + dy + gumove(-dy, 540)]
+      : [mT[0] + dx, mT[1] + dy];
     plocha.translate(mT);
   }
   function kamera() {
@@ -454,18 +473,21 @@ const czPoradi = Object.fromEntries(
     if (minus) minus.disabled = !p;
     if (reset) reset.disabled = !p;
   }
-  // Přiblíží o faktor k kolem bodu c (souřadnice SVG)
-  function priblizKolem(k: number, c: [number, number]) {
+  // Přiblíží o faktor k kolem bodu c (souřadnice SVG). Plynule = pružinou; když už pružina
+  // běží (rychlé klikání na +), počítá se od jejího cíle, takže se přiblížení sčítá.
+  function priblizKolem(k: number, c: [number, number], plynule = false) {
     if (rezim === 'globus') {
-      zoomG = Math.min(MAX_ZOOM, Math.max(1, zoomG * k));
-    } else {
-      const ns = Math.min(M0 * MAX_ZOOM, Math.max(M0, mS * k));
-      const kk = ns / mS;
-      mT = [c[0] - (c[0] - mT[0]) * kk, c[1] - (c[1] - mT[1]) * kk];
-      mS = ns;
+      if (!plynule) { zastavPohyb(); zoomG = Math.min(MAX_ZOOM, Math.max(1, zoomG * k)); kamera(); kresli(); return; }
+      const z = pruzinaGlobus.bezi() ? cilG : [rotace[0], rotace[1], zoomG];
+      letGlobus([z[0], z[1], Math.min(MAX_ZOOM, Math.max(1, z[2] * k))]);
+      return;
     }
-    kamera();
-    kresli();
+    const z = plynule && pruzinaMapa.bezi() ? cilM : [mS, mT[0], mT[1]];
+    const ns = Math.min(M0 * MAX_ZOOM, Math.max(M0, z[0] * k));
+    const kk = ns / z[0];
+    const cil = [ns, c[0] - (c[0] - z[1]) * kk, c[1] - (c[1] - z[2]) * kk];
+    if (!plynule) { zastavPohyb(); [mS, mT] = [cil[0], [cil[1], cil[2]]]; kamera(); kresli(); return; }
+    letMapa(cil);
   }
   function doSvg(cx: number, cy: number): [number, number] {
     const m = svg.getScreenCTM();
@@ -475,6 +497,8 @@ const czPoradi = Object.fromEntries(
   }
 
   function nastavRezim(r: 'globus' | 'mapa') {
+    zastavPohyb();
+    okraj = 'tvrdy';
     rezim = r;
     if (r === 'globus') {
       svg.setAttribute('viewBox', '0 0 800 800');
@@ -496,13 +520,21 @@ const czPoradi = Object.fromEntries(
     for (const b of document.querySelectorAll<HTMLButtonElement>('[data-rezim]')) b.setAttribute('aria-pressed', String(b.dataset.rezim === r));
     kresli();
   }
+  // Kreslení: atribut měníme jen tam, kde se tvar opravdu změnil. Obrys koule se stínem se při
+  // otáčení nemění, takže prohlížeč nemusí každý snímek znovu počítat drahý rozmazaný stín.
+  const elMore = $<SVGPathElement>('[data-more]');
+  const elLesk = $<SVGPathElement>('[data-lesk]');
+  const elOkraj = $<SVGPathElement>('[data-okraj]');
+  const elSit = $<SVGPathElement>('[data-sit]');
+  const posledniD = new WeakMap<Element, string>();
+  const nastavD = (e: Element, d: string) => { if (posledniD.get(e) !== d) { posledniD.set(e, d); e.setAttribute('d', d); } };
   function kresli() {
     const s = cesta(sfera) ?? '';
-    $<SVGPathElement>('[data-more]').setAttribute('d', s);
-    $<SVGPathElement>('[data-lesk]').setAttribute('d', s);
-    $<SVGPathElement>('[data-okraj]').setAttribute('d', s);
-    $<SVGPathElement>('[data-sit]').setAttribute('d', cesta(mrizka) ?? '');
-    for (const { f, p } of prvky) p.setAttribute('d', cesta(f) ?? '');
+    nastavD(elMore, s);
+    nastavD(elLesk, s);
+    nastavD(elOkraj, s);
+    nastavD(elSit, cesta(mrizka) ?? '');
+    for (const { f, p } of prvky) nastavD(p, cesta(f) ?? '');
   }
 
   function obarvi() {
@@ -722,55 +754,58 @@ const czPoradi = Object.fromEntries(
     globus.rotate(r);
     if (rezim === 'globus') kresli();
   }
-  let animace: number | null = null;
-  function animuj(trvani: number, krok: (e: number) => void) {
-    if (animace) cancelAnimationFrame(animace);
-    if (klidne) { krok(1); return; }
-    const start = performance.now();
-    const f = (t: number) => {
-      const k = Math.min(1, (t - start) / trvani);
-      krok(k < 0.5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
-      if (k < 1) animace = requestAnimationFrame(f);
-    };
-    animace = requestAnimationFrame(f);
+  // --- pohyb kamery: pružiny bez překmitu (dají se kdykoli chytit a přesměrovat)
+  // Glóbus: [délka, šířka, přiblížení]; plochá mapa: [měřítko, posun x, posun y].
+  const pruzinaGlobus = pruzina(() => [rotace[0], rotace[1], zoomG], ([a, b, zg]) => { zoomG = zg; kamera(); otoc([a, b]); }, 0.7);
+  const pruzinaMapa = pruzina(() => [mS, mT[0], mT[1]], ([s, x, y]) => { mS = s; mT = [x, y]; kamera(); kresli(); }, 0.5);
+  let cilG: number[] = [];
+  let cilM: number[] = [];
+  let dobeh: { zastav: () => void } | null = null;
+  function letGlobus(cil: number[], volby: { rychlost?: number[] } = {}) { cilG = cil; pruzinaGlobus.k(cil, volby); }
+  function letMapa(cil: number[], volby: { rychlost?: number[]; hotovo?: () => void } = {}) {
+    // Volný okraj platí jen pro návrat zpoza hrany; každý jiný pohyb kamery hlídá okraje.
+    if (!volby.hotovo) okraj = 'tvrdy';
+    cilM = cil;
+    pruzinaMapa.k(cil, volby);
   }
+  function zastavPohyb() { pruzinaGlobus.zastav(); pruzinaMapa.zastav(); dobeh?.zastav(); dobeh = null; }
+
   // Natočí glóbus na stát; s priblizit=true ho i přiblíží podle velikosti státu.
   function letNa(a3: string, priblizit = false) {
     const f = zeme.find((z) => z.id === a3);
     if (!f) return;
+    dobeh?.zastav(); dobeh = null;
     if (rezim === 'globus') {
       const [lon, lat] = geoCentroid(f);
       const z = rotace.slice() as [number, number];
       let dl = -lon - z[0];
       dl = ((dl + 540) % 360) - 180;
-      const cil: [number, number] = [z[0] + dl, Math.max(-60, Math.min(60, -lat))];
       const polomer = Math.sqrt(geoArea(f) / Math.PI);
-      const cilZoom = priblizit ? Math.min(5, Math.max(1, 0.22 / Math.sin(Math.min(Math.PI / 2, polomer * 1.7)))) : zoomG;
-      const z0 = zoomG;
-      animuj(1100, (e) => {
-        zoomG = z0 + (cilZoom - z0) * e;
-        kamera();
-        otoc([z[0] + (cil[0] - z[0]) * e, z[1] + (cil[1] - z[1]) * e]);
-      });
+      const cilZoom = priblizit ? Math.min(5, Math.max(1, 0.22 / Math.sin(Math.min(Math.PI / 2, polomer * 1.7)))) : (pruzinaGlobus.bezi() ? cilG[2] : zoomG);
+      letGlobus([z[0] + dl, Math.max(-60, Math.min(60, -lat)), cilZoom]);
     } else if (priblizit) {
       plocha.scale(M0).translate(M0t);
       const [[x0, y0], [x1, y1]] = geoPath(plocha).bounds(f);
       const k = Math.min(MAX_ZOOM, Math.max(1, Math.min(984 / ((x1 - x0) * 2.6 || 1), 512 / ((y1 - y0) * 2.6 || 1))));
-      const cS = M0 * k;
-      const cT: [number, number] = [500 - k * ((x0 + x1) / 2 - M0t[0]), 264 - k * ((y0 + y1) / 2 - M0t[1])];
       plocha.scale(mS).translate(mT);
-      const s0 = mS, t0: [number, number] = [...mT];
-      animuj(900, (e) => {
-        mS = s0 + (cS - s0) * e;
-        mT = [t0[0] + (cT[0] - t0[0]) * e, t0[1] + (cT[1] - t0[1]) * e];
-        kamera();
-        kresli();
-      });
+      letMapa([M0 * k, 500 - k * ((x0 + x1) / 2 - M0t[0]), 264 - k * ((y0 + y1) / 2 - M0t[1])]);
     }
   }
+
+  // Samootáčení: posun podle uplynulého času, takže stejná rychlost na 60 i 120Hz displeji.
+  // Pomalé otáčení stačí kreslit ~30× za sekundu (krok je pod hranicí vnímání) a jen když je
+  // glóbus vidět, ať zbytečně nežere baterii. Tažení a doběh se kreslí každý snímek.
+  const OTACENI = 6.6; // stupňů za sekundu
   let posledni = 0;
+  let globusVidet = true;
+  new IntersectionObserver(([z]) => (globusVidet = z.isIntersecting)).observe(svg);
   function samoOtaceni(t: number) {
-    if (!interakce && rezim === 'globus' && !klidne && !document.hidden && t - posledni > 33) { otoc([rotace[0] + 0.22, rotace[1]]); posledni = t; }
+    if (!posledni) posledni = t;
+    const dt = t - posledni;
+    if (dt >= 32) {
+      posledni = t;
+      if (!interakce && rezim === 'globus' && !klidne && !document.hidden && globusVidet) otoc([rotace[0] + (OTACENI * Math.min(dt, 100)) / 1000, rotace[1]]);
+    }
     if (!interakce) requestAnimationFrame(samoOtaceni);
   }
 
@@ -794,18 +829,38 @@ const czPoradi = Object.fromEntries(
   }
 
   const prsty = new Map<number, { x: number; y: number }>();
-  let tah: { x: number; y: number; r: [number, number]; t: [number, number]; posun: number } | null = null;
+  const mereni = merickoRychlosti();
+  let tah: { x: number; y: number; r: [number, number]; t: [number, number]; posun: number; jede: boolean } | null = null;
   let stisk: { d: number; zG: number; s: number; t: [number, number]; c: [number, number] } | null = null;
   let poStisku = 0;
+  const jednotekNaPixel = () => (rezim === 'globus' ? 800 : 1000) / Math.max(1, svg.getBoundingClientRect().width);
+  // Stupně otočení glóbusu na jeden pixel tažení
+  const stupnuNaPixel = () => (0.32 * jednotekNaPixel()) / zoomG;
+  // Plochá mapa za okrajem: kde by byla bez gumového odporu (aby chycení za letu neposkočilo)
+  function surovyPosun(): [number, number] {
+    const o = okraj;
+    okraj = 'tvrdy';
+    const [dx, dy] = opravaMapy();
+    okraj = o;
+    const hrana: [number, number] = [mT[0] + dx, mT[1] + dy];
+    return [hrana[0] + zpetGumove(mT[0] - hrana[0], 1000), hrana[1] + zpetGumove(mT[1] - hrana[1], 540)];
+  }
   svg.addEventListener('pointerdown', (e) => {
     interakce = true;
+    // Chycení okamžitě zastaví přelet, přiblížení i doběh. Pokračuje se od aktuální polohy, bez skoku.
+    const zaOkrajem = okraj === 'volny';
+    zastavPohyb();
+    const t = zaOkrajem ? surovyPosun() : ([...mT] as [number, number]);
+    okraj = 'tvrdy';
     prsty.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (prsty.size === 2) {
       const [a, b] = [...prsty.values()];
       stisk = { d: Math.hypot(a.x - b.x, a.y - b.y), zG: zoomG, s: mS, t: [...mT], c: doSvg((a.x + b.x) / 2, (a.y + b.y) / 2) };
       tah = null;
     } else {
-      tah = { x: e.clientX, y: e.clientY, r: rotace, t: [...mT], posun: 0 };
+      tah = { x: e.clientX, y: e.clientY, r: rotace, t, posun: 0, jede: false };
+      mereni.zacni(e.clientX, e.clientY);
+      if (zaOkrajem) { okraj = 'gumovy'; tah.jede = true; }
     }
     if (rezim === 'globus' || priblizeno() || prsty.size === 2) { try { svg.setPointerCapture(e.pointerId); } catch {} }
   });
@@ -826,16 +881,26 @@ const czPoradi = Object.fromEntries(
       return;
     }
     if (tah && prsty.has(e.pointerId)) {
+      mereni.pridej(e.clientX, e.clientY);
       const dx = e.clientX - tah.x, dy = e.clientY - tah.y;
       tah.posun = Math.max(tah.posun, Math.hypot(dx, dy));
-      const jednotek = (rezim === 'globus' ? 800 : 1000) / svg.getBoundingClientRect().width;
-      if (rezim === 'globus') {
-        const k = (0.32 * jednotek) / zoomG;
-        otoc([tah.r[0] + dx * k, Math.max(-75, Math.min(75, tah.r[1] - dy * k))]);
-      } else if (priblizeno() && tah.posun > 4) {
-        mT = [tah.t[0] + dx * jednotek, tah.t[1] + dy * jednotek];
-        kamera();
-        kresli();
+      // Pár pixelů tolerance, ať se při obyčejném ťuknutí nic nepohne. Pak se jede 1:1 s prstem.
+      if (!tah.jede && tah.posun > 4 && (rezim === 'globus' || priblizeno())) {
+        tah.jede = true;
+        tah.x = e.clientX; tah.y = e.clientY; tah.r = rotace; tah.t = [...mT];
+        if (rezim === 'mapa') okraj = 'gumovy';
+      }
+      if (tah.jede) {
+        const ddx = e.clientX - tah.x, ddy = e.clientY - tah.y;
+        if (rezim === 'globus') {
+          const k = stupnuNaPixel();
+          otoc([tah.r[0] + ddx * k, Math.max(-75, Math.min(75, tah.r[1] - ddy * k))]);
+        } else {
+          const j = jednotekNaPixel();
+          mT = [tah.t[0] + ddx * j, tah.t[1] + ddy * j];
+          kamera();
+          kresli();
+        }
       }
     }
     if (e.pointerType === 'mouse') {
@@ -851,16 +916,59 @@ const czPoradi = Object.fromEntries(
     }
   });
   svg.addEventListener('pointerleave', () => (tooltip.hidden = true));
+
+  // Po puštění: glóbus i mapa doběhnou rychlostí prstu. Mapa za okrajem se pružinou vrátí na hranu.
+  function pustitTah(rychlost: [number, number]) {
+    if (rezim === 'globus') {
+      const k = stupnuNaPixel();
+      dobeh = setrvacnost([rychlost[0] * k, -rychlost[1] * k], (dl, ds) => {
+        const sirka = Math.max(-75, Math.min(75, rotace[1] + ds));
+        const naraz = sirka !== rotace[1] + ds;
+        otoc([rotace[0] + dl, sirka]);
+        return [false, naraz];
+      }, { zpomaleni: 0.995, min: 0.6, start: 4, hotovo: () => (dobeh = null) });
+      return;
+    }
+    const j = jednotekNaPixel();
+    const [vx, vy] = [rychlost[0] * j, rychlost[1] * j];
+    okraj = 'tvrdy';
+    const pred: [number, number] = [...mT];
+    const [dx, dy] = opravaMapy();
+    if (Math.abs(dx) > 0.5 || Math.abs(dy) > 0.5) {
+      // Za okrajem: vrátit pružinou; rychlost prstu převezme jen směrem zpátky dovnitř.
+      mT = pred;
+      okraj = 'volny';
+      const dovnitr = (v: number, d: number) => (Math.sign(v) === Math.sign(d) ? v : 0);
+      letMapa([mS, pred[0] + dx, pred[1] + dy], { rychlost: [0, dovnitr(vx, dx), dovnitr(vy, dy)], hotovo: () => (okraj = 'tvrdy') });
+      return;
+    }
+    dobeh = setrvacnost([vx, vy], (sx, sy) => {
+      const cil: [number, number] = [mT[0] + sx, mT[1] + sy];
+      mT = cil;
+      kamera();
+      kresli();
+      return [Math.abs(mT[0] - cil[0]) > 0.01, Math.abs(mT[1] - cil[1]) > 0.01];
+    }, { zpomaleni: 0.996, hotovo: () => (dobeh = null) });
+  }
   const pustit = (e: PointerEvent) => {
     prsty.delete(e.pointerId);
-    if (prsty.size < 2 && stisk) { stisk = null; tah = null; return; }
+    if (prsty.size < 2 && stisk) { stisk = null; tah = null; okraj = 'tvrdy'; return true; }
+    return false;
   };
-  svg.addEventListener('pointercancel', pustit);
+  svg.addEventListener('pointercancel', (e) => {
+    const t = tah;
+    pustit(e);
+    tah = null;
+    if (t?.jede) pustitTah([0, 0]);
+  });
   svg.addEventListener('pointerup', (e) => {
     const bylStisk = !!stisk || performance.now() - poStisku < 300;
     pustit(e);
-    const kliknuti = !bylStisk && (!tah || tah.posun < 6);
+    const t = tah;
     tah = null;
+    if (t?.jede && !bylStisk) { pustitTah(mereni.rychlost()); return; }
+    if (rezim === 'mapa') okraj = 'tvrdy';
+    const kliknuti = !bylStisk && (!t || t.posun < 6);
     if (!kliknuti) return;
     const cil = document.elementFromPoint(e.clientX, e.clientY) as SVGPathElement | null;
     const kod = cil?.dataset?.kod;
@@ -882,23 +990,16 @@ const czPoradi = Object.fromEntries(
   svg.addEventListener('dblclick', (e) => {
     e.preventDefault();
     interakce = true;
-    priblizKolem(2, doSvg(e.clientX, e.clientY));
+    priblizKolem(2, doSvg(e.clientX, e.clientY), true);
   });
   for (const b of document.querySelectorAll<HTMLButtonElement>('[data-zoom]')) {
     b.addEventListener('click', () => {
       interakce = true;
       const stred: [number, number] = rezim === 'globus' ? [400, 390] : [500, 264];
-      if (b.dataset.zoom === 'plus') priblizKolem(1.6, stred);
-      else if (b.dataset.zoom === 'minus') priblizKolem(1 / 1.6, stred);
-      else {
-        const z0 = zoomG, s0 = mS, t0: [number, number] = [...mT];
-        animuj(500, (e) => {
-          if (rezim === 'globus') zoomG = z0 + (1 - z0) * e;
-          else { mS = s0 + (M0 - s0) * e; mT = [t0[0] + (M0t[0] - t0[0]) * e, t0[1] + (M0t[1] - t0[1]) * e]; }
-          kamera();
-          kresli();
-        });
-      }
+      if (b.dataset.zoom === 'plus') priblizKolem(1.6, stred, true);
+      else if (b.dataset.zoom === 'minus') priblizKolem(1 / 1.6, stred, true);
+      else if (rezim === 'globus') letGlobus([...(pruzinaGlobus.bezi() ? cilG.slice(0, 2) : rotace), 1]);
+      else letMapa([M0, M0t[0], M0t[1]]);
     });
   }
 

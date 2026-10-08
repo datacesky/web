@@ -19,7 +19,7 @@ const dalsiDil = epizody.length + 1;
     <div class="hledani hl__hledani">
       <div class="hledani__pole">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
-        <input type="search" placeholder="Napiš zemi, třeba Japonsko" aria-label="Země pro další díl" autocomplete="off" data-vstup />
+        <input type="search" enterkeyhint="search" placeholder="Napiš zemi, třeba Japonsko" aria-label="Země pro další díl" autocomplete="off" data-vstup />
       </div>
       <ul class="naseptavac" data-seznam hidden></ul>
     </div>
@@ -66,15 +66,18 @@ const dalsiDil = epizody.length + 1;
   .hl__rychle-titul { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
   .hl__chipy { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   :global(.hl__chip) { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 38px; padding: 0 0.85rem 0 0.5rem; border: 1.5px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--navy); font-family: inherit; font-size: 0.86rem; font-weight: 800; cursor: pointer; }
-  :global(.hl__chip:hover) { border-color: var(--navy); }
+  @media (hover: hover) and (pointer: fine) { :global(.hl__chip:hover) { border-color: var(--navy); } }
+  :global(.hl__chip) { transition: transform var(--stisk) var(--ease-out), border-color 0.2s ease; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
+  :global(.hl__chip:active) { transform: scale(0.96); }
   :global(.hl__chip .vlajka) { width: 24px; height: 18px; border-radius: 3px; }
-  .hl__karta { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: 1rem 1.1rem; border-radius: 20px; background: var(--navy); color: var(--cream); box-shadow: var(--stin); animation: hl-vjezd 0.35s ease both; }
+  .hl__karta { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: 1rem 1.1rem; border-radius: 20px; background: var(--navy); color: var(--cream); box-shadow: var(--stin); animation: hl-vjezd 0.4s var(--ease-out) both; }
   .hl__vlajka { width: 64px; height: 48px; border-radius: 8px; object-fit: cover; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25); }
   .hl__karta-text { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
   .hl__karta-stitek { font-size: 0.74rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: #F6C08C; }
   .hl__karta-jmeno { font-size: 1.45rem; font-weight: 900; line-height: 1.2; }
   .hl__karta-fakta { font-size: 0.86rem; font-weight: 600; color: #D9D3C7; line-height: 1.45; }
-  .hl__zrusit { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid rgba(242, 237, 227, 0.4); background: transparent; color: var(--cream); font-size: 1.3rem; line-height: 1; cursor: pointer; }
+  .hl__zrusit { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid rgba(242, 237, 227, 0.4); background: transparent; color: var(--cream); font-size: 1.3rem; line-height: 1; cursor: pointer; transition: transform var(--stisk) var(--ease-out); }
+  .hl__zrusit:active { transform: scale(0.92); }
   .hl__odeslat { width: 100%; min-height: 56px; font-size: 1.05rem; }
   .hl__stav { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--navy); min-height: 1.4em; }
   .hl__stav:empty { display: none; }
@@ -88,11 +91,11 @@ const dalsiDil = epizody.length + 1;
   :global(.hl__poradi .poz) { color: var(--muted); font-size: 0.85rem; text-align: right; }
   :global(.hl__poradi .jm) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   :global(.hl__poradi .draha) { height: 16px; border-radius: 999px; background: var(--draha); overflow: hidden; }
-  :global(.hl__poradi .pruh) { display: block; height: 100%; border-radius: 999px; background: var(--navy); transform-origin: left; animation: hl-rust 1.2s cubic-bezier(0.22, 0.8, 0.24, 1) both; }
+  :global(.hl__poradi .pruh) { display: block; height: 100%; border-radius: 999px; background: var(--navy); animation: hl-rust 1.2s cubic-bezier(0.22, 0.8, 0.24, 1) both; }
   :global(.hl__poradi .radek--prvni .pruh) { background: var(--orange); }
   :global(.hl__poradi .tvuj) { margin-left: 0.4rem; padding: 0.1rem 0.45rem; border-radius: 999px; background: var(--plocha-2); border: 1px solid var(--line); font-size: 0.68rem; font-weight: 800; color: var(--muted); vertical-align: middle; }
   :global(.hl__poradi .hlasy) { text-align: right; font-variant-numeric: tabular-nums; font-weight: 800; }
-  @keyframes hl-rust { from { transform: scaleX(0); } }
+  @keyframes hl-rust { from { clip-path: inset(0 100% 0 0 round 999px); } to { clip-path: inset(0 0 0 0 round 999px); } }
   @keyframes hl-vjezd { from { opacity: 0; transform: translateY(6px); } }
   @media (prefers-reduced-motion: reduce) { :global(.hl__poradi .pruh), .hl__karta { animation: none; } }
 </style>

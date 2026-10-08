@@ -127,6 +127,44 @@ const FB = 'https://www.facebook.com/data.cesky';
       </div>
     </footer>
     <script>
+      // Hlavička: stín jen ve chvíli, kdy pod ní jede obsah
+      const hlavicka = document.querySelector('.hlavicka');
+      if (hlavicka) {
+        let pod = false;
+        const zkontroluj = () => {
+          const ted = window.scrollY > 2;
+          if (ted !== pod) { pod = ted; hlavicka.classList.toggle('je-pod', ted); }
+        };
+        addEventListener('scroll', zkontroluj, { passive: true });
+        zkontroluj();
+      }
+
+      // Segmentové přepínače: tmavá pilulka přejede pod vybrané tlačítko místo skoku
+      for (const seg of document.querySelectorAll<HTMLElement>('.segment')) {
+        const jezdec = document.createElement('span');
+        jezdec.className = 'segment__jezdec bez-prechodu';
+        jezdec.setAttribute('aria-hidden', 'true');
+        seg.prepend(jezdec);
+        const posun = () => {
+          const b = seg.querySelector<HTMLElement>('button[aria-pressed="true"]');
+          jezdec.hidden = !b;
+          if (!b) return;
+          jezdec.style.setProperty('--x', `${b.offsetLeft}px`);
+          jezdec.style.setProperty('--y', `${b.offsetTop}px`);
+          jezdec.style.setProperty('--w', `${b.offsetWidth}px`);
+          jezdec.style.setProperty('--h', `${b.offsetHeight}px`);
+        };
+        posun();
+        seg.classList.add('ma-jezdec');
+        requestAnimationFrame(() => jezdec.classList.remove('bez-prechodu'));
+        new MutationObserver(posun).observe(seg, { attributes: true, subtree: true, attributeFilter: ['aria-pressed'] });
+        new ResizeObserver(() => {
+          jezdec.classList.add('bez-prechodu');
+          posun();
+          requestAnimationFrame(() => jezdec.classList.remove('bez-prechodu'));
+        }).observe(seg);
+      }
+
       const prvky = document.querySelectorAll('.odhal, .odhal-graf');
       if ('IntersectionObserver' in window) {
         const pozorovatel = new IntersectionObserver((zaznamy) => {

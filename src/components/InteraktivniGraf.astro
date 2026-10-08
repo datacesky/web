@@ -55,7 +55,7 @@ const souhrnHodnota = soucet
 
 <div class="ig" data-ig style={`--sirka-hodnot: ${sirkaHodnot};`}>
   <div class="ig__lista">
-    <div class="ig__prepinac" role="group" aria-label="Způsob zobrazení">
+    <div class="segment ig__prepinac" role="group" aria-label="Způsob zobrazení">
       <button type="button" aria-pressed="true" data-pohled="graf">Graf</button>
       <button type="button" aria-pressed="false" data-pohled="tabulka">Tabulka</button>
     </div>
@@ -145,9 +145,9 @@ const souhrnHodnota = soucet
 <style>
   .ig { display: flex; flex-direction: column; gap: 1.25rem; }
   .ig__lista { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; }
-  .ig__prepinac { display: inline-flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--cream); border: 1px solid var(--line); }
-  .ig__prepinac button { min-height: 44px; padding: 0 1.3rem; border: 0; border-radius: 999px; background: transparent; color: var(--navy); font-family: inherit; font-size: 0.95rem; font-weight: 800; cursor: pointer; }
-  .ig__prepinac button[aria-pressed='true'] { background: var(--navy); color: var(--cream); }
+  /* Graf | Tabulka: segmentový přepínač z global.css, jen větší a na krémovém podkladu */
+  .ig__prepinac { gap: 4px; padding: 4px; background: var(--cream); box-shadow: none; }
+  .ig__prepinac button { min-height: 44px; padding: 0 1.3rem; font-size: 0.95rem; }
 
   .ig__graf { display: flex; flex-direction: column; gap: 1.25rem; }
   .ig__radky { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
@@ -166,9 +166,11 @@ const souhrnHodnota = soucet
     font-family: inherit;
     text-align: left;
     cursor: pointer;
-    transition: opacity 0.15s ease, background 0.15s ease;
+    touch-action: manipulation;
+    transition: opacity 0.2s var(--ease-out), background-color 0.15s ease;
   }
-  .ig__radek:hover { background: rgba(27, 42, 74, 0.05); }
+  @media (hover: hover) and (pointer: fine) { .ig__radek:hover { background: rgba(27, 42, 74, 0.05); } }
+  .ig__radek:active { background: rgba(27, 42, 74, 0.08); }
   .ig__radek[aria-pressed='true'] { background: var(--cream); }
   .ig--vyber .ig__radek[aria-pressed='false'] { opacity: 0.38; }
   .ig__jmeno { text-align: right; font-weight: 700; font-size: 0.98rem; }
