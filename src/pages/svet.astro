@@ -77,6 +77,15 @@ const czPoradi = Object.fromEntries(
           </div>
         </div>
         <div class="scena__obal" data-obal>
+          <!-- Stín glóbusu ve vlastní vrstvě: prohlížeč ho rozmaže jednou a při otáčení ho jen znovu použije -->
+          <svg class="scena__stin" data-stin viewBox="0 0 800 800" aria-hidden="true">
+            <defs>
+              <filter id="f-stin-globus" x="-25%" y="-20%" width="150%" height="160%">
+                <feDropShadow dx="0" dy="24" stdDeviation="26" flood-color="#1B2A4A" flood-opacity="0.22" />
+              </filter>
+            </defs>
+            <circle data-stin-kruh cx="400" cy="390" r="360" fill="#AFCFE6" filter="url(#f-stin-globus)" />
+          </svg>
           <svg class="scena__svg" data-svg role="img" aria-label="Mapa světa">
             <defs>
               <radialGradient id="g-more" cx="40%" cy="34%" r="72%">
@@ -101,7 +110,7 @@ const czPoradi = Object.fromEntries(
                 <line x1="0" y1="0" x2="0" y2="7" stroke="#D7D0C4" stroke-width="2.4" />
               </pattern>
             </defs>
-            <path class="scena__more" data-more filter="url(#f-stin)"></path>
+            <path class="scena__more" data-more></path>
             <path class="scena__sit" data-sit></path>
             <g data-zeme></g>
             <path class="scena__lesk" data-lesk fill="url(#g-lesk)"></path>
@@ -243,6 +252,10 @@ const czPoradi = Object.fromEntries(
   .scena__hledani .hledani { width: min(100%, 400px); }
   .scena__obal { position: relative; display: flex; justify-content: center; border-radius: 28px; transition: box-shadow 0.3s ease; }
   .scena__obal.je-priblizeno { overflow: hidden; box-shadow: inset 0 0 0 1px var(--line), var(--stin); background: #B9D6EA; }
+  .scena__stin { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; will-change: transform; overflow: visible; }
+  .scena__obal.je-priblizeno .scena__stin, .scena__obal:has(.scena__svg--mapa) .scena__stin { display: none; }
+  .scena__svg { position: relative; }
+  .scena__svg--mapa .scena__more { filter: url(#f-stin); }
   .scena__obal.je-priblizeno .scena__svg { overflow: hidden; }
   .scena__svg { width: 100%; height: auto; display: block; max-height: 76vh; max-height: 76svh; cursor: grab; -webkit-user-select: none; user-select: none; overflow: visible; }
   .scena__svg--globus, .scena__svg.je-priblizeno { touch-action: none; }
@@ -267,7 +280,7 @@ const czPoradi = Object.fromEntries(
   :global(.scena__pod .legenda) { justify-content: center; }
 
   /* Panel se žebříčkem */
-  .panel { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--stin); padding: 1.4rem; display: flex; flex-direction: column; max-height: min(82vh, 780px); position: sticky; top: 84px; }
+  .panel { background: var(--paper); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--stin); padding: 1.4rem; display: flex; flex-direction: column; overflow-x: clip; max-height: min(82vh, 780px); position: sticky; top: 84px; }
   @media (max-width: 1020px) { .panel { position: static; max-height: none; } }
   .panel__zebricek, .panel__stat { display: flex; flex-direction: column; gap: 0.9rem; min-height: 0; flex: 1 1 auto; }
   .panel__zebricek[hidden], .panel__stat[hidden] { display: none; }
@@ -362,7 +375,7 @@ const czPoradi = Object.fromEntries(
 </style>
 
 <script>
-  import { geoOrthographic, geoEqualEarth, geoPath, geoGraticule10, geoCentroid, geoArea } from 'd3-geo';
+  import { geoOrthographic, geoEqualEarth, geoPath, geoGraticule10, geoCentroid, geoArea, geoDistance } from 'd3-geo';
   import { feature } from 'topojson-client';
   import svet from '../data/svet.json';
   import { epizody, odkazDilu } from '../data/epizody';
@@ -428,6 +441,15 @@ const czPoradi = Object.fromEntries(
   const cesta = geoPath();
   const sfera = { type: 'Sphere' } as any;
   const mrizka = geoGraticule10();
+  // Pro každý stát kruh, který ho celý obsahuje (střed a úhlový poloměr v radiánech).
+  // Díky tomu se státy mimo záběr glóbusu vůbec nepočítají, při přiblížení je to většina.
+  const obalStatu = zeme.map((f) => {
+    const c = geoCentroid(f) as [number, number];
+    let r = 0;
+    const projdi = (g: any) => { for (const x of g) { if (typeof x[0] === 'number') r = Math.max(r, geoDistance(c, x)); else projdi(x); } };
+    projdi(f.geometry?.coordinates ?? []);
+    return { c, r: r + 0.02 };
+  });
   const prvky = zeme.map((f) => {
     const p = document.createElementNS('http://www.w3.org/2000/svg', 'path');
     p.setAttribute('class', 'zeme');
@@ -462,8 +484,15 @@ const czPoradi = Object.fromEntries(
       : [mT[0] + dx, mT[1] + dy];
     plocha.translate(mT);
   }
+  const stinKruh = document.querySelector<SVGCircleElement>('[data-stin-kruh]');
+  let stinR = '';
   function kamera() {
-    if (rezim === 'globus') globus.scale(G0 * zoomG).translate(G0t);
+    if (rezim === 'globus') {
+      globus.scale(G0 * zoomG).translate(G0t);
+      // stín drží velikost koule; mění se jen při přiblížení, ne při otáčení
+      const r = (G0 * zoomG).toFixed(1);
+      if (stinKruh && r !== stinR) { stinR = r; stinKruh.setAttribute('r', r); stinKruh.setAttribute('cx', String(G0t[0])); stinKruh.setAttribute('cy', String(G0t[1])); }
+    }
     else omezMapu();
     const p = priblizeno();
     obal.classList.toggle('je-priblizeno', p);
@@ -534,7 +563,14 @@ const czPoradi = Object.fromEntries(
     nastavD(elLesk, s);
     nastavD(elOkraj, s);
     nastavD(elSit, cesta(mrizka) ?? '');
-    for (const { f, p } of prvky) nastavD(p, cesta(f) ?? '');
+    // Glóbus: největší úhel od středu záběru, který je ještě vidět (při přiblížení se zmenšuje).
+    const mez = rezim === 'globus' ? Math.asin(Math.min(1, 580 / globus.scale())) : Infinity;
+    const stred: [number, number] = [-rotace[0], -rotace[1]];
+    for (let i = 0; i < prvky.length; i++) {
+      const { f, p } = prvky[i];
+      if (mez < Infinity && geoDistance(stred, obalStatu[i].c) - obalStatu[i].r > mez) { nastavD(p, ''); continue; }
+      nastavD(p, cesta(f) ?? '');
+    }
   }
 
   function obarvi() {
@@ -815,12 +851,26 @@ const czPoradi = Object.fromEntries(
     if (vybrana) p.set('z', vybrana);
     history.replaceState(null, '', p.toString() ? `#${p}` : location.pathname);
   }
+  // Přechod v panelu: detail státu přijede zprava, „Zpět“ vrátí žebříček zleva
+  // (cesta tam i zpět je stejná), přepnutí na jiný stát jen krátce prolne obsah.
+  const VYJEZD = 'cubic-bezier(0.23, 1, 0.32, 1)';
+  function prejezdPanelu(el: HTMLElement, odkud: number) {
+    if (klidne) return;
+    el.animate(
+      [{ opacity: 0, transform: `translateX(${odkud}px)` }, { opacity: 1, transform: 'none' }],
+      { duration: odkud ? 340 : 220, easing: VYJEZD },
+    );
+  }
   function vyber(a3: string | null, letet = true, priblizit = false) {
+    const predtim = vybrana;
     vybrana = a3 && jmeno(a3) !== a3 ? a3 : null;
     if (vybrana) interakce = true;
     obarvi();
     statPanel();
     if (!vybrana) zebricekPanel();
+    if (vybrana && !predtim) prejezdPanelu(pohledStat, 18);
+    else if (vybrana && predtim !== vybrana) prejezdPanelu(pohledStat, 0);
+    else if (!vybrana && predtim) prejezdPanelu(pohledZebricek, -18);
     if (vybrana && letet) letNa(vybrana, priblizit);
     ulozOdkaz();
   }
@@ -845,7 +895,17 @@ const czPoradi = Object.fromEntries(
     const hrana: [number, number] = [mT[0] + dx, mT[1] + dy];
     return [hrana[0] + zpetGumove(mT[0] - hrana[0], 1000), hrana[1] + zpetGumove(mT[1] - hrana[1], 540)];
   }
+  // Prst na telefonu posílá pohyb častěji, než displej kreslí (často 120× za sekundu).
+  // Překreslujeme proto jen jednou za snímek, s poslední polohou prstu.
+  let vSnimkuCeka: (() => void) | null = null;
+  function vSnimku(f: () => void) {
+    const naplanovano = vSnimkuCeka !== null;
+    vSnimkuCeka = f;
+    if (!naplanovano) requestAnimationFrame(() => { const g = vSnimkuCeka; vSnimkuCeka = null; g?.(); });
+  }
+  const dokresli = () => { const g = vSnimkuCeka; vSnimkuCeka = null; g?.(); };
   svg.addEventListener('pointerdown', (e) => {
+    dokresli();
     interakce = true;
     // Chycení okamžitě zastaví přelet, přiblížení i doběh. Pokračuje se od aktuální polohy, bez skoku.
     const zaOkrajem = okraj === 'volny';
@@ -869,14 +929,17 @@ const czPoradi = Object.fromEntries(
     if (stisk && prsty.size === 2) {
       const [a, b] = [...prsty.values()];
       const k = Math.hypot(a.x - b.x, a.y - b.y) / Math.max(1, stisk.d);
-      if (rezim === 'globus') { zoomG = Math.min(MAX_ZOOM, Math.max(1, stisk.zG * k)); }
-      else {
-        mS = Math.min(M0 * MAX_ZOOM, Math.max(M0, stisk.s * k));
-        const kk = mS / stisk.s;
-        mT = [stisk.c[0] - (stisk.c[0] - stisk.t[0]) * kk, stisk.c[1] - (stisk.c[1] - stisk.t[1]) * kk];
-      }
-      kamera();
-      kresli();
+      const st = stisk;
+      vSnimku(() => {
+        if (rezim === 'globus') { zoomG = Math.min(MAX_ZOOM, Math.max(1, st.zG * k)); }
+        else {
+          mS = Math.min(M0 * MAX_ZOOM, Math.max(M0, st.s * k));
+          const kk = mS / st.s;
+          mT = [st.c[0] - (st.c[0] - st.t[0]) * kk, st.c[1] - (st.c[1] - st.t[1]) * kk];
+        }
+        kamera();
+        kresli();
+      });
       poStisku = performance.now();
       return;
     }
@@ -886,6 +949,7 @@ const czPoradi = Object.fromEntries(
       tah.posun = Math.max(tah.posun, Math.hypot(dx, dy));
       // Pár pixelů tolerance, ať se při obyčejném ťuknutí nic nepohne. Pak se jede 1:1 s prstem.
       if (!tah.jede && tah.posun > 4 && (rezim === 'globus' || priblizeno())) {
+        dokresli();
         tah.jede = true;
         tah.x = e.clientX; tah.y = e.clientY; tah.r = rotace; tah.t = [...mT];
         if (rezim === 'mapa') okraj = 'gumovy';
@@ -894,12 +958,12 @@ const czPoradi = Object.fromEntries(
         const ddx = e.clientX - tah.x, ddy = e.clientY - tah.y;
         if (rezim === 'globus') {
           const k = stupnuNaPixel();
-          otoc([tah.r[0] + ddx * k, Math.max(-75, Math.min(75, tah.r[1] - ddy * k))]);
+          const r: [number, number] = [tah.r[0] + ddx * k, Math.max(-75, Math.min(75, tah.r[1] - ddy * k))];
+          vSnimku(() => otoc(r));
         } else {
           const j = jednotekNaPixel();
-          mT = [tah.t[0] + ddx * j, tah.t[1] + ddy * j];
-          kamera();
-          kresli();
+          const t: [number, number] = [tah.t[0] + ddx * j, tah.t[1] + ddy * j];
+          vSnimku(() => { mT = t; kamera(); kresli(); });
         }
       }
     }
@@ -956,12 +1020,14 @@ const czPoradi = Object.fromEntries(
     return false;
   };
   svg.addEventListener('pointercancel', (e) => {
+    dokresli();
     const t = tah;
     pustit(e);
     tah = null;
     if (t?.jede) pustitTah([0, 0]);
   });
   svg.addEventListener('pointerup', (e) => {
+    dokresli();
     const bylStisk = !!stisk || performance.now() - poStisku < 300;
     pustit(e);
     const t = tah;
