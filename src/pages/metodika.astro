@@ -55,8 +55,14 @@ const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
     <h2 id="novinky">Novinky z dat</h2>
     <p>
       Novinky připravuje jednou měsíčně skript, který stáhne čísla přímo z otevřených dat ČSÚ (DataStat) a Eurostatu.
-      Vybere změny, které jsou proti běžnému vývoji neobvyklé, a věty skládá z pevných šablon, takže nic nedomýšlí.
-      Každé vydání před zveřejněním projdu. U velkých skoků cen potravin ověřuju, jestli nejde o sezónu nebo akční ceny.
+      Sleduje inflaci, ceny pohonných hmot, nezaměstnanost, průměrnou mzdu, růst HDP, narozené děti, turisty v ubytovacích
+      zařízeních, průmyslovou výrobu a tržby obchodů. Výš zařadí změny, které jsou proti běžnému vývoji neobvyklé, a věty skládá
+      z pevných šablon, takže nic nedomýšlí. Každé vydání před zveřejněním projdu.
+    </p>
+    <p>
+      Malé grafy u novinek kreslí stejná data. Sloupce začínají vždy od nuly. Čárové grafy (inflace, ceny, HDP) nula začínat
+      nemusí, aby byl vidět vývoj, proto mají popsané vodorovné linky. Meziroční změny průmyslu a obchodů jsou očištěné
+      o vliv počtu pracovních dní, tržby obchodů navíc o změny cen. Údaje o narozených za běžný rok jsou předběžné.
     </p>
 
     <h2 id="porovnej">Porovnej se</h2>
@@ -77,6 +83,13 @@ const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
       Když v grafu najdeš chybu, napiš na <a href="mailto:data.cesky@gmail.com">data.cesky@gmail.com</a>. Opravu udělám a poznamenám ji
       přímo u grafu, kterého se týká.
     </p>
+    <ul class="opravy">
+      <li>
+        <strong>9. 10. 2026, Svoboda tisku (glóbus a žebříčky):</strong> u deseti zemí se špatně načetlo skóre, třeba u Lotyšska
+        0,81 místo 81 bodů nebo u Japonska 6,29 místo 62,9. Šlo o Lotyšsko, Trinidad a Tobago, Surinam, Ghanu, Ukrajinu, Japonsko,
+        Černou Horu, Nepál, Čad a Bhútán. Pořadí zemí bylo správně, skóre jsou teď podle zdroje.
+      </li>
+    </ul>
 
     <h2>Použití grafů</h2>
     <p>

@@ -16,16 +16,19 @@ const temata = ['Vše', ...new Set(grafy.map((g) => g.data.tema))];
         <button class="chip" type="button" data-filtr={t} aria-pressed={i === 0 ? 'true' : 'false'}>{t}</button>
       ))}
     </div>
-    <div class="sloupec" style="gap: 0.4rem;">
-      <label for="hledat-graf">Hledat graf</label>
-      <input id="hledat-graf" type="search" enterkeyhint="search" placeholder="Třeba Penny nebo káva" autocomplete="off" />
+    <div class="hledani archiv__hledani">
+      <label class="sr-only" for="hledat-graf">Hledat graf</label>
+      <div class="hledani__pole">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
+        <input id="hledat-graf" type="search" enterkeyhint="search" placeholder="Hledat, třeba Penny" autocomplete="off" />
+      </div>
     </div>
   </div>
 
   <p class="drobne" data-pocet aria-live="polite"></p>
 
   <ul class="mrizka" data-seznam>
-    {grafy.map((g) => <GrafCard id={g.id} data={g.data} />)}
+    {grafy.map((g, i) => <GrafCard id={g.id} data={g.data} velka={i === 0} />)}
   </ul>
 
   <div class="karta archiv__prazdno" data-prazdno hidden>
@@ -37,7 +40,8 @@ const temata = ['Vše', ...new Set(grafy.map((g) => g.data.tema))];
 
 <style>
   .archiv { display: flex; flex-direction: column; gap: 1.25rem; }
-  .archiv__ovladani { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; align-items: flex-end; justify-content: space-between; }
+  .archiv__ovladani { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; justify-content: space-between; }
+  .archiv__hledani { width: min(100%, 300px); }
   .archiv__prazdno { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; text-align: center; border-style: dashed; }
 </style>
 

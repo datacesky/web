@@ -39,7 +39,9 @@ const FB = 'https://www.facebook.com/data.cesky';
     <title>{titul}</title>
     <meta name="description" content={popis} />
     <link rel="canonical" href={kanonicka} />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <script is:inline>document.documentElement.classList.add('js');</script>
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="data.cesky" />
@@ -63,8 +65,8 @@ const FB = 'https://www.facebook.com/data.cesky';
         <a class="logo" href="/" aria-label="data.cesky, úvodní stránka">data<span class="logo__cesky">.cesky</span></a>
         {hlasovaniZapnute && <a href="/hlasovani/" class="hlavicka__hlasuj" aria-current={aktivni('/hlasovani')}>Hlasuj</a>}
         <nav class="navigace" aria-label="Hlavní navigace">
-          <a href="/grafy/" aria-current={aktivni('/grafy')}>Grafy</a>
           <a href="/novinky/" aria-current={aktivni('/novinky')}>Novinky</a>
+          <a href="/zebricky/" aria-current={aktivni('/zebricky') ?? aktivni('/grafy')}>Žebříčky</a>
           <a href="/mapa/" aria-current={aktivni('/mapa')}>Mapa Česka</a>
           <a href="/svet/" aria-current={aktivni('/svet')}>Svět</a>
           <a href="/serie/" aria-current={aktivni('/serie')}>Série</a>
@@ -95,8 +97,8 @@ const FB = 'https://www.facebook.com/data.cesky';
           <div class="sloupec">
             <h2>Obsah</h2>
             <ul class="patka__odkazy">
-              <li><a href="/grafy/">Grafy</a></li>
               <li><a href="/novinky/">Novinky z dat</a></li>
+              <li><a href="/zebricky/">Žebříčky a grafy</a></li>
               <li><a href="/mapa/">Mapa Česka</a></li>
               <li><a href="/svet/">Svět</a></li>
               <li><a href="/serie/">Série</a></li>
@@ -181,10 +183,53 @@ const FB = 'https://www.facebook.com/data.cesky';
         menu.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       }
 
-      const prvky = document.querySelectorAll('.odhal, .odhal-graf');
+      // Karty posouvané do strany (mobil): tečky pod nimi ukazují, kde jsi
+      for (const pas of document.querySelectorAll<HTMLElement>('[data-posuvnik]')) {
+        const tecky = Array.from(pas.parentElement?.querySelectorAll<HTMLElement>('[data-tecky] i') ?? []);
+        if (!tecky.length) continue;
+        let i0 = 0;
+        pas.addEventListener('scroll', () => {
+          const prvni = pas.firstElementChild as HTMLElement | null;
+          if (!prvni) return;
+          const krok = prvni.offsetWidth + parseFloat(getComputedStyle(pas).columnGap || '0');
+          const i = Math.min(tecky.length - 1, Math.round(pas.scrollLeft / krok));
+          if (i !== i0) { tecky[i0].classList.remove('je-aktivni'); tecky[i].classList.add('je-aktivni'); i0 = i; }
+        }, { passive: true });
+      }
+
+      // Velká čísla naskočí od nuly, až přijedou do obrazu. Text na konci je vždy přesně ten původní.
+      const klid = matchMedia('(prefers-reduced-motion: reduce)').matches;
+      const CISLO = /([+−-]?)(\d{1,3}(?:[ \u00a0]\d{3})+|\d+)(?:,(\d+))?/;
+      const pocitej = (el: HTMLElement) => {
+        if (el.dataset.bezi) return;
+        const puvodni = el.dataset.puvodni ?? el.textContent ?? '';
+        el.dataset.puvodni = puvodni;
+        const m = puvodni.match(CISLO);
+        if (!m || klid) { el.textContent = puvodni; return; }
+        const des = m[3]?.length ?? 0;
+        const cil = Number(m[2].replace(/[ \u00a0]/g, '') + (des ? '.' + m[3] : ''));
+        const nf = new Intl.NumberFormat('cs-CZ', { minimumFractionDigits: des, maximumFractionDigits: des });
+        const pred = puvodni.slice(0, m.index! + m[1].length), po = puvodni.slice(m.index! + m[0].length);
+        const zacatek = performance.now(), doba = cil > 999 ? 1400 : 1000;
+        el.dataset.bezi = '1';
+        const krok = (t: number) => {
+          const k = Math.min(1, (t - zacatek) / doba);
+          const e = 1 - Math.pow(1 - k, 3);
+          el.textContent = k < 1 ? pred + nf.format(cil * e).replace(/\u00a0/g, ' ') + po : puvodni;
+          if (k < 1) requestAnimationFrame(krok); else delete el.dataset.bezi;
+        };
+        requestAnimationFrame(krok);
+      };
+      document.addEventListener('pocitej', (e) => (e.target as HTMLElement).querySelectorAll<HTMLElement>('[data-pocitej]').forEach(pocitej));
+
+      const prvky = document.querySelectorAll('.odhal, .odhal-graf, [data-pocitej]');
       if ('IntersectionObserver' in window) {
         const pozorovatel = new IntersectionObserver((zaznamy) => {
-          for (const z of zaznamy) if (z.isIntersecting) { z.target.classList.add('odhal--videt'); pozorovatel.unobserve(z.target); }
+          for (const z of zaznamy) if (z.isIntersecting) {
+            if ((z.target as HTMLElement).dataset.pocitej !== undefined) pocitej(z.target as HTMLElement);
+            else z.target.classList.add('odhal--videt');
+            pozorovatel.unobserve(z.target);
+          }
         }, { rootMargin: '0px 0px -10% 0px' });
         prvky.forEach((p) => pozorovatel.observe(p));
       } else prvky.forEach((p) => p.classList.add('odhal--videt'));

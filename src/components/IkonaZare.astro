@@ -1,0 +1,23 @@
+---
+// Ikonka v kulatém poli s měkkou barevnou září za ní (prvek vizuální identity)
+import { ikona } from '../lib/ikony';
+
+interface Props {
+  id?: string;
+  cesta?: string;
+  velikost?: number;
+  tmava?: boolean;
+}
+const { id, cesta, velikost = 40, tmava = false } = Astro.props;
+---
+
+<span class:list={['iz', { 'iz--tmava': tmava }]} style={`--v: ${velikost}px;`} aria-hidden="true">
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d={cesta ?? ikona(id)} /></svg>
+</span>
+
+<style>
+  .iz { position: relative; flex-shrink: 0; display: grid; place-items: center; width: var(--v); height: var(--v); border-radius: calc(var(--v) * 0.32); background: var(--paper); color: var(--navy); box-shadow: 0 0 0 1px rgba(226, 217, 201, 0.9), 0 4px 10px -4px rgba(27, 42, 74, 0.25); isolation: isolate; }
+  .iz::before { content: ''; position: absolute; inset: -55%; z-index: -1; border-radius: 50%; background: radial-gradient(circle, rgba(240, 136, 41, 0.34), rgba(240, 136, 41, 0) 62%); pointer-events: none; }
+  .iz svg { width: 58%; height: 58%; }
+  .iz--tmava { background: var(--navy); color: var(--orange); box-shadow: 0 4px 12px -4px rgba(27, 42, 74, 0.45); }
+</style>

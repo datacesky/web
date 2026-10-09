@@ -36,6 +36,15 @@ z otevřených dat ČSÚ (DataStat) a Eurostatu, vybere to nejzajímavější a 
 (Pull request „Novinky z dat: RRRR-MM“). Projdi ho, případně uprav text a klikni **Merge**. Až pak se
 novinky objeví na webu. Ručně jde spustit v záložce Actions → Novinky z dat → Run workflow.
 
+Sleduje devět ukazatelů: inflace (ČSÚ CEN0101H + Eurostat prc_hicp_minr), pohonné hmoty (CENPHMT),
+nezaměstnanost v EU (Eurostat une_rt_m), průměrná mzda (MZDQ1), HDP (Eurostat namq_10_gdp),
+narození (OBY01CRQM), turisté (CRU02M), průmysl (PRU01B) a maloobchod (OBC01). Ukazatel, který od minulého
+vydání nemá nová data, se vynechá. Úvodní stránka ukazuje šest nejčerstvějších položek napříč vydáními
+a pás s čísly pod hlavičkou.
+
+Každá položka má v souboru i řádek `graf:` s daty pro malý graf (JSON na jednom řádku). Položku smažeš
+tak, že odstraníš celý její blok od `- id:` po `graf:` včetně.
+
 Aby GitHub mohl návrh vytvořit, musí být v Settings → Actions → General → Workflow permissions
 zapnuté **Read and write permissions** a **Allow GitHub Actions to create and approve pull requests**.
 

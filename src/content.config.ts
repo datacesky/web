@@ -76,6 +76,27 @@ const novinky = defineCollection({
           zdroj: z.string(),
           sada: z.string(),
           url: z.string().url(),
+          // krátký štítek a změna pro pás s čísly na úvodní stránce
+          stitek: z.string().optional(),
+          zmena: z.string().optional(),
+          smer: z.enum(['nahoru', 'dolu', 'stejne']).optional(),
+          // ikona karty (viz src/lib/ikony.ts)
+          ikona: z.string().optional(),
+          // malý graf nad textem: cara (vývoj), sloupce (období), zeme (srovnání zemí EU)
+          graf: z
+            .object({
+              typ: z.enum(['cara', 'sloupce', 'zeme']),
+              popis: z.string(),
+              jednotka: z.string(),
+              desetinna: z.number().int().min(0).max(3).default(1),
+              znamenko: z.boolean().optional(),
+              rady: z.array(z.object({ nazev: z.string(), body: z.array(z.tuple([z.string(), z.number()])) })).optional(),
+              body: z.array(z.tuple([z.string(), z.number()])).optional(),
+              zeme: z.array(z.tuple([z.string(), z.string(), z.number()])).optional(),
+              zvyraznit: z.string().optional(),
+              reference: z.object({ hodnota: z.number(), popis: z.string() }).optional(),
+            })
+            .optional(),
           // poznámka pro kontrolu v návrhu, na webu se neukazuje
           zkontroluj: z.string().optional(),
         })

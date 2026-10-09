@@ -1,24 +1,57 @@
 ---
-// Jedna novinka z dat: nadpis, velké číslo, krátký text a zdroj s odkazem na datovou sadu.
+// Jedna novinka z dat: nahoře ikonka a malý animovaný graf, pod ním velké číslo, nadpis, text a zdroj.
+import MiniGraf from './MiniGraf.astro';
+import IkonaZare from './IkonaZare.astro';
+
 interface Props {
-  p: { nadpis: string; cislo: string; popisCisla?: string; text: string; zdroj: string; sada: string; url: string };
+  p: {
+    id: string; nadpis: string; cislo: string; popisCisla?: string; text: string; zdroj: string; sada: string; url: string;
+    stitek?: string; zmena?: string; smer?: 'nahoru' | 'dolu' | 'stejne'; ikona?: string; graf?: any;
+  };
+  // kotva pro odkazy z pásu čísel (jen na stránce novinek)
+  kotva?: boolean;
 }
-const { p } = Astro.props;
+const { p, kotva = false } = Astro.props;
+const SIPKA = { nahoru: 'M12 19V5 M6 11l6-6 6 6', dolu: 'M12 5v14 M6 13l6 6 6-6', stejne: 'M5 12h14' };
 ---
 
-<li class="nk">
-  <h3 class="nk__nadpis">{p.nadpis}</h3>
-  <p class="nk__cislo">{p.cislo}{p.popisCisla && <span>{p.popisCisla}</span>}</p>
-  <p class="nk__text">{p.text}</p>
-  <p class="nk__zdroj">Zdroj: <a href={p.url}>{p.zdroj} ({p.sada})</a></p>
+<li class="nk" id={kotva ? `n-${p.id}` : undefined}>
+  <div class="nk__vizual">
+    <div class="nk__hlava">
+      <IkonaZare id={p.ikona} velikost={34} />
+      <span class="nk__stitek">{p.stitek ?? p.zdroj}</span>
+      {p.zmena && (
+        <span class:list={['nk__zmena', `nk__zmena--${p.smer ?? 'stejne'}`]}>
+          <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={SIPKA[p.smer ?? 'stejne']} /></svg>
+          {p.zmena}
+        </span>
+      )}
+    </div>
+    {p.graf && <MiniGraf graf={p.graf} />}
+  </div>
+  <div class="nk__telo">
+    <h3 class="nk__nadpis">{p.nadpis}</h3>
+    <p class="nk__cislo"><span data-pocitej>{p.cislo}</span>{p.popisCisla && <small>{p.popisCisla}</small>}</p>
+    <p class="nk__text">{p.text}</p>
+    <p class="nk__zdroj">Zdroj: <a href={p.url}>{p.zdroj} ({p.sada})</a></p>
+  </div>
 </li>
 
 <style>
-  .nk { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.3rem 1.35rem 1.15rem; border-radius: 20px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); }
-  .nk__nadpis { font-size: 1.02rem; line-height: 1.35; }
-  .nk__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.2rem 0.5rem; font-size: clamp(1.8rem, 4vw, 2.3rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.025em; color: var(--navy); }
-  .nk__cislo span { font-size: 0.9rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
-  .nk__text { flex-grow: 1; font-size: 0.93rem; line-height: 1.6; color: var(--text-2); }
-  .nk__zdroj { padding-top: 0.6rem; border-top: 1px solid var(--line); font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+  .nk { display: flex; flex-direction: column; border-radius: 22px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); overflow: hidden; transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); }
+  @media (hover: hover) and (pointer: fine) { .nk:hover { transform: translateY(-3px); box-shadow: var(--stin); } }
+  .nk__vizual { display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 1.1rem 0.85rem; background: var(--plocha-2); border-bottom: 1px solid #EFE8DC; }
+  .nk__hlava { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
+  .nk__stitek { flex: 1 1 auto; min-width: 0; font-size: 0.86rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nk__zmena { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 800; white-space: nowrap; background: #EDE6DA; color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .nk__zmena--nahoru { background: #FDEBD8; color: var(--orange-text); }
+  .nk__zmena--dolu { background: #E3E8F1; color: var(--navy); }
+  .nk__telo { flex-grow: 1; display: flex; flex-direction: column; gap: 0.5rem; padding: 1.05rem 1.25rem 1.1rem; }
+  .nk__nadpis { font-size: 1rem; line-height: 1.35; color: var(--text-2); }
+  .nk__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.15rem 0.5rem; font-size: clamp(1.9rem, 4vw, 2.35rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .nk__cislo small { font-size: 0.88rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
+  .nk__text { flex-grow: 1; font-size: 0.9rem; line-height: 1.62; color: var(--text-2); }
+  .nk__zdroj { padding-top: 0.6rem; border-top: 1px solid var(--line); font-size: 0.78rem; font-weight: 600; color: var(--muted); }
   .nk__zdroj a { color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { .nk { transition: none; } .nk:hover { transform: none; } }
 </style>

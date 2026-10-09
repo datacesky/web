@@ -1,0 +1,294 @@
+---
+// Malý graf nad novinkou: čára (vývoj), sloupce (období) nebo země EU (srovnání).
+// Kreslí se na serveru jako SVG, takže funguje i bez JavaScriptu. Animace se spustí, až graf vjede do obrazu,
+// a po najetí myší nebo ťuknutí ukáže přesnou hodnotu.
+// Sloupce vždy začínají od nuly. Čára může začínat jinde, proto má popsané vodorovné linky.
+import { obdobi, hodnota, kratce } from '../lib/obdobi';
+
+type Graf = {
+  typ: 'cara' | 'sloupce' | 'zeme';
+  popis: string;
+  jednotka: string;
+  desetinna: number;
+  znamenko?: boolean;
+  rady?: { nazev: string; body: [string, number][] }[];
+  body?: [string, number][];
+  zeme?: [string, string, number][];
+  zvyraznit?: string;
+  reference?: { hodnota: number; popis: string };
+};
+interface Props {
+  graf: Graf;
+}
+const { graf: g } = Astro.props;
+
+const W = 300, H = 132;
+const L = 4, R = W - 4, T = 22, B = H - 20;
+const d = g.desetinna ?? 1;
+const j = g.jednotka;
+const sJednotkou = (v: number, kr = false) => `${kr ? kratce(v, d, g.znamenko) : hodnota(v, d, g.znamenko)}${j === '%' ? ' %' : ` ${j}`}`;
+const f1 = (v: number) => Math.round(v * 10) / 10;
+
+const ORANZOVA = '#F08829', NAVY = '#1B2A4A', SEDA = '#AEB8CB';
+
+// pěkné kroky os
+function kroky(lo: number, hi: number, n = 3) {
+  const hruby = (hi - lo) / n;
+  const mocnina = 10 ** Math.floor(Math.log10(hruby || 1));
+  const k = [1, 2, 2.5, 5, 10].find((x) => x * mocnina >= hruby)! * mocnina;
+  const out: number[] = [];
+  for (let v = Math.ceil(lo / k) * k; v <= hi + 1e-9; v += k) out.push(Math.round(v * 1e6) / 1e6);
+  return out;
+}
+
+let obsah: any = {};
+let aria = g.popis;
+
+if (g.typ === 'cara') {
+  const rady = g.rady ?? [];
+  const n = rady[0].body.length;
+  const vse = rady.flatMap((r) => r.body.map((b) => b[1]));
+  if (g.reference) vse.push(g.reference.hodnota);
+  let lo = Math.min(...vse), hi = Math.max(...vse);
+  const pad = (hi - lo) * 0.14 || 1;
+  lo -= pad; hi += pad;
+  const x = (i: number) => L + (i * (R - L)) / (n - 1);
+  const y = (v: number) => B - ((v - lo) / (hi - lo)) * (B - T);
+  const cesty = rady.map((r, ri) => ({
+    nazev: r.nazev,
+    barva: ri === 0 ? ORANZOVA : NAVY,
+    d: r.body.map((b, i) => `${i ? 'L' : 'M'}${f1(x(i))},${f1(y(b[1]))}`).join(''),
+    konec: { x: f1(x(n - 1)), y: f1(y(r.body[n - 1][1])), t: sJednotkou(r.body[n - 1][1]) },
+  }));
+  // popisky konců od sebe, když jsou moc blízko
+  if (cesty.length > 1 && Math.abs(cesty[0].konec.y - cesty[1].konec.y) < 13) {
+    const nahore = cesty[0].konec.y <= cesty[1].konec.y ? 0 : 1;
+    (cesty[nahore].konec as any).dy = -6;
+    (cesty[1 - nahore].konec as any).dy = 14;
+  }
+  const rv = g.reference?.hodnota;
+  const ref = g.reference ? { y: f1(y(rv!)), t: `${g.reference.popis ? g.reference.popis + ' ' : ''}${hodnota(rv!, rv! % 1 ? 1 : 0)}${j === '%' ? ' %' : ` ${j}`}`, x: L, kotva: 'start' } : null;
+  if (ref) {
+    // nejbližší vzdálenost čar od popisku vlevo (prvních pár bodů) a vpravo (konce)
+    const blizko = (od: number, do_: number) => Math.min(...rady.flatMap((r) => r.body.slice(od, do_).map((b) => Math.abs(y(b[1]) - (ref.y - 6)))));
+    const kus = Math.max(2, Math.round(n * 0.3));
+    if (blizko(0, kus) < 9 && blizko(n - kus, n - 2) > blizko(0, kus) && cesty.every((c) => Math.abs(c.konec.y - ref.y) > 16)) {
+      ref.x = R; ref.kotva = 'end';
+    }
+  }
+  // vodorovné linky s popisem, kromě té, která by splývala s referenční čarou
+  const mrizka = kroky(lo, hi)
+    .map((v) => ({ y: f1(y(v)), t: hodnota(v, Math.abs(v) < 10 && v % 1 ? 1 : 0) }))
+    .filter((m) => !ref || Math.abs(m.y - ref.y) > 9);
+  const sirka = (R - L) / (n - 1);
+  const zasahy = rady[0].body.map((b, i) => ({
+    x: f1(Math.max(L, x(i) - sirka / 2)), w: f1(sirka), cx: f1(x(i)),
+    tip: [obdobi(b[0]), ...rady.map((r) => `${rady.length > 1 ? r.nazev + ': ' : ''}${sJednotkou(r.body[i][1])}`)].join('|'),
+  }));
+  obsah = { cesty, mrizka, ref, zasahy, od: obdobi(rady[0].body[0][0], true), do: obdobi(rady[0].body[n - 1][0], true) };
+  aria += `. Poslední hodnota: ${cesty.map((c) => `${rady.length > 1 ? c.nazev + ' ' : ''}${c.konec.t}`).join(', ')}.`;
+} else {
+  const body: [string, string, number][] = g.typ === 'zeme'
+    ? (g.zeme ?? [])
+    : (g.body ?? []).map(([k, v]) => [k, obdobi(k), v]);
+  const n = body.length;
+  const hodnoty = body.map((b) => b[2]);
+  const vse = g.reference ? [...hodnoty, g.reference.hodnota] : hodnoty;
+  const lo = Math.min(0, ...vse);
+  let hi = Math.max(0, ...vse);
+  hi += (hi - lo) * 0.06;
+  const pas = (R - L) / n;
+  const sirka = g.typ === 'zeme' ? pas * 0.62 : pas * (n > 18 ? 0.66 : 0.6);
+  const y = (v: number) => B - ((v - lo) / (hi - lo || 1)) * (B - T);
+  const nula = f1(y(0));
+  const zvyrazneno = (i: number) => (g.typ === 'zeme' ? body[i][0] === g.zvyraznit : i === n - 1);
+  const sloupce = body.map((b, i) => {
+    const y1 = y(b[2]);
+    return {
+      x: f1(L + i * pas + (pas - sirka) / 2), w: f1(sirka),
+      y: f1(Math.min(y1, nula)), h: f1(Math.max(Math.abs(nula - y1), 1.2)),
+      zap: b[2] < 0, barva: zvyrazneno(i) ? ORANZOVA : SEDA, i,
+      hit: { x: f1(L + i * pas), w: f1(pas) },
+      tip: `${b[1]}|${sJednotkou(b[2])}`,
+    };
+  });
+  // popisky: zvýrazněný sloupec a pro srovnání první (období) nebo nejvyšší (země)
+  const popisek = (i: number, silne: boolean) => {
+    const s = sloupce[i];
+    const cx = s.x + s.w / 2;
+    const vlevo = cx < W * 0.3, vpravo = cx > W * 0.7;
+    const text = g.typ === 'zeme' ? `${body[i][1]} ${sJednotkou(body[i][2])}` : sJednotkou(body[i][2], true);
+    const x = vlevo ? s.x - 1 : vpravo ? s.x + s.w + 1 : cx;
+    const sirkaTextu = text.length * (silne ? 7.2 : 6.3);
+    const [x0, x1] = vlevo ? [x, x + sirkaTextu] : vpravo ? [x - sirkaTextu, x] : [x - sirkaTextu / 2, x + sirkaTextu / 2];
+    const podTextem = sloupce.filter((q) => q.x + q.w > x0 && q.x < x1);
+    const vrch = body[i][2] < 0 ? s.y + s.h + 11 : Math.max(silne ? 12 : 11, Math.min(...podTextem.map((q) => q.y)) - 5);
+    // u zemí jde popisek zvýrazněné země nahoru s tenkou linkou dolů, ať nekoliduje s průměrem EU
+    if (g.typ === 'zeme' && silne && body[i][2] >= 0) {
+      return { x: f1(x), kotva: vlevo ? 'start' : vpravo ? 'end' : 'middle', y: 12, text, silne, vodic: { x: f1(cx), y1: 16, y2: f1(s.y - 2) } };
+    }
+    return { x: f1(x), kotva: vlevo ? 'start' : vpravo ? 'end' : 'middle', y: f1(vrch), text, silne };
+  };
+  const iZv = sloupce.findIndex((s) => zvyrazneno(s.i));
+  const iDruhy = g.typ === 'zeme' ? (iZv === n - 1 ? 0 : n - 1) : 0;
+  const popisky = [popisek(iZv, true)];
+  if (iDruhy !== iZv) popisky.push(popisek(iDruhy, false));
+  // popisek reference vlevo, kde jsou sloupce u zemí seřazených od nejnižší nejníž
+  const ref = g.reference ? { y: f1(y(g.reference.hodnota)), t: `${g.reference.popis} ${sJednotkou(g.reference.hodnota)}`, x: g.typ === 'zeme' ? L : R, kotva: g.typ === 'zeme' ? 'start' : 'end' } : null;
+  obsah = {
+    sloupce, popisky, ref, nula, zaporne: lo < 0,
+    od: g.typ === 'zeme' ? 'nejnižší' : obdobi(body[0][0], true),
+    do: g.typ === 'zeme' ? 'nejvyšší' : obdobi(body[n - 1][0], true),
+  };
+  aria += `. ${g.typ === 'zeme' ? `${body[iZv][1]}: ${sJednotkou(body[iZv][2])}` : `${body[n - 1][1]}: ${sJednotkou(body[n - 1][2])}, ${body[0][1]}: ${sJednotkou(body[0][2])}`}.`;
+}
+const legenda = g.typ === 'cara' && (g.rady?.length ?? 0) > 1 ? obsah.cesty.map((c: any) => ({ nazev: c.nazev, barva: c.barva })) : [];
+---
+
+<figure class="mg odhal-graf" data-mg>
+  <svg class="mg__svg" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={aria}>
+    {g.typ === 'cara' ? (
+      <g>
+        {obsah.mrizka.map((m: any) => (
+          <g class="mg__mrizka">
+            <line x1={L} x2={R} y1={m.y} y2={m.y} />
+            <text x={L} y={m.y - 3}>{m.t}</text>
+          </g>
+        ))}
+        {obsah.ref && (
+          <g class="mg__ref">
+            <line x1={L} x2={R} y1={obsah.ref.y} y2={obsah.ref.y} />
+            <text x={obsah.ref.x} y={obsah.ref.y - 3} text-anchor={obsah.ref.kotva}>{obsah.ref.t}</text>
+          </g>
+        )}
+        {[...obsah.cesty].reverse().map((c: any, ri: number) => (
+          <g>
+            {ri === obsah.cesty.length - 1 && <path class="mg__zare" d={c.d} stroke={c.barva} />}
+            <path class="mg__cara" d={c.d} stroke={c.barva} stroke-width={ri === obsah.cesty.length - 1 ? 3 : 2} pathLength="1" />
+          </g>
+        ))}
+        {obsah.cesty.map((c: any, ri: number) => (
+          <g class="mg__konec">
+            <circle cx={c.konec.x} cy={c.konec.y} r={ri === 0 ? 4.5 : 3.5} fill={c.barva} />
+            <text x={c.konec.x - 7} y={c.konec.y + (c.konec.dy ?? -8)} text-anchor="end" class:list={['mg__hodnota', { 'mg__hodnota--hlavni': ri === 0 }]}>{c.konec.t}</text>
+          </g>
+        ))}
+        <line class="mg__kriz" x1="0" x2="0" y1={T - 8} y2={B} />
+        {obsah.zasahy.map((z: any) => <rect class="mg__hit" x={z.x} y="0" width={z.w} height={B} data-tip={z.tip} data-cx={z.cx} />)}
+      </g>
+    ) : (
+      <g>
+        {obsah.ref && (
+          <g class="mg__ref mg__ref--nad">
+            <line x1={L} x2={R} y1={obsah.ref.y} y2={obsah.ref.y} />
+            <text x={obsah.ref.x} y={obsah.ref.y - 4} text-anchor={obsah.ref.kotva}>{obsah.ref.t}</text>
+          </g>
+        )}
+        {obsah.sloupce.map((s: any) => (
+          <rect class:list={['mg__sloupec', { 'mg__sloupec--zap': s.zap }]} x={s.x} y={s.y} width={s.w} height={s.h} rx={Math.min(3, s.w / 2)} fill={s.barva} style={`--i: ${s.i};`} />
+        ))}
+        <line class="mg__nula" x1={L} x2={R} y1={obsah.nula} y2={obsah.nula} />
+        {obsah.popisky.filter((p: any) => p.vodic).map((p: any) => (
+          <line class="mg__vodic" x1={p.vodic.x} x2={p.vodic.x} y1={p.vodic.y1} y2={p.vodic.y2} />
+        ))}
+        {obsah.popisky.map((p: any) => (
+          <text class:list={['mg__hodnota', { 'mg__hodnota--hlavni': p.silne }]} x={p.x} y={p.y} text-anchor={p.kotva}>{p.text}</text>
+        ))}
+        {obsah.sloupce.map((s: any) => <rect class="mg__hit" x={s.hit.x} y="0" width={s.hit.w} height={B} data-tip={s.tip} />)}
+      </g>
+    )}
+    <text class="mg__osa" x={L} y={H - 5}>{obsah.od}</text>
+    <text class="mg__osa" x={R} y={H - 5} text-anchor="end">{obsah.do}</text>
+  </svg>
+  {legenda.length > 0 && (
+    <ul class="mg__legenda">
+      {legenda.map((l: any) => <li><i style={`background: ${l.barva};`}></i>{l.nazev}</li>)}
+    </ul>
+  )}
+  <figcaption class="mg__popis">{g.popis}</figcaption>
+  <div class="mg__tip" hidden></div>
+</figure>
+
+<style>
+  .mg { position: relative; margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+  .mg__svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+  .mg__svg text { font-family: inherit; font-size: 10px; font-weight: 700; fill: var(--muted); paint-order: stroke; stroke: var(--plocha-2); stroke-width: 3px; stroke-linejoin: round; }
+  .mg__mrizka line { stroke: #E7E0D3; stroke-width: 1; }
+  .mg__mrizka text { font-size: 9px; font-weight: 600; fill: #7D879A; }
+  .mg__ref line { stroke: var(--slate); stroke-width: 1.2; stroke-dasharray: 3 3; }
+  .mg__ref text { font-size: 9.5px; fill: var(--slate); }
+  .mg__cara { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+  .mg__zare { fill: none; stroke-width: 9; stroke-opacity: 0.14; stroke-linecap: round; stroke-linejoin: round; }
+  .mg__konec circle { stroke: #fff; stroke-width: 2; }
+  .mg__hodnota { font-size: 11px !important; font-weight: 800 !important; fill: var(--navy) !important; }
+  .mg__hodnota--hlavni { font-size: 12.5px !important; font-weight: 900 !important; fill: var(--orange-text) !important; }
+  .mg__nula { stroke: var(--line-2); stroke-width: 1; }
+  .mg__vodic { stroke: var(--orange); stroke-width: 1.2; }
+  .mg__osa { font-size: 9.5px !important; font-weight: 600 !important; fill: #7D879A !important; }
+  .mg__hit { fill: transparent; cursor: crosshair; }
+  .mg__kriz { stroke: var(--navy); stroke-width: 1; stroke-dasharray: 2 2; opacity: 0; transition: opacity 0.15s ease; pointer-events: none; }
+  .mg.ukazuje .mg__kriz { opacity: 0.45; }
+  .mg__sloupec { transition: opacity 0.15s ease; }
+  .mg.ukazuje .mg__sloupec:not(.je-vybrany) { opacity: 0.55; }
+  .mg__legenda { display: flex; gap: 0.9rem; list-style: none; margin: 0; padding: 0; font-size: 0.74rem; font-weight: 700; color: var(--muted); }
+  .mg__legenda li { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .mg__legenda i { width: 14px; height: 3px; border-radius: 3px; }
+  .mg__popis { font-size: 0.74rem; font-weight: 600; line-height: 1.45; color: #6F7990; }
+  .mg__tip { position: absolute; z-index: 3; top: 0; left: 0; padding: 0.4rem 0.6rem; border-radius: 10px; background: var(--navy); color: var(--cream); font-size: 0.76rem; font-weight: 700; line-height: 1.4; white-space: nowrap; pointer-events: none; box-shadow: 0 6px 18px -6px rgba(27, 42, 74, 0.5); transform: translate(var(--tx, 0), var(--ty, 0)); }
+  :global(.mg__tip b) { display: block; font-weight: 900; color: var(--orange); }
+
+  /* Animace při vjetí do obrazu: čára se nakreslí, sloupce vyrostou, popisky naskočí na konci */
+  :global(.js) .mg .mg__cara { stroke-dasharray: 1; stroke-dashoffset: 1; }
+  :global(.js) .mg .mg__zare, :global(.js) .mg .mg__konec, :global(.js) .mg .mg__hodnota, :global(.js) .mg .mg__vodic { opacity: 0; }
+  :global(.js) .mg .mg__sloupec { transform: scaleY(0); transform-box: fill-box; transform-origin: 50% 100%; }
+  :global(.js) .mg .mg__sloupec--zap { transform-origin: 50% 0; }
+  :global(.js) .mg:global(.odhal--videt) .mg__cara { stroke-dashoffset: 0; transition: stroke-dashoffset 1.7s cubic-bezier(0.33, 0.8, 0.3, 1); }
+  :global(.js) .mg:global(.odhal--videt) .mg__zare { opacity: 1; transition: opacity 0.8s ease 1s; }
+  :global(.js) .mg:global(.odhal--videt) .mg__konec, :global(.js) .mg:global(.odhal--videt) .mg__hodnota, :global(.js) .mg:global(.odhal--videt) .mg__vodic { opacity: 1; transition: opacity 0.45s var(--ease-out) 1.25s; }
+  :global(.js) .mg:global(.odhal--videt) .mg__sloupec { transform: none; transition: transform 0.9s cubic-bezier(0.22, 0.9, 0.28, 1) calc(var(--i) * 32ms), opacity 0.15s ease; }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .mg .mg__cara { stroke-dasharray: none; stroke-dashoffset: 0; transition: none !important; }
+    :global(.js) .mg .mg__zare, :global(.js) .mg .mg__konec, :global(.js) .mg .mg__hodnota, :global(.js) .mg .mg__vodic { opacity: 1; transition: none !important; }
+    :global(.js) .mg .mg__sloupec { transform: none; transition: none !important; }
+  }
+</style>
+
+<script>
+  // Přesná hodnota po najetí myší nebo ťuknutí
+  for (const fig of document.querySelectorAll<HTMLElement>('[data-mg]')) {
+    const svg = fig.querySelector<SVGSVGElement>('svg')!;
+    const tip = fig.querySelector<HTMLElement>('.mg__tip')!;
+    const kriz = fig.querySelector<SVGLineElement>('.mg__kriz');
+    const sloupce = Array.from(fig.querySelectorAll<SVGRectElement>('.mg__sloupec'));
+    const zasahy = Array.from(fig.querySelectorAll<SVGRectElement>('.mg__hit'));
+    let vybrany: SVGRectElement | null = null;
+    const ukaz = (hit: SVGRectElement) => {
+      const [hlava, ...radky] = (hit.dataset.tip ?? '').split('|');
+      const b = document.createElement('b');
+      b.textContent = hlava;
+      tip.replaceChildren(b, ...radky.flatMap((r, i) => (i ? [document.createElement('br'), r] : [r])));
+      tip.hidden = false;
+      fig.classList.add('ukazuje');
+      const i = zasahy.indexOf(hit);
+      vybrany?.classList.remove('je-vybrany');
+      vybrany = sloupce[i] ?? null;
+      vybrany?.classList.add('je-vybrany');
+      const s = svg.getBoundingClientRect(), f = fig.getBoundingClientRect();
+      const meritko = s.width / svg.viewBox.baseVal.width;
+      const cx = hit.dataset.cx ? Number(hit.dataset.cx) : Number(hit.getAttribute('x')) + Number(hit.getAttribute('width')) / 2;
+      if (kriz) { kriz.setAttribute('x1', String(cx)); kriz.setAttribute('x2', String(cx)); }
+      const x = s.left - f.left + cx * meritko;
+      const w = tip.offsetWidth;
+      const tx = Math.min(Math.max(x - w / 2, 0), f.width - w);
+      tip.style.setProperty('--tx', `${tx}px`);
+      tip.style.setProperty('--ty', `${s.top - f.top - tip.offsetHeight - 6}px`);
+    };
+    const schovej = () => { tip.hidden = true; fig.classList.remove('ukazuje'); vybrany?.classList.remove('je-vybrany'); vybrany = null; };
+    for (const hit of zasahy) {
+      hit.addEventListener('pointerenter', () => ukaz(hit));
+      hit.addEventListener('pointerdown', () => ukaz(hit));
+    }
+    svg.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') schovej(); });
+    document.addEventListener('pointerdown', (e) => { if (!fig.contains(e.target as Node)) schovej(); }, { passive: true });
+  }
+</script>

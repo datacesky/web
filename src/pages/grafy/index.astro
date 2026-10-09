@@ -1,22 +1,4 @@
 ---
-import { getCollection } from 'astro:content';
-import Base from '../../layouts/Base.astro';
-import ArchivGrafu from '../../components/ArchivGrafu.astro';
-
-const grafy = (await getCollection('grafy')).sort(
-  (a, b) => b.data.datum.valueOf() - a.data.datum.valueOf()
-);
+// Archiv grafů se přestěhoval do záložky Žebříčky. Stará adresa přesměruje, ať fungují i odkazy z dřívějška.
+return Astro.redirect('/zebricky/#grafy', 301);
 ---
-
-<Base
-  titul="Všechny grafy — data.cesky"
-  popis="Archiv grafů a map o Česku se zdroji a metodikou. Filtruj podle tématu nebo hledej."
->
-  <section class="obal sekce--mala sloupec" style="gap: 1.75rem;">
-    <div class="sloupec" style="max-width: 62ch;">
-      <h1>Všechny grafy</h1>
-      <p class="perex">Filtruj podle tématu, nebo hledej podle názvu. Každý graf má uvedený zdroj a metodiku.</p>
-    </div>
-    <ArchivGrafu grafy={grafy} />
-  </section>
-</Base>

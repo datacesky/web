@@ -3,7 +3,9 @@ import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import BarChart from '../components/BarChart.astro';
 import HeroGlobus from '../components/uvod/HeroGlobus.astro';
-import CeskoVeSvete from '../components/uvod/CeskoVeSvete.astro';
+import ZebrickyUpoutavka from '../components/ZebrickyUpoutavka.astro';
+import PasCisel from '../components/PasCisel.astro';
+import { posledniNovinky } from '../lib/novinky';
 import MapaMini from '../components/uvod/MapaMini.astro';
 import HlasovaniPozvanka from '../components/HlasovaniPozvanka.astro';
 import NovinkaKarta from '../components/NovinkaKarta.astro';
@@ -13,7 +15,8 @@ import { datum } from '../lib/format';
 
 const grafy = (await getCollection('grafy')).sort((a, b) => b.data.datum.valueOf() - a.data.datum.valueOf());
 const tydne = grafy[0];
-const posledniNovinky = (await getCollection('novinky')).sort((a, b) => b.data.datum.valueOf() - a.data.datum.valueOf())[0];
+const novinky = await posledniNovinky(9);
+const aktualizovano = novinky.length ? new Date(Math.max(...novinky.map((n) => n.datumVydani.valueOf()))) : null;
 // Seznam zemí pro vyhledávání v úvodu (jen název a vlajka, ať je stránka lehká)
 const zemeHledani = JSON.stringify(Object.entries(ZEME).filter(([a3]) => a3 !== 'EUZ' && a3 !== 'CZE').map(([a3, [n, a2]]) => [a3, n, a2]));
 
@@ -32,6 +35,7 @@ const FB = 'https://www.facebook.com/data.cesky';
 ---
 
 <Base titul="data.cesky — Česko v mapách, grafech a číslech" obrazek="/og/uvod.png">
+  {novinky.length > 0 && <PasCisel polozky={novinky} />}
   <div class="vrstevnice">
   <section class="uvod obal">
     <div class="uvod__text">
@@ -58,25 +62,43 @@ const FB = 'https://www.facebook.com/data.cesky';
   </section>
   </div>
 
+  {novinky.length > 0 && (
+    <section class="obal sekce--mala novinky-uvod">
+      <div class="nadpis-sekce">
+        <div class="nadpis">
+          <span class="nadhlavi nadhlavi--zive">Nová data{aktualizovano && ` · ${datum(aktualizovano)}`}</span>
+          <h2>Novinky z dat</h2>
+          <p class="drobne">Nejzajímavější čísla, která za poslední měsíc zveřejnil ČSÚ a Eurostat.</p>
+        </div>
+        <a class="tlacitko tlacitko--male" href="/novinky/">Všechny novinky</a>
+      </div>
+      <ul class="posuvnik" data-posuvnik>
+        {novinky.slice(0, 6).map((p) => <NovinkaKarta p={p} />)}
+      </ul>
+      <div class="tecky" aria-hidden="true" data-tecky>{novinky.slice(0, 6).map((_, i) => <i class:list={{ 'je-aktivni': i === 0 }}></i>)}</div>
+    </section>
+  )}
+
   <section class="obal sekce--mala">
     <HlasovaniPozvanka />
   </section>
 
   <section class="obal sekce--mala">
-    <div class="karta sloupec" style="gap: 1.25rem;">
-      <div class="nadpis-sekce" style="margin-bottom: 0;">
-        <h2>Kde je Česko ve světových žebříčcích</h2>
-        <p class="drobne" style="max-width: 38ch;">Vyber žebříček a rozbalí se: kde leží Česko mezi všemi zeměmi, kdo vede a kdo je hned vedle nás.</p>
+    <div class="nadpis-sekce">
+      <div class="nadpis">
+        <span class="nadhlavi">Žebříčky</span>
+        <h2>Kde je Česko ve světě</h2>
       </div>
-      <CeskoVeSvete />
+      <a class="tlacitko tlacitko--male" href="/zebricky/">Všechny žebříčky</a>
     </div>
+    <ZebrickyUpoutavka />
   </section>
 
   {tydne && (
     <section class="obal sekce--mala">
       <a class="tydne" href={`/grafy/${tydne.id}/`}>
         <div class="tydne__text">
-          <span class="znacka">Graf týdne</span>
+          <span class="nadhlavi">Graf týdne</span>
           <h2>{tydne.data.titul}</h2>
           <p class="perex">{tydne.data.perex}</p>
           <span class="drobne tydne__meta"><span>Zdroj: {tydne.data.zdroj}</span><span>Vyšlo {datum(tydne.data.datum)}</span></span>
@@ -93,21 +115,6 @@ const FB = 'https://www.facebook.com/data.cesky';
           </div>
         </div>
       </a>
-    </section>
-  )}
-
-  {posledniNovinky && (
-    <section class="obal sekce--mala">
-      <div class="nadpis-sekce">
-        <div class="nadpis">
-          <h2>Novinky z dat</h2>
-          <p class="drobne">Co nového ukázala data ČSÚ a Eurostatu za poslední měsíc.</p>
-        </div>
-        <a class="tlacitko tlacitko--male" href="/novinky/">Všechny novinky</a>
-      </div>
-      <ul class="mrizka mrizka--3">
-        {posledniNovinky.data.polozky.slice(0, 3).map((p) => <NovinkaKarta p={p} />)}
-      </ul>
     </section>
   )}
 
@@ -173,6 +180,8 @@ const FB = 'https://www.facebook.com/data.cesky';
   .uvod__legenda i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
   .uvod__globus { display: block; max-width: 560px; justify-self: center; width: 100%; -webkit-touch-callout: none; transition: transform 0.2s var(--ease-out); }
   @media (max-width: 860px) { .uvod__globus { max-width: 340px; } }
+  /* Na telefonu menší glóbus, ať jsou novinky blíž nahoře */
+  @media (max-width: 560px) { .uvod { padding-block: 1.75rem 0.5rem; gap: 1.25rem; } .uvod__globus { max-width: 250px; } .uvod__text { gap: 1rem; } }
   .uvod__globus:active { transform: scale(0.985); }
 
   .tydne { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center; text-decoration: none; color: var(--navy); }

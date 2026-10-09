@@ -1,0 +1,43 @@
+---
+// Upoutávka na úvodní stránce: pořadí Česka v šesti světových žebříčcích, každé vede do záložky Žebříčky.
+import { vrstvaPodleId, pocet, poradiZeme } from '../lib/svet';
+import IkonaZare from './IkonaZare.astro';
+
+const IDS = ['stesti', 'hdp', 'doziti', 'korupce', 'tisk', 'bm'];
+const dlazdice = IDS.map((id) => {
+  const v = vrstvaPodleId(id)!;
+  const n = pocet(id);
+  const r = poradiZeme(id, 'CZE')!;
+  return { id, v, n, r, x: n <= 1 ? 0 : ((r - 1) / (n - 1)) * 100 };
+});
+---
+
+<ul class="zu">
+  {dlazdice.map((d, i) => (
+    <li style={`--x: ${d.x}%; --i: ${i};`}>
+      <a href={`/zebricky/#z=${d.id}`} class="zu__odkaz">
+        <span class="zu__hlava"><IkonaZare cesta={d.v.ikona} velikost={32} /><span>{d.v.nazev}</span></span>
+        <span class="zu__misto"><strong data-pocitej>{d.r}.</strong><small>{d.v.poradiSlovo}<br />z {d.n} zemí</small></span>
+        <span class="zu__osa odhal-graf" aria-hidden="true"><i></i></span>
+      </a>
+    </li>
+  ))}
+</ul>
+
+<style>
+  .zu { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 0.75rem; list-style: none; margin: 0; padding: 0; }
+  @media (max-width: 1020px) { .zu { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  @media (max-width: 560px) { .zu { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; } }
+  .zu__odkaz { display: flex; flex-direction: column; gap: 0.7rem; height: 100%; padding: 0.95rem 0.95rem 0.9rem; border-radius: 20px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); color: var(--navy); text-decoration: none; transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); -webkit-touch-callout: none; }
+  @media (hover: hover) and (pointer: fine) { .zu__odkaz:hover { transform: translateY(-3px); box-shadow: var(--stin); color: var(--navy); } }
+  .zu__odkaz:active { transform: scale(0.97); transition-duration: 60ms; }
+  .zu__hlava { display: flex; align-items: center; gap: 0.55rem; font-size: 0.84rem; font-weight: 800; line-height: 1.25; }
+  .zu__misto { display: flex; align-items: center; gap: 0.5rem; }
+  .zu__misto strong { font-size: 2.1rem; font-weight: 900; line-height: 1; letter-spacing: -0.04em; color: var(--orange-text); font-variant-numeric: tabular-nums; }
+  .zu__misto small { font-size: 0.72rem; font-weight: 700; line-height: 1.3; color: var(--muted); }
+  .zu__osa { position: relative; height: 6px; margin-top: auto; border-radius: 6px; background: linear-gradient(90deg, #1B2A4A, #6E7C96 45%, #E2D9C9); }
+  .zu__osa i { position: absolute; top: 50%; left: var(--x); width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--orange); border: 2px solid #fff; box-shadow: 0 0 0 3px rgba(240, 136, 41, 0.28); }
+  :global(.js) .zu__osa i { left: 0; opacity: 0; }
+  :global(.js) .zu__osa:global(.odhal--videt) i { left: var(--x); opacity: 1; transition: left 1.2s cubic-bezier(0.22, 0.8, 0.24, 1) calc(var(--i) * 80ms), opacity 0.3s ease calc(var(--i) * 80ms); }
+  @media (prefers-reduced-motion: reduce) { :global(.js) .zu__osa i { left: var(--x); opacity: 1; transition: none !important; } }
+</style>

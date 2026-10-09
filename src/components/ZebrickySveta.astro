@@ -1,0 +1,238 @@
+---
+// Česko ve světových žebříčcích: dlaždice s pořadím Česka, pod nimi detail vybraného žebříčku.
+// Detail: kde v pořadí leží Česko a sousedé, prvních deset zemí s Českem a srovnání se sousedy.
+// Všechno se kreslí na serveru, JavaScript jen přepíná žebříčky (bez něj jsou vidět všechny pod sebou).
+import { vrstvaPodleId, zebricek, pocet, jmeno, vlajka } from '../lib/svet';
+import IkonaZare from './IkonaZare.astro';
+
+const IDS = ['stesti', 'hdp', 'doziti', 'bm', 'korupce', 'tisk', 'akad', 'gini', 'pop', 'area'];
+const SOUSEDE = ['DEU', 'AUT', 'SVK', 'POL'];
+const zebricky = IDS.map((id) => {
+  const v = vrstvaPodleId(id)!;
+  const z = zebricek(id);
+  const n = pocet(id);
+  const f = v.kratce ?? v.format;
+  const cz = z.find((q) => q.a3 === 'CZE')!;
+  const pozice = (r: number) => (n <= 1 ? 0 : ((r - 1) / (n - 1)) * 100);
+  const prvni = z.slice(0, 10);
+  const radky = prvni.some((q) => q.a3 === 'CZE') ? prvni : [...prvni.slice(0, 9), cz];
+  const max = Math.max(...radky.map((q) => q.v));
+  const sousede = [cz, ...SOUSEDE.map((a3) => z.find((q) => q.a3 === a3)).filter(Boolean)].sort((a, b) => a!.r - b!.r) as typeof z;
+  return {
+    id, v, n, cz, f,
+    zdrojKratce: v.zdroj.split(',')[0].split('(')[0].trim(),
+    pozice: pozice(cz.r),
+    piny: (() => {
+      // sousedé blízko sebe jdou do dalšího řádku, ať se vlajky nepřekrývají
+      const radky: number[] = [];
+      return sousede.filter((q) => q.a3 !== 'CZE').map((q) => {
+        const x = pozice(q.r);
+        let r = radky.findIndex((konec) => x - konec >= 7);
+        if (r === -1) { r = radky.length; radky.push(x); } else radky[r] = x;
+        return { ...q, x, radek: Math.min(r, 2) };
+      });
+    })(),
+    // popisky konců schovat, když by je překryl štítek Česka
+    skrytKraj: { l: pozice(cz.r) < 16, p: pozice(cz.r) > 80 },
+    radky: radky.map((q) => ({ ...q, t: f(q.v), sirka: Math.max(2, (q.v / max) * 100) })),
+    sousede: sousede.map((q) => ({ ...q, t: f(q.v) })),
+    prvni: z[0],
+    posledni: z.at(-1)!,
+  };
+});
+---
+
+<div class="zs" data-zs>
+  <div class="zs__dlazdice" role="group" aria-label="Vyber žebříček">
+    {zebricky.map((z, i) => (
+      <button type="button" class="zs__dlazdice-1" data-zs-vyber={z.id} aria-pressed={i === 0 ? 'true' : 'false'} aria-controls={`zs-${z.id}`} style={`--x: ${z.pozice}%;`}>
+        <span class="zs__d-hlava"><IkonaZare cesta={z.v.ikona} velikost={30} /><span class="zs__d-nazev">{z.v.nazev}</span></span>
+        <span class="zs__d-misto"><strong>{z.cz.r}.</strong> <small>z {z.n}</small></span>
+        <span class="zs__d-osa" aria-hidden="true"><i></i></span>
+      </button>
+    ))}
+  </div>
+
+  {zebricky.map((z, i) => (
+    <section class:list={['zs__panel', { 'je-aktivni': i === 0 }]} id={`zs-${z.id}`} data-zs-panel={z.id} aria-label={z.v.nazev} style={`--x: ${z.pozice}%;`}>
+      <div class="zs__hlava">
+        <div class="zs__titul">
+          <IkonaZare cesta={z.v.ikona} velikost={48} tmava />
+          <div>
+            <h3>{z.v.nazev}</h3>
+            <p class="drobne">{z.v.popis}</p>
+          </div>
+        </div>
+        <p class="zs__vyrok">
+          <span class="zs__vyrok-cislo" data-pocitej>{z.cz.r}.</span>
+          <span class="zs__vyrok-text">{z.v.poradiSlovo} země z {z.n}<small>Česko: {z.v.format(z.cz.v)}</small></span>
+        </p>
+      </div>
+
+      <div class="zs__osa odhal-graf" aria-hidden="true" style={`--rady: ${Math.max(0, ...z.piny.map((p) => p.radek))};`}>
+        <div class="zs__draha"></div>
+        {z.piny.map((p) => (
+          <span class="zs__pin" style={`--px: ${p.x}%; --radek: ${p.radek};`} title={`${jmeno(p.a3)}: ${p.r}.`}>
+            <img src={vlajka(p.a3)} alt="" class="vlajka" width="22" height="16" loading="lazy" />
+            <span>{p.r}.</span>
+          </span>
+        ))}
+        <span class:list={['zs__cz', { 'zs__cz--l': z.pozice < 9, 'zs__cz--p': z.pozice > 91 }]}><span class="zs__cz-stitek"><img src={vlajka('CZE')} alt="" class="vlajka" width="22" height="16" loading="lazy" />Česko {z.cz.r}.</span></span>
+        {!z.skrytKraj.l && <span class="zs__kraj zs__kraj--l">1. {jmeno(z.prvni.a3)}</span>}
+        {!z.skrytKraj.p && <span class="zs__kraj zs__kraj--p">{z.posledni.r}. {jmeno(z.posledni.a3)}</span>}
+      </div>
+
+      <div class="zs__dve">
+        <div class="zs__blok">
+          <h4>Nejvýš v žebříčku{z.radky.at(-1)!.a3 === 'CZE' && z.cz.r > 10 ? ' a Česko' : ''}</h4>
+          <ol class="zs__pruhy odhal-graf">
+            {z.radky.map((q, k) => (
+              <li class:list={{ 'je-cz': q.a3 === 'CZE', 'je-mezera': q.a3 === 'CZE' && q.r > 10 }} style={`--i: ${k}; --w: ${q.sirka}%;`}>
+                <span class="p">{q.r}.</span>
+                <img src={vlajka(q.a3)} alt="" class="vlajka" width="22" height="16" loading="lazy" />
+                <span class="j">{jmeno(q.a3)}</span>
+                <span class="d"><span class="b"></span></span>
+                <span class="h">{q.t}</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div class="zs__blok">
+          <h4>Česko a sousedé</h4>
+          <ol class="zs__sousede">
+            {z.sousede.map((q) => (
+              <li class:list={{ 'je-cz': q.a3 === 'CZE' }}>
+                <img src={vlajka(q.a3)} alt="" class="vlajka" width="28" height="21" loading="lazy" />
+                <span class="j">{jmeno(q.a3)}</span>
+                <span class="h">{q.t}</span>
+                <span class="p">{q.r}.</span>
+              </li>
+            ))}
+          </ol>
+          <p class="drobne zs__sousede-pozn">Pořadí ze všech {z.n} zemí. Sousedé, kteří v žebříčku nejsou, chybí.</p>
+        </div>
+      </div>
+
+      <div class="zs__pata">
+        <span class="drobne">Zdroj: <a href={z.v.zdrojUrl}>{z.v.zdroj}</a>{z.v.obdobi ? `, ${z.v.obdobi}` : ''}</span>
+        <a class="tlacitko tlacitko--male tlacitko--plny" href={`/svet/#v=${z.id}`}>Celý žebříček na glóbusu</a>
+      </div>
+    </section>
+  ))}
+</div>
+
+<style>
+  .zs { display: flex; flex-direction: column; gap: 1.25rem; }
+  .zs__dlazdice { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.65rem; }
+  @media (max-width: 960px) {
+    .zs__dlazdice { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: -1.25rem; padding: 0.3rem 1.25rem 0.6rem; scroll-padding-inline: 1.25rem; }
+    .zs__dlazdice::-webkit-scrollbar { display: none; }
+    .zs__dlazdice-1 { flex: 0 0 158px; scroll-snap-align: start; }
+  }
+  .zs__dlazdice-1 { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; padding: 0.8rem 0.85rem 0.75rem; border: 1px solid var(--line); border-radius: 18px; background: var(--paper); color: var(--navy); font-family: inherit; text-align: left; cursor: pointer; box-shadow: var(--stin-maly); transition: transform var(--stisk) var(--ease-out), background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease; }
+  @media (hover: hover) and (pointer: fine) { .zs__dlazdice-1:hover { border-color: var(--line-2); box-shadow: var(--stin); } }
+  .zs__dlazdice-1:active { transform: scale(0.97); transition-duration: 60ms; }
+  .zs__dlazdice-1[aria-pressed='true'] { background: var(--navy); border-color: var(--navy); color: var(--cream); box-shadow: 0 12px 26px -14px rgba(27, 42, 74, 0.7); }
+  .zs__d-hlava { display: flex; align-items: center; gap: 0.5rem; min-width: 0; width: 100%; }
+  .zs__d-nazev { font-size: 0.8rem; font-weight: 800; line-height: 1.25; }
+  .zs__d-misto { display: flex; align-items: baseline; gap: 0.3rem; }
+  .zs__d-misto strong { font-size: 1.6rem; font-weight: 900; line-height: 1; letter-spacing: -0.03em; color: var(--orange-text); }
+  .zs__dlazdice-1[aria-pressed='true'] .zs__d-misto strong { color: var(--orange); }
+  .zs__d-misto small { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+  .zs__dlazdice-1[aria-pressed='true'] .zs__d-misto small { color: #B9C0CF; }
+  .zs__d-osa { position: relative; width: 100%; height: 4px; border-radius: 4px; background: var(--draha); }
+  .zs__dlazdice-1[aria-pressed='true'] .zs__d-osa { background: rgba(242, 237, 227, 0.18); }
+  .zs__d-osa i { position: absolute; top: 50%; left: var(--x); width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 3px rgba(240, 136, 41, 0.25); }
+
+  .zs__panel { display: flex; flex-direction: column; gap: 1.5rem; padding: clamp(1.25rem, 3vw, 2rem); border-radius: 24px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin); }
+  :global(.js) .zs__panel:not(.je-aktivni) { display: none; }
+  :global(.js) .zs__panel.je-aktivni { animation: zs-vjezd 0.4s var(--ease-out); }
+  @keyframes zs-vjezd { from { opacity: 0; transform: translateY(8px); } }
+  .zs__hlava { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; justify-content: space-between; }
+  .zs__titul { display: flex; gap: 1rem; align-items: flex-start; max-width: 56ch; }
+  .zs__titul h3 { font-size: clamp(1.3rem, 2.6vw, 1.7rem); font-weight: 900; margin-bottom: 0.25rem; }
+  .zs__vyrok { display: flex; align-items: center; gap: 0.75rem; }
+  .zs__vyrok-cislo { font-size: clamp(3rem, 7vw, 4.4rem); font-weight: 900; line-height: 0.9; letter-spacing: -0.05em; color: var(--orange); font-variant-numeric: tabular-nums; }
+  .zs__vyrok-text { display: flex; flex-direction: column; font-size: 1.05rem; font-weight: 800; line-height: 1.3; }
+  .zs__vyrok-text small { font-size: 0.85rem; font-weight: 700; color: var(--muted); }
+
+  /* Osa pořadí: dráha od 1. místa po poslední, nad ní vlajky sousedů, pod ní Česko */
+  .zs__osa { position: relative; height: calc(96px + var(--rady) * 34px); margin-inline: 0.4rem; }
+  .zs__draha { position: absolute; left: 0; right: 0; top: calc(44px + var(--rady) * 34px); height: 10px; border-radius: 999px; background: linear-gradient(90deg, #1B2A4A, #6E7C96 45%, #E2D9C9); }
+  .zs__pin { position: absolute; left: var(--px); bottom: 54px; display: flex; flex-direction: column; align-items: center; gap: 1px; transform: translateX(-50%); font-size: 0.7rem; font-weight: 800; color: var(--text-2); line-height: 1.2; }
+  .zs__pin::after { content: ''; width: 2px; height: calc(6px + var(--radek) * 34px); background: var(--line-2); border-radius: 2px; }
+  .zs__pin .vlajka { width: 22px; height: 16px; border-radius: 3px; }
+  .zs__cz { position: absolute; left: var(--x); top: calc(49px + var(--rady) * 34px); width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: var(--orange); border: 3px solid #fff; box-shadow: 0 0 0 5px rgba(240, 136, 41, 0.25), 0 3px 8px rgba(27, 42, 74, 0.3); }
+  .zs__cz-stitek { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.55rem 0.2rem 0.3rem; border-radius: 999px; background: var(--navy); color: var(--cream); font-size: 0.76rem; font-weight: 900; white-space: nowrap; }
+  .zs__cz--l .zs__cz-stitek { left: -6px; transform: none; }
+  .zs__cz--p .zs__cz-stitek { left: auto; right: -6px; transform: none; }
+  .zs__cz-stitek .vlajka { width: 18px; height: 13px; border-radius: 2px; box-shadow: none; }
+  .zs__kraj { position: absolute; top: calc(62px + var(--rady) * 34px); font-size: 0.72rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .zs__kraj--l { left: 0; }
+  .zs__kraj--p { right: 0; }
+  :global(.js) .zs__osa .zs__cz { left: 0; opacity: 0; }
+  :global(.js) .zs__osa:global(.odhal--videt) .zs__cz { left: var(--x); opacity: 1; transition: left 1.3s cubic-bezier(0.22, 0.8, 0.24, 1), opacity 0.3s ease; }
+  :global(.js) .zs__osa .zs__pin { opacity: 0; transform: translate(-50%, -6px); }
+  :global(.js) .zs__osa:global(.odhal--videt) .zs__pin { opacity: 1; transform: translateX(-50%); transition: opacity 0.4s ease 0.9s, transform 0.5s var(--ease-out) 0.9s; }
+
+  .zs__dve { display: grid; grid-template-columns: minmax(0, 3fr) minmax(0, 2fr); gap: 1.25rem; }
+  @media (max-width: 760px) { .zs__dve { grid-template-columns: 1fr; } }
+  .zs__blok { display: flex; flex-direction: column; gap: 0.65rem; padding: 1rem 1.1rem; border-radius: 18px; background: var(--plocha-2); }
+  .zs__blok h4 { margin: 0; font-size: 0.88rem; font-weight: 800; color: var(--muted); }
+  .zs__pruhy, .zs__sousede { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+  .zs__pruhy li { display: grid; grid-template-columns: 2rem 22px minmax(70px, 130px) minmax(0, 1fr) auto; gap: 0.55rem; align-items: center; padding: 0.22rem 0.45rem; border-radius: 10px; font-size: 0.86rem; font-weight: 700; }
+  .zs__pruhy li.je-mezera { margin-top: 0.55rem; }
+  .zs__pruhy .p { text-align: right; font-size: 0.78rem; color: var(--muted); }
+  .zs__pruhy .vlajka, .zs__sousede .vlajka { width: 22px; height: 16px; border-radius: 3px; }
+  .zs__pruhy .j, .zs__sousede .j { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .zs__pruhy .d { height: 10px; border-radius: 999px; background: #ECE5D8; overflow: hidden; }
+  .zs__pruhy .b { display: block; height: 100%; width: var(--w); border-radius: 999px; background: var(--navy); }
+  .zs__pruhy .h, .zs__sousede .h { font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }
+  .zs__pruhy li.je-cz { background: var(--paper); box-shadow: 0 0 0 1.5px var(--orange); }
+  .zs__pruhy li.je-cz .b { background: var(--orange); }
+  .zs__pruhy li.je-cz .j, .zs__pruhy li.je-cz .p { color: var(--orange-text); font-weight: 900; }
+  :global(.js) .zs__pruhy .b { clip-path: inset(0 100% 0 0 round 999px); }
+  :global(.js) .zs__pruhy:global(.odhal--videt) .b { clip-path: inset(0 0 0 0 round 999px); transition: clip-path 1.1s cubic-bezier(0.22, 0.8, 0.24, 1) calc(var(--i) * 60ms); }
+  @media (max-width: 560px) {
+    .zs__pruhy li { grid-template-columns: 1.7rem 20px minmax(0, 1fr) 54px auto; gap: 0.4rem; font-size: 0.82rem; padding-inline: 0.3rem; }
+  }
+  .zs__sousede li { display: grid; grid-template-columns: 22px minmax(0, 1fr) auto 3rem; gap: 0.6rem; align-items: center; padding: 0.45rem 0.6rem; border-radius: 11px; background: var(--paper); font-size: 0.9rem; font-weight: 700; }
+  .zs__sousede .p { text-align: right; font-size: 1.05rem; font-weight: 900; color: var(--navy); }
+  .zs__sousede li.je-cz { background: var(--navy); color: var(--cream); }
+  .zs__sousede li.je-cz .p { color: var(--orange); }
+  .zs__sousede-pozn { font-size: 0.76rem; }
+  .zs__pata { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between; padding-top: 1rem; border-top: 1px solid var(--line); }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .zs__panel.je-aktivni { animation: none; }
+    :global(.js) .zs__osa .zs__cz { left: var(--x); opacity: 1; transition: none !important; }
+    :global(.js) .zs__osa .zs__pin { opacity: 1; transform: translateX(-50%); transition: none !important; }
+    :global(.js) .zs__pruhy .b { clip-path: none; transition: none !important; }
+  }
+</style>
+
+<script>
+  for (const koren of document.querySelectorAll<HTMLElement>('[data-zs]')) {
+    const tlacitka = Array.from(koren.querySelectorAll<HTMLButtonElement>('[data-zs-vyber]'));
+    const panely = Array.from(koren.querySelectorAll<HTMLElement>('[data-zs-panel]'));
+    const vyber = (id: string, zHashe = false) => {
+      if (!panely.some((p) => p.dataset.zsPanel === id)) return;
+      for (const t of tlacitka) t.setAttribute('aria-pressed', String(t.dataset.zsVyber === id));
+      for (const p of panely) {
+        const ano = p.dataset.zsPanel === id;
+        p.classList.toggle('je-aktivni', ano);
+        if (ano) {
+          // animace pořadí a pruhů znovu od začátku
+          for (const g of p.querySelectorAll('.odhal-graf')) { g.classList.remove('odhal--videt'); void (g as HTMLElement).offsetWidth; g.classList.add('odhal--videt'); }
+          p.dispatchEvent(new CustomEvent('pocitej', { bubbles: true }));
+        }
+      }
+      const t = tlacitka.find((x) => x.dataset.zsVyber === id);
+      t?.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: zHashe ? 'instant' : 'smooth' });
+      if (!zHashe) history.replaceState(null, '', `#z=${id}`);
+    };
+    for (const t of tlacitka) t.addEventListener('click', () => vyber(t.dataset.zsVyber!));
+    const zHashe = () => { const z = location.hash.match(/z=([a-z]+)/); if (z) vyber(z[1], true); };
+    zHashe();
+    addEventListener('hashchange', zHashe);
+  }
+</script>

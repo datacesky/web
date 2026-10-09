@@ -1,0 +1,69 @@
+---
+// Pás s nejnovějšími čísly pod hlavičkou, jako na burze. Každá položka vede na svou novinku.
+// Pohyb se zastaví pod myší, při fokusu a pro lidi, kteří mají vypnuté animace (pak jde pás posouvat rukou).
+interface Props {
+  polozky: { id: string; stitek?: string; nadpis: string; cislo: string; zmena?: string; smer?: string }[];
+}
+const { polozky } = Astro.props;
+const SIPKA: Record<string, string> = { nahoru: 'M12 19V5 M6 11l6-6 6 6', dolu: 'M12 5v14 M6 13l6 6 6-6', stejne: 'M5 12h14' };
+const rychlost = Math.max(28, polozky.length * 6.5);
+---
+
+<div class="pc" aria-label="Nejnovější čísla">
+  <a class="pc__nalepka" href="/novinky/"><i class="pc__pulz" aria-hidden="true"></i>Nová data</a>
+  <div class="pc__okno">
+    <div class="pc__pas" style={`--doba: ${rychlost}s;`}>
+      {[0, 1].map((kopie) => (
+        <ul class="pc__rada" aria-hidden={kopie === 1 ? 'true' : undefined}>
+          {polozky.map((p) => (
+            <li>
+              <a href={`/novinky/#n-${p.id}`} tabindex={kopie === 1 ? -1 : undefined}>
+                <span class="pc__stitek">{p.stitek ?? p.nadpis}</span>
+                <span class="pc__cislo">{p.cislo}</span>
+                {p.zmena && (
+                  <span class:list={['pc__zmena', `pc__zmena--${p.smer ?? 'stejne'}`]}>
+                    <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={SIPKA[p.smer ?? 'stejne']} /></svg>
+                    {p.zmena}
+                  </span>
+                )}
+              </a>
+            </li>
+          ))}
+        </ul>
+      ))}
+    </div>
+  </div>
+</div>
+
+<style>
+  .pc { display: flex; align-items: stretch; background: var(--navy); color: var(--cream); font-size: 0.86rem; font-weight: 700; overflow: hidden; }
+  .pc__nalepka { position: relative; z-index: 2; flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.5rem; padding: 0 1rem 0 max(1.25rem, calc((100vw - var(--obal)) / 2)); background: var(--navy); color: var(--orange); font-weight: 900; text-decoration: none; white-space: nowrap; box-shadow: 12px 0 14px -6px var(--navy); }
+  .pc__nalepka:hover { color: #F6A55C; }
+  .pc__pulz { position: relative; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+  .pc__pulz::after { content: ''; position: absolute; inset: -4px; border-radius: 50%; border: 2px solid var(--orange); opacity: 0; animation: pc-pulz 2s var(--ease-out) infinite; }
+  @keyframes pc-pulz { 0% { transform: scale(0.5); opacity: 0.9; } 100% { transform: scale(1.6); opacity: 0; } }
+  .pc__okno { flex: 1 1 auto; min-width: 0; overflow: hidden; -webkit-mask-image: linear-gradient(90deg, transparent, #000 2rem, #000 calc(100% - 3rem), transparent); mask-image: linear-gradient(90deg, transparent, #000 2rem, #000 calc(100% - 3rem), transparent); }
+  .pc__pas { display: flex; width: max-content; animation: pc-jed var(--doba) linear infinite; }
+  .pc:hover .pc__pas, .pc:focus-within .pc__pas { animation-play-state: paused; }
+  @keyframes pc-jed { to { transform: translateX(-50%); } }
+  .pc__rada { display: flex; list-style: none; margin: 0; padding: 0; }
+  .pc__rada li { display: flex; }
+  .pc__rada a { display: inline-flex; align-items: center; gap: 0.45rem; min-height: 40px; padding: 0 1.15rem; color: var(--cream); text-decoration: none; white-space: nowrap; border-right: 1px solid rgba(242, 237, 227, 0.12); }
+  .pc__rada a:hover { color: #fff; background: rgba(255, 255, 255, 0.05); }
+  .pc__stitek { color: #B9C0CF; font-weight: 700; }
+  .pc__cislo { font-weight: 900; font-variant-numeric: tabular-nums; }
+  .pc__zmena { display: inline-flex; align-items: center; gap: 0.2rem; font-size: 0.78rem; font-weight: 800; font-variant-numeric: tabular-nums; color: #B9C0CF; }
+  .pc__zmena--nahoru { color: var(--orange); }
+  .pc__zmena--dolu { color: #9DC3E6; }
+  @media (max-width: 700px) {
+    .pc { font-size: 0.8rem; }
+    .pc__nalepka { padding-left: 1.25rem; padding-right: 0.75rem; }
+    .pc__rada a { min-height: 36px; padding: 0 0.9rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pc__pas { animation: none; }
+    .pc__okno { overflow-x: auto; scrollbar-width: none; }
+    .pc__rada[aria-hidden='true'] { display: none; }
+    .pc__pulz::after { animation: none; }
+  }
+</style>

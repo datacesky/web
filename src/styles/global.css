@@ -388,3 +388,26 @@ select {
   .zoom-ovladani button { width: 34px; height: 34px; font-size: 1.1rem; }
 }
 .navigace { align-items: center; }
+
+/* Jen pro čtečky obrazovky */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
+
+/* Štítek nad nadpisem sekce: malý, oranžový, s krátkou linkou (datový „eyebrow“) */
+.nadhlavi { display: inline-flex; align-items: center; gap: 0.55rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--orange-text); }
+.nadhlavi::before { content: ''; width: 22px; height: 3px; border-radius: 3px; background: var(--orange); }
+.nadhlavi--zive::before { width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 0 4px rgba(240, 136, 41, 0.22); animation: zive 2s ease-in-out infinite; }
+@keyframes zive { 50% { box-shadow: 0 0 0 7px rgba(240, 136, 41, 0.06); } }
+@media (prefers-reduced-motion: reduce) { .nadhlavi--zive::before { animation: none; } }
+
+/* Karty, které se na mobilu posouvají do strany (novinky) */
+.posuvnik { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; list-style: none; margin: 0; padding: 0; }
+@media (max-width: 1020px) { .posuvnik { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 680px) {
+  .posuvnik { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: -1.25rem; padding: 0.25rem 1.25rem 0.75rem; scroll-padding-inline: 1.25rem; gap: 0.85rem; }
+  .posuvnik::-webkit-scrollbar { display: none; }
+  .posuvnik > li { flex: 0 0 min(86%, 340px); scroll-snap-align: start; }
+}
+.tecky { display: none; justify-content: center; gap: 6px; margin-top: 0.35rem; }
+@media (max-width: 680px) { .tecky { display: flex; } }
+.tecky i { width: 7px; height: 7px; border-radius: 999px; background: var(--line-2); transition: width 0.3s var(--ease-out), background-color 0.3s ease; }
+.tecky i.je-aktivni { width: 20px; background: var(--navy); }
