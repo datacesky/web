@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import { SVET_VRSTVY } from '../lib/svet';
 import { vrstvy as vrstvyCesko } from '../data/vrstvy';
+import { web } from '../data/web';
 
 const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
 ---
@@ -72,11 +73,23 @@ const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
       zveřejněné čtvrtletí. Průměr je vyšší než medián, takže pro typického zaměstnance vyjde čas o něco delší.
     </p>
 
-    <h2 id="soukromi">Soukromí</h2>
+    <h2 id="soukromi">Soukromí a cookies</h2>
     <p>
-      Web nepoužívá reklamní ani sledovací cookies. Hlasování si do tvého prohlížeče uloží jen náhodné číslo a zemi, pro kterou jsi
-      hlasoval(a), aby šlo hlasovat jednou za 30 dní. Nic z toho tě neidentifikuje.
+      Web nepoužívá žádné cookies, ani reklamní, ani analytické. Proto tu nenajdeš ani cookie lištu.
     </p>
+    <p>Do úložiště tvého prohlížeče se něco zapíše jen ve dvou případech, a to až ve chvíli, kdy to sám uděláš:</p>
+    <ul>
+      <li><strong>Hlasování o dalším dílu:</strong> náhodné číslo a země, pro kterou jsi hlasoval(a), aby šlo hlasovat jednou za 30 dní. Číslo tě nijak neidentifikuje.</li>
+      <li><strong>Můj kraj na Mapě Česka:</strong> který kraj sis vybral(a), aby ho mapa příště rovnou ukázala.</li>
+    </ul>
+    <p>Obojí smažeš tím, že v prohlížeči vymažeš data tohoto webu.</p>
+    <p>Kdo při návštěvě něco vidí:</p>
+    <ul>
+      <li><strong>GitHub Pages</strong>, kde web běží. Jako každý server zpracovává tvou IP adresu, aby ti mohl stránku poslat.</li>
+      <li><strong>Google</strong>, přes který běží hlasování (Apps Script a tabulka). Při načtení výsledků a při hlasování uvidí tvou IP adresu. Cookies ani adresa stránky se mu neposílají.</li>
+      {web.goatcounter && <li><strong>GoatCounter</strong> měří návštěvnost bez cookies a bez ukládání čehokoli do prohlížeče. Vidí jen souhrnná čísla, ne jednotlivé lidi.</li>}
+    </ul>
+    <p>Písma, vlajky, mapy i data grafů jsou uložené přímo na webu, nic dalšího se odjinud nenačítá. Odkazy na Instagram, TikTok a Facebook jsou obyčejné odkazy, jejich obsah se sem nevkládá.</p>
 
     <h2 id="opravy">Opravy</h2>
     <p>

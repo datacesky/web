@@ -8,7 +8,7 @@ interface Props {
     id: string; nadpis: string; cislo: string; popisCisla?: string; text: string; zdroj: string; sada: string; url: string;
     stitek?: string; zmena?: string; smer?: 'nahoru' | 'dolu' | 'stejne'; ikona?: string; graf?: any;
   };
-  // kotva pro odkazy z pásu čísel (jen na stránce novinek)
+  // kotva pro přímé odkazy na novinku (jen na stránce novinek)
   kotva?: boolean;
 }
 const { p, kotva = false } = Astro.props;

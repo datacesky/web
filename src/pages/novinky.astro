@@ -1,12 +1,10 @@
 ---
 import Base from '../layouts/Base.astro';
 import NovinkaKarta from '../components/NovinkaKarta.astro';
-import PasCisel from '../components/PasCisel.astro';
-import { vydaniNovinek, posledniNovinky } from '../lib/novinky';
+import { vydaniNovinek } from '../lib/novinky';
 import { datum } from '../lib/format';
 
 const vydani = await vydaniNovinek();
-const nejnovejsi = await posledniNovinky(12);
 // kotvy z pásu čísel míří vždy na nejnovější výskyt ukazatele
 const kotvy = new Set<string>();
 ---
@@ -15,7 +13,6 @@ const kotvy = new Set<string>();
   titul="Novinky z dat — data.cesky"
   popis="Nejzajímavější čísla, která za poslední měsíc zveřejnil Český statistický úřad a Eurostat. Inflace, ceny, mzdy, nezaměstnanost, HDP, porodnost i turisté."
 >
-  {nejnovejsi.length > 0 && <PasCisel polozky={nejnovejsi} />}
   <section class="obal sekce--mala sloupec" style="gap: 2rem;">
     <div class="sloupec" style="max-width: 62ch;">
       <span class="nadhlavi nadhlavi--zive">Novinky z dat{vydani[0] && ` · ${datum(vydani[0].data.datum)}`}</span>

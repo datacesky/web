@@ -48,6 +48,16 @@ tak, že odstraníš celý její blok od `- id:` po `graf:` včetně.
 Aby GitHub mohl návrh vytvořit, musí být v Settings → Actions → General → Workflow permissions
 zapnuté **Read and write permissions** a **Allow GitHub Actions to create and approve pull requests**.
 
+## Série a náhledovky
+
+Stránka Série ukazuje každý díl jako obálku 9:16. Bez obrázku se obálka vygeneruje sama (vlajky, název, číslo dílu).
+Vlastní náhledovku dáš do složky `public/serie/` (JPG, PNG nebo WebP, ideálně 720 × 1280 px):
+
+- `cesko-vs-svet-9.jpg` = díl 9 série Česko vs. svět
+- `index-tydne-1.jpg`, `kdyby-cesko-bylo-100-lidi-1.jpg` = díly ostatních sérií v pořadí ze `src/data/serie.ts`
+
+Nový díl Česko vs. svět přidáš do `src/data/epizody.ts`, ostatní do `src/data/serie.ts`.
+
 ## Data u grafů
 
 Vývoj v čase (vysokoškoláci, turisté) a průměrná mzda u „Porovnej se“ jsou v `src/data/grafy/`.

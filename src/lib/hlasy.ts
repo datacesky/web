@@ -6,6 +6,8 @@ export type Vysledky = { pocty: Map<string, number>; celkem: number };
 const KLIC_HLAS = 'dc-hlas';
 const KLIC_VOLIC = 'dc-volic';
 export const MESIC = 30 * 24 * 3600 * 1000;
+// Google nedostane ani nenastaví žádné cookies a nedozví se, ze které stránky požadavek přišel
+const BEZ_COOKIES: RequestInit = { credentials: 'omit', referrerPolicy: 'no-referrer' };
 
 // Náhodné anonymní číslo prohlížeče: skript podle něj pozná opakovaný hlas. Nic osobního.
 export function volic(): string {
@@ -46,10 +48,10 @@ const zJson = (j: any): Vysledky => {
 // jmena: převod ručně psaných názvů ve formuláři („Čína") na kód země
 export async function nactiVysledky(N: Nastaveni, jmena?: Map<string, string>): Promise<Vysledky> {
   if (N.skript) {
-    const odp = await fetch(`${N.skript}${N.skript.includes('?') ? '&' : '?'}akce=vysledky&t=${Date.now()}`);
+    const odp = await fetch(`${N.skript}${N.skript.includes('?') ? '&' : '?'}akce=vysledky&t=${Date.now()}`, BEZ_COOKIES);
     return zJson(await odp.json());
   }
-  const odp = await fetch(`${N.vysledky}${N.vysledky.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`);
+  const odp = await fetch(`${N.vysledky}${N.vysledky.includes('?') ? '&' : '?'}t=${Math.floor(Date.now() / 60000)}`, BEZ_COOKIES);
   const text = await odp.text();
   if (!odp.ok || text.trimStart().startsWith('<')) throw new Error('Tabulka nevrátila CSV');
   const bez = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
@@ -76,15 +78,15 @@ export async function odesliHlas(N: Nastaveni, a3: string): Promise<Odpoved> {
     const telo = new URLSearchParams({ kod: a3, volic: volic() });
     try {
       // Jednoduchý požadavek bez vlastních hlaviček, Apps Script odpoví JSONem.
-      const odp = await fetch(N.skript, { method: 'POST', body: telo });
+      const odp = await fetch(N.skript, { ...BEZ_COOKIES, method: 'POST', body: telo });
       const j = await odp.json();
       return { ok: !!j.ok, chyba: j.chyba, vysledky: j.pocty ? zJson(j) : undefined };
     } catch {
       // Kdyby prohlížeč odpověď nepustil, hlas aspoň odešleme naslepo.
-      await fetch(N.skript, { method: 'POST', mode: 'no-cors', body: telo });
+      await fetch(N.skript, { ...BEZ_COOKIES, method: 'POST', mode: 'no-cors', body: telo });
       return { ok: true };
     }
   }
-  await fetch(N.formular, { method: 'POST', mode: 'no-cors', body: new URLSearchParams({ [N.pole]: a3 }) });
+  await fetch(N.formular, { ...BEZ_COOKIES, method: 'POST', mode: 'no-cors', body: new URLSearchParams({ [N.pole]: a3 }) });
   return { ok: true };
 }

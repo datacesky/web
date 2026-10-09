@@ -4,13 +4,30 @@ import { ZEME } from '../lib/svet';
 import { epizody, posledniDil } from '../data/epizody';
 import { hlasovani, hlasovaniZapnute } from '../data/hlasovani';
 
+interface Props {
+  // mala = kompaktní karta do úvodu stránky (pod vyhledávání vedle glóbusu)
+  mala?: boolean;
+}
+const { mala = false } = Astro.props;
 const hotove = new Set(epizody.map((e) => e.a3));
 const zeme = Object.fromEntries(Object.entries(ZEME).filter(([a3]) => a3 !== 'CZE' && a3 !== 'EUZ' && !hotove.has(a3)).map(([a3, [n, a2]]) => [a3, [n, a2]]));
 const nastaveni = JSON.stringify({ ...hlasovani, zapnute: hlasovaniZapnute, zeme });
 const [jmenoPosl, a2Posl] = ZEME[posledniDil.a3];
 ---
 
-{hlasovaniZapnute && (
+{hlasovaniZapnute && mala && (
+  <div class="hp hp--mala" data-pozvanka data-nastaveni={nastaveni}>
+    <div class="hp-m__hlava">
+      <span class="hp__stitek"><i class="hp-m__pulz" aria-hidden="true"></i>Česko vs. svět, díl {epizody.length + 1}</span>
+      <strong class="hp-m__titul">Kterou zemi chceš příště?</strong>
+    </div>
+    <a class="tlacitko tlacitko--oranzovy tlacitko--male hp-m__tlacitko" href="/hlasovani/">Hlasovat</a>
+    <ol class="hp__poradi" data-hp-poradi aria-label="Zatím vedou">
+      <li class="hp__nic">Načítám hlasy…</li>
+    </ol>
+  </div>
+)}
+{hlasovaniZapnute && !mala && (
   <div class="hp" data-pozvanka data-nastaveni={nastaveni}>
     <div class="hp__text">
       <span class="hp__stitek">Česko vs. svět, díl {epizody.length + 1}</span>
@@ -32,7 +49,7 @@ const [jmenoPosl, a2Posl] = ZEME[posledniDil.a3];
   @media (max-width: 760px) { .hp { grid-template-columns: 1fr; } }
   .hp__text { display: flex; flex-direction: column; gap: 0.9rem; align-items: flex-start; position: relative; z-index: 1; }
   .hp__stitek { font-size: 0.92rem; font-weight: 800; color: #F6C08C; }
-  .hp__titul { color: var(--cream); font-size: clamp(1.6rem, 3.4vw, 2.3rem); }
+  .hp__titul { color: var(--cream); font-size: clamp(1.5rem, 3vw, 2rem); }
   .hp__perex { margin: 0; color: #D9D3C7; font-size: 1rem; line-height: 1.6; }
   .hp__mala-vlajka { width: 22px; height: 16px; border-radius: 3px; vertical-align: -2px; }
   .hp__poradi { list-style: none; margin: 0; padding: 1.1rem; display: flex; flex-direction: column; gap: 0.7rem; border-radius: 18px; background: rgba(255, 255, 255, 0.06); position: relative; z-index: 1; }
@@ -45,6 +62,22 @@ const [jmenoPosl, a2Posl] = ZEME[posledniDil.a3];
   :global(.hp__poradi .h) { text-align: right; font-variant-numeric: tabular-nums; }
   :global(.hp__poradi .vlajka) { width: 30px; height: 22px; }
   :global(.hp__nic) { color: #D9D3C7; font-size: 0.92rem; font-weight: 600; }
+
+  /* Kompaktní karta v úvodu: nadpis a tlačítko vedle sebe, pod tím tři vedoucí země jako pilulky */
+  .hp--mala { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.7rem 1rem; align-items: center; width: 100%; padding: 1rem 1.1rem; border-radius: 20px; text-align: left; }
+  .hp--mala::after { right: -90px; top: -120px; }
+  .hp-m__hlava { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; position: relative; z-index: 1; }
+  .hp--mala .hp__stitek { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.8rem; }
+  .hp-m__pulz { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 3px rgba(240, 136, 41, 0.25); }
+  .hp-m__titul { font-size: 1.08rem; font-weight: 900; line-height: 1.3; color: var(--cream); }
+  .hp-m__tlacitko { position: relative; z-index: 1; }
+  .hp--mala .hp__poradi { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; gap: 0.4rem; padding: 0; background: none; }
+  .hp--mala :global(.r) { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.22rem 0.65rem 0.22rem 0.3rem; border-radius: 999px; background: rgba(255, 255, 255, 0.08); font-size: 0.82rem; }
+  .hp--mala :global(.r .p), .hp--mala :global(.r .d) { display: none; }
+  .hp--mala :global(.r .vlajka) { width: 22px; height: 16px; border-radius: 3px; }
+  .hp--mala :global(.r .h) { color: var(--orange); }
+  .hp--mala :global(.r:first-child) { background: rgba(240, 136, 41, 0.16); }
+  .hp--mala :global(.hp__nic) { font-size: 0.82rem; }
 </style>
 
 <script>

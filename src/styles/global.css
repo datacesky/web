@@ -31,12 +31,15 @@
 
 html {
   scroll-behavior: smooth;
+  font-size: 100%;
   /* Mobil: žádný šedý záblesk při ťuknutí (každý ovládací prvek má vlastní stisk) a žádné zvětšování písma na šířku */
   -webkit-tap-highlight-color: transparent;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+/* Na počítači je všechno o kousek menší (15 px místo 16 px); telefon zůstává, tam je 16 px akorát */
+@media (min-width: 1024px) { html { font-size: 93.75%; } }
 body {
   margin: 0;
   background: var(--cream);
@@ -50,8 +53,8 @@ body {
 /* Prostrkání podle velikosti: čím větší nadpis, tím těsněji. Řádkování necháváme dost volné,
    aby se háčky a čárky velkých písmen (Č, Ř, Š, Ž, Ú) nedotýkaly řádku nad sebou. */
 h1, h2, h3 { margin: 0; line-height: 1.2; font-weight: 900; text-wrap: balance; }
-h1 { font-size: clamp(2.1rem, 5.5vw, 3.6rem); letter-spacing: -0.028em; }
-h2 { font-size: clamp(1.6rem, 3.4vw, 2.5rem); letter-spacing: -0.02em; }
+h1 { font-size: clamp(2.1rem, 4.4vw, 3rem); letter-spacing: -0.028em; }
+h2 { font-size: clamp(1.55rem, 2.8vw, 2.1rem); letter-spacing: -0.02em; }
 /* Kotvy (#opravy, #svet…) nezajedou pod lepkavou hlavičku */
 [id] { scroll-margin-top: 5.5rem; }
 h3 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.008em; }
@@ -89,11 +92,11 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
 .plocha-grafu { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--stin-maly); }
 
 /* Text */
-.perex { font-size: clamp(1.02rem, 2vw, 1.25rem); line-height: 1.7; color: var(--text-2); }
+.perex { font-size: clamp(1.02rem, 1.6vw, 1.12rem); line-height: 1.7; color: var(--text-2); }
 .stitek { font-size: 0.85rem; font-weight: 700; color: var(--orange-text); }
 .drobne { font-size: 0.9rem; font-weight: 500; color: var(--muted); }
-.nadpis-grafu { font-size: clamp(1.2rem, 2.6vw, 1.75rem); font-weight: 900; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.25; }
-.text-clanku { display: flex; flex-direction: column; gap: 1.1rem; font-size: 1.08rem; line-height: 1.85; color: #2E3B58; max-width: 68ch; }
+.nadpis-grafu { font-size: clamp(1.2rem, 2.2vw, 1.55rem); font-weight: 900; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.25; }
+.text-clanku { display: flex; flex-direction: column; gap: 1.1rem; font-size: 1.05rem; line-height: 1.85; color: #2E3B58; max-width: 68ch; }
 /* Nadpisy uvnitř textu: o stupeň menší než nadpisy sekcí a s větším odstupem nad sebou než pod sebou,
    ať je jasné, ke kterému odstavci patří */
 .text-clanku h2 { font-size: clamp(1.35rem, 2.4vw, 1.7rem); letter-spacing: -0.015em; line-height: 1.25; color: var(--navy); margin-top: 1.9rem; }
@@ -239,7 +242,7 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
 .hero { position: relative; overflow: hidden; text-align: center; }
 .hero__vrstevnice { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .hero__obsah { position: relative; max-width: 60ch; margin-inline: auto; display: flex; flex-direction: column; align-items: center; gap: 1.6rem; }
-.hero h1 { font-size: clamp(2.3rem, 6.5vw, 4.3rem); line-height: 1.15; }
+.hero h1 { font-size: clamp(2.3rem, 5vw, 3.4rem); line-height: 1.15; }
 
 /* Graf týdne */
 .graf-tydne { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }

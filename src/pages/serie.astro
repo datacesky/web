@@ -1,39 +1,123 @@
 ---
+// Série jako galerie: každý díl jako obálka ve stylu našich příspěvků, nejnovější díl nahoře.
 import Base from '../layouts/Base.astro';
-import { serie } from '../data/serie';
+import SerieObalka from '../components/SerieObalka.astro';
+import { rady, vsechnyDily } from '../lib/dily';
+import { epizody } from '../data/epizody';
 import { datum, sklonuj } from '../lib/format';
+import { hlasovaniZapnute } from '../data/hlasovani';
+
+const vsechny = vsechnyDily;
+const nejnovejsi = vsechny[0];
+const zemi = new Set(epizody.map((e) => e.a3)).size;
+const den = (d: string) => datum(new Date(d));
 ---
 
-<Base titul="Série — data.cesky" popis="Česko vs. svět, Index týdne a Kdyby Česko bylo 100 lidí. Všechny díly na jednom místě.">
-  <section class="obal sekce--mala sloupec" style="gap: 1.5rem;">
-    <div class="sloupec" style="max-width: 62ch;">
-      <h1>Série</h1>
-      <p class="perex">Témata, která pokračují díl po dílu. Animované verze najdeš na Instagramu.</p>
-    </div>
-    <nav class="rada" aria-label="Série">
-      {serie.map((s) => <a class="chip" style="text-decoration: none;" href={`#${s.id}`}>{s.nazev}</a>)}
-    </nav>
-  </section>
+<Base titul="Série — data.cesky" popis="Česko vs. svět, Index týdne a Kdyby Česko bylo 100 lidí. Všechny díly na jednom místě, s odkazem na video.">
+  <div class="se-uvod">
+    <section class="obal se-uvod__obsah">
+      <span class="nadhlavi">Série</span>
+      <h1>Díl po dílu</h1>
+      <p class="perex">Témata, která pokračují. Každý díl vyšel nejdřív jako video na Instagramu a TikToku, tady jsou všechny pohromadě.</p>
+      <ul class="se-cisla">
+        <li><strong data-pocitej>{vsechny.length}</strong><span>{sklonuj(vsechny.length, 'díl', 'díly', 'dílů').replace(/^\d+ /, '')}</span></li>
+        <li><strong data-pocitej>{rady.length}</strong><span>{sklonuj(rady.length, 'série', 'série', 'sérií').replace(/^\d+ /, '')}</span></li>
+        <li><strong data-pocitej>{zemi}</strong><span>{sklonuj(zemi, 'země', 'země', 'zemí').replace(/^\d+ /, '')} vedle Česka</span></li>
+      </ul>
+      <nav class="se-skok" aria-label="Série">
+        {rady.map((r) => <a class="chip" href={`#${r.id}`}>{r.nazev}</a>)}
+      </nav>
+    </section>
+  </div>
 
-  {serie.map((s) => (
-    <section id={s.id} class="obal sekce--mala sloupec" style="gap: 1.25rem; scroll-margin-top: 1rem;">
-      <div class="nadpis-sekce" style="margin-bottom: 0;">
-        <div class="sloupec" style="gap: 0.35rem;">
-          <h2>{s.nazev}</h2>
-          <p class="drobne">{s.popis}</p>
+  {nejnovejsi && (
+    <section class="obal sekce--mala">
+      <div class="se-nove">
+        <a class="se-nove__obalka" href={nejnovejsi.odkaz} aria-label={`${nejnovejsi.serie}: ${nejnovejsi.nazev}, přehrát na Instagramu`}>
+          <SerieObalka slug={nejnovejsi.slug} serie={nejnovejsi.serie} typ={nejnovejsi.typ} dil={nejnovejsi.dil} nazev={nejnovejsi.nazev} a3={nejnovejsi.a3} ikonaId={nejnovejsi.ikona} velka />
+        </a>
+        <div class="se-nove__text">
+          <span class="nadhlavi nadhlavi--zive">Nejnovější díl · {den(nejnovejsi.datum)}</span>
+          <h2>{nejnovejsi.typ === 'vs' ? `Česko vs. ${nejnovejsi.nazev}` : nejnovejsi.nazev}</h2>
+          <p class="perex">{nejnovejsi.popis}</p>
+          <div class="rada">
+            <a class="tlacitko tlacitko--plny" href={nejnovejsi.odkaz}>Přehrát na Instagramu</a>
+            {nejnovejsi.a3 && <a class="tlacitko" href={`/svet/#z=${nejnovejsi.a3}`}>{nejnovejsi.nazev} na glóbusu</a>}
+          </div>
+          {nejnovejsi.typ === 'vs' && hlasovaniZapnute && (
+            <a class="se-nove__hlasuj" href="/hlasovani/">
+              <span>Díl {(nejnovejsi.dil ?? 0) + 1} vybíráš ty</span>
+              <strong>Hlasuj, kterou zemi chceš příště →</strong>
+            </a>
+          )}
         </div>
-        <span class="stitek">{sklonuj(s.dily.length, 'díl', 'díly', 'dílů')}</span>
       </div>
-      <ul class="mrizka mrizka--3">
-        {[...s.dily].reverse().map((d) => (
-          <li class="karta sloupec" style="gap: 0.6rem;">
-            <span class="stitek">{d.cislo ? `Díl ${d.cislo}` : 'Díl'} · {datum(new Date(d.datum))}</span>
-            <h3 style="font-size: 1.35rem; font-weight: 900;">{d.nazev}</h3>
-            <p class="drobne" style="flex-grow: 1;">{d.popis}</p>
-            {d.instagram && <a class="tlacitko" href={d.instagram}>Přehrát na Instagramu</a>}
+    </section>
+  )}
+
+  {rady.map((r) => (
+    <section id={r.id} class="obal sekce--mala">
+      <div class="nadpis-sekce">
+        <div class="nadpis">
+          <span class="nadhlavi">{sklonuj(r.dily.length, 'díl', 'díly', 'dílů')}</span>
+          <h2>{r.nazev}</h2>
+          <p class="drobne" style="max-width: 60ch;">{r.popis}</p>
+        </div>
+      </div>
+      <ul class="se-mrizka">
+        {[...r.dily].reverse().map((d, i) => (
+          <li style={`--i: ${i};`} class="odhal">
+            <a class="se-dil" href={d.odkaz}>
+              <SerieObalka slug={d.slug} serie={d.serie} typ={d.typ} dil={d.dil} nazev={d.nazev} a3={d.a3} ikonaId={d.ikona} />
+              <span class="se-dil__meta">{d.dil ? `Díl ${d.dil} · ` : ''}{den(d.datum)}</span>
+              <strong class="se-dil__nazev">{d.nazev}</strong>
+              <span class="se-dil__popis">{d.popis}</span>
+            </a>
           </li>
         ))}
       </ul>
     </section>
   ))}
 </Base>
+
+<style>
+  .se-uvod { position: relative; isolation: isolate; }
+  .se-uvod::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: url('/vrstevnice.svg') center top / cover no-repeat; opacity: 0.7;
+    -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
+  }
+  .se-uvod__obsah { display: flex; flex-direction: column; align-items: center; gap: 1rem; text-align: center; padding-block: clamp(2.5rem, 6vw, 4rem) 0.5rem; }
+  .se-uvod__obsah .perex { max-width: 54ch; }
+  .se-cisla { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.6rem; list-style: none; margin: 0.4rem 0 0; padding: 0; }
+  .se-cisla li { display: flex; align-items: baseline; gap: 0.45rem; padding: 0.55rem 1.1rem; border-radius: 999px; background: var(--paper); box-shadow: 0 0 0 1px var(--line), var(--stin-maly); }
+  .se-cisla strong { font-size: 1.5rem; font-weight: 900; line-height: 1; color: var(--orange-text); font-variant-numeric: tabular-nums; }
+  .se-cisla span { font-size: 0.88rem; font-weight: 700; color: var(--text-2); }
+  .se-skok { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; }
+  .se-skok .chip { text-decoration: none; }
+
+  .se-nove { display: grid; grid-template-columns: minmax(180px, 280px) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; padding: clamp(1.25rem, 3vw, 2rem); border-radius: 28px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin); }
+  @media (max-width: 680px) { .se-nove { grid-template-columns: 1fr; justify-items: center; text-align: center; } .se-nove__obalka { width: min(62vw, 240px); } .se-nove__text { align-items: center; } .se-nove .rada { justify-content: center; } }
+  .se-nove__obalka { display: block; border-radius: 18px; transition: transform 0.3s var(--ease-out); -webkit-touch-callout: none; }
+  @media (hover: hover) and (pointer: fine) { .se-nove__obalka:hover { transform: translateY(-4px) rotate(-1deg); } }
+  .se-nove__obalka:active { transform: scale(0.98); }
+  .se-nove__text { display: flex; flex-direction: column; gap: 1rem; align-items: flex-start; }
+  .se-nove__hlasuj { display: flex; flex-direction: column; gap: 0.1rem; margin-top: 0.4rem; padding: 0.8rem 1.1rem; border-radius: 16px; background: var(--navy); color: var(--cream); text-decoration: none; transition: transform var(--stisk) var(--ease-out); }
+  .se-nove__hlasuj span { font-size: 0.8rem; font-weight: 800; color: #F6C08C; }
+  .se-nove__hlasuj strong { font-size: 1rem; font-weight: 900; }
+  .se-nove__hlasuj:hover { color: var(--cream); }
+  .se-nove__hlasuj:active { transform: scale(0.98); }
+
+  .se-mrizka { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 1.4rem 1.1rem; list-style: none; margin: 0; padding: 0; }
+  @media (max-width: 560px) { .se-mrizka { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem 0.75rem; } }
+  .se-mrizka > li { transition-delay: calc(var(--i) * 45ms) !important; }
+  .se-dil { display: flex; flex-direction: column; gap: 0.3rem; color: var(--navy); text-decoration: none; -webkit-touch-callout: none; }
+  .se-dil :global(.so) { margin-bottom: 0.45rem; transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); }
+  @media (hover: hover) and (pointer: fine) { .se-dil:hover :global(.so) { transform: translateY(-4px); box-shadow: 0 0 0 1px var(--line-2), 0 18px 34px -16px rgba(27, 42, 74, 0.55); } .se-dil:hover { color: var(--navy); } }
+  .se-dil:active :global(.so) { transform: scale(0.98); transition-duration: 80ms; }
+  .se-dil__meta { font-size: 0.76rem; font-weight: 700; color: var(--orange-text); }
+  .se-dil__nazev { font-size: 1rem; font-weight: 900; line-height: 1.3; }
+  .se-dil__popis { font-size: 0.82rem; line-height: 1.5; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+  @media (prefers-reduced-motion: reduce) { .se-nove__obalka, .se-dil :global(.so) { transition: none; } .se-nove__obalka:hover, .se-dil:hover :global(.so) { transform: none; } }
+</style>

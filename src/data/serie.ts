@@ -1,4 +1,6 @@
-export type Dil = { cislo?: number; nazev: string; popis: string; datum: string; instagram?: string };
+// ikona: obrázek na vygenerované obálce (src/lib/ikony.ts). Vlastní náhledovku dílu dej do public/serie/
+// jako {id-serie}-{pořadí dílu}.jpg, třeba index-tydne-1.jpg; díly Česko vs. svět jako cesko-vs-svet-9.jpg.
+export type Dil = { cislo?: number; nazev: string; popis: string; datum: string; instagram?: string; ikona?: string };
 export type Serie = { id: string; nazev: string; popis: string; dily: Dil[] };
 
 // Nový díl přidáš na konec seznamu dily. Datum je ve tvaru rok-měsíc-den.
@@ -8,8 +10,8 @@ export const serie: Serie[] = [
     nazev: 'Index týdne',
     popis: 'Jeden světový index a místo, které v něm má Česko.',
     dily: [
-      { nazev: 'Big Mac index', popis: 'Big Mac stojí v Česku 115 Kč, 19. nejvíc z 54 zemí.', datum: '2026-08-08', instagram: 'https://www.instagram.com/reel/DbxYpBWSa9a/' },
-      { nazev: 'Index vnímání korupce', popis: 'Nejméně zkorumpované země světa v letech 2012 až 2025.', datum: '2026-08-19', instagram: 'https://www.instagram.com/reel/DcOSlsLBuVs/' },
+      { nazev: 'Big Mac index', popis: 'Big Mac stojí v Česku 115 Kč, 19. nejvíc z 54 zemí.', datum: '2026-08-08', instagram: 'https://www.instagram.com/reel/DbxYpBWSa9a/', ikona: 'burger' },
+      { nazev: 'Index vnímání korupce', popis: 'Nejméně zkorumpované země světa v letech 2012 až 2025.', datum: '2026-08-19', instagram: 'https://www.instagram.com/reel/DcOSlsLBuVs/', ikona: 'stit' },
     ],
   },
   {
