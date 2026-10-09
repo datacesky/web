@@ -1,0 +1,48 @@
+# Novinky z dat: jednou měsíčně stáhne čerstvá čísla z ČSÚ a Eurostatu (skripty/novinky.py)
+# a pošle je jako návrh ke schválení (pull request). Na web se dostanou, až návrh schválíš (Merge).
+# Ručně: záložka Actions → Novinky z dat → Run workflow.
+name: Novinky z dat
+
+on:
+  schedule:
+    # 12. den v měsíci v 6:00 UTC (8:00 v létě). ČSÚ do té doby zveřejní inflaci za minulý měsíc.
+    - cron: '0 6 12 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  navrh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stáhnout repozitář
+        uses: actions/checkout@v7
+
+      - name: Stáhnout data a připravit novinky
+        env:
+          NAVRH_POPIS: ${{ runner.temp }}/navrh.md
+        run: python3 skripty/novinky.py
+
+      - name: Poslat jako návrh ke schválení
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -z "$(git status --porcelain src/content/novinky)" ]; then
+            echo "Od minulého vydání nejsou nová data."
+            exit 0
+          fi
+          MESIC="$(date +%Y-%m)"
+          VETEV="novinky/$MESIC"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$VETEV"
+          git add src/content/novinky
+          git commit -m "Novinky z dat: $MESIC (návrh)"
+          git push --force origin "$VETEV"
+          if gh pr view "$VETEV" > /dev/null 2>&1; then
+            gh pr edit "$VETEV" --body-file "$RUNNER_TEMP/navrh.md"
+          else
+            gh pr create --base main --head "$VETEV" --title "Novinky z dat: $MESIC" --body-file "$RUNNER_TEMP/navrh.md"
+          fi

@@ -6,12 +6,14 @@ import HeroGlobus from '../components/uvod/HeroGlobus.astro';
 import CeskoVeSvete from '../components/uvod/CeskoVeSvete.astro';
 import MapaMini from '../components/uvod/MapaMini.astro';
 import HlasovaniPozvanka from '../components/HlasovaniPozvanka.astro';
+import NovinkaKarta from '../components/NovinkaKarta.astro';
 import { ZEME } from '../lib/svet';
 import { epizody } from '../data/epizody';
 import { datum } from '../lib/format';
 
 const grafy = (await getCollection('grafy')).sort((a, b) => b.data.datum.valueOf() - a.data.datum.valueOf());
 const tydne = grafy[0];
+const posledniNovinky = (await getCollection('novinky')).sort((a, b) => b.data.datum.valueOf() - a.data.datum.valueOf())[0];
 // Seznam zemí pro vyhledávání v úvodu (jen název a vlajka, ať je stránka lehká)
 const zemeHledani = JSON.stringify(Object.entries(ZEME).filter(([a3]) => a3 !== 'EUZ' && a3 !== 'CZE').map(([a3, [n, a2]]) => [a3, n, a2]));
 
@@ -91,6 +93,21 @@ const FB = 'https://www.facebook.com/data.cesky';
           </div>
         </div>
       </a>
+    </section>
+  )}
+
+  {posledniNovinky && (
+    <section class="obal sekce--mala">
+      <div class="nadpis-sekce">
+        <div class="nadpis">
+          <h2>Novinky z dat</h2>
+          <p class="drobne">Co nového ukázala data ČSÚ a Eurostatu za poslední měsíc.</p>
+        </div>
+        <a class="tlacitko tlacitko--male" href="/novinky/">Všechny novinky</a>
+      </div>
+      <ul class="mrizka mrizka--3">
+        {posledniNovinky.data.polozky.slice(0, 3).map((p) => <NovinkaKarta p={p} />)}
+      </ul>
     </section>
   )}
 

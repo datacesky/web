@@ -1,0 +1,138 @@
+---
+// „Porovnej se" se mzdou: kolik let práce je majetek, nebo za jak dlouho firma utrží tvůj roční plat.
+// Předvyplněná je průměrná hrubá mzda podle ČSÚ (src/data/grafy/mzda.json, skripty/data_grafu.py).
+import mzda from '../data/grafy/mzda.json';
+
+interface Props {
+  polozky: { nazev: string; hodnota: number }[];
+  typ: 'majetek' | 'trzby';
+  // Krátký popis toho, co hodnota je, třeba „majetku podle Forbes Česko“ nebo „tržeb za rok 2024“
+  coJeHodnota: string;
+  poznamka: string;
+}
+const { polozky, typ, coJeHodnota, poznamka } = Astro.props;
+const fmt = new Intl.NumberFormat('cs-CZ');
+const data = JSON.stringify({ typ, polozky, coJeHodnota });
+---
+
+<div class="pm" data-pm data-nastaveni={data}>
+  <div class="pm__ovladani">
+    <label class="pm__pole">
+      <span class="pm__popisek">Tvoje hrubá měsíční mzda</span>
+      <span class="pm__vstup">
+        <input type="text" inputmode="numeric" autocomplete="off" enterkeyhint="done" value={fmt.format(mzda.hodnota)} data-pm-mzda aria-describedby="pm-pozn" />
+        <span aria-hidden="true">Kč</span>
+      </span>
+    </label>
+    <label class="pm__pole">
+      <span class="pm__popisek">{typ === 'majetek' ? 'Porovnat s' : 'Firma'}</span>
+      <select data-pm-kdo>
+        {polozky.map((p, i) => <option value={i}>{p.nazev}</option>)}
+      </select>
+    </label>
+  </div>
+
+  <div class="pm__vysledek" aria-live="polite">
+    <p class="pm__kdo"><strong data-pm-jmeno></strong> <span data-pm-hodnota></span></p>
+    <p class="pm__otazka" data-pm-otazka></p>
+    <p class="pm__cislo" data-pm-cislo></p>
+    <p class="pm__kontext" data-pm-kontext></p>
+    {typ === 'trzby' && <p class="pm__pocitadlo" data-pm-pocitadlo></p>}
+  </div>
+  <p class="drobne" id="pm-pozn">
+    Předvyplněná je průměrná hrubá měsíční mzda v Česku za {mzda.obdobi} podle <a href={mzda.zdrojUrl}>ČSÚ</a>. Přepiš ji na svou. {poznamka}
+  </p>
+</div>
+
+<style>
+  .pm { display: flex; flex-direction: column; gap: 1.1rem; }
+  .pm__ovladani { display: flex; flex-wrap: wrap; gap: 0.9rem 1.2rem; }
+  .pm__pole { display: flex; flex-direction: column; gap: 0.35rem; flex: 1 1 220px; min-width: 0; }
+  .pm__popisek { font-size: 0.92rem; font-weight: 800; }
+  .pm__vstup { display: flex; align-items: center; gap: 0.5rem; min-height: 50px; padding: 0 1.1rem; border: 1.5px solid var(--line); border-radius: 999px; background: var(--paper); box-shadow: var(--stin-maly); font-weight: 800; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
+  .pm__vstup:focus-within { border-color: var(--navy); box-shadow: 0 0 0 4px rgba(27, 42, 74, 0.08), var(--stin-maly); }
+  .pm__vstup input { flex: 1 1 auto; min-width: 0; width: 100%; min-height: 46px; padding: 0; border: 0; background: transparent; outline: none; font-family: inherit; font-size: 1.1rem; font-weight: 800; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .pm__pole select { width: 100%; min-height: 50px; border-radius: 999px; border-color: var(--line); box-shadow: var(--stin-maly); padding-left: 1.1rem; }
+  .pm__vysledek { display: flex; flex-direction: column; gap: 0.3rem; padding: clamp(1.2rem, 3vw, 1.8rem); border-radius: 18px; background: var(--navy); color: var(--cream); text-align: center; align-items: center; }
+  .pm__kdo { font-size: 1rem; color: #D9D3C7; }
+  .pm__kdo strong { color: var(--cream); font-weight: 900; }
+  .pm__otazka { font-size: 1.02rem; font-weight: 700; margin-top: 0.4rem; }
+  .pm__cislo { font-size: clamp(2.4rem, 7vw, 3.6rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; color: var(--orange); }
+  .pm__kontext { max-width: 46ch; font-size: 0.92rem; font-weight: 600; color: #D9D3C7; line-height: 1.55; }
+  .pm__pocitadlo { margin-top: 0.6rem; padding: 0.5rem 0.9rem; border-radius: 999px; background: rgba(255, 255, 255, 0.08); font-size: 0.9rem; font-weight: 700; }
+  :global(.pm__pocitadlo b) { color: var(--orange); font-variant-numeric: tabular-nums; }
+</style>
+
+<script>
+  const fmt = new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 0 });
+  const fmt1 = new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 1 });
+  const tvar = (n: number, jeden: string, dva: string, pet: string, desetinne: string) =>
+    !Number.isInteger(n) ? desetinne : n === 1 ? jeden : n >= 2 && n <= 4 ? dva : pet;
+
+  for (const koren of document.querySelectorAll<HTMLElement>('[data-pm]')) {
+    const N = JSON.parse(koren.dataset.nastaveni!) as { typ: 'majetek' | 'trzby'; polozky: { nazev: string; hodnota: number }[]; coJeHodnota: string };
+    const $ = <T extends Element>(s: string) => koren.querySelector<T>(s)!;
+    const vstup = $<HTMLInputElement>('[data-pm-mzda]');
+    const kdo = $<HTMLSelectElement>('[data-pm-kdo]');
+    const pocitadlo = koren.querySelector<HTMLElement>('[data-pm-pocitadlo]');
+    const otevreno = performance.now();
+    const mzda = () => Number(vstup.value.replace(/[^\d]/g, '')) || 0;
+
+    function prepocitej() {
+      const p = N.polozky[Number(kdo.value)];
+      const m = mzda();
+      const castka = p.hodnota * 1e9;
+      $<HTMLElement>('[data-pm-jmeno]').textContent = p.nazev;
+      $<HTMLElement>('[data-pm-hodnota]').textContent = `${fmt1.format(p.hodnota)} mld. Kč ${N.coJeHodnota}`;
+      const cislo = $<HTMLElement>('[data-pm-cislo]');
+      const kontext = $<HTMLElement>('[data-pm-kontext]');
+      const otazka = $<HTMLElement>('[data-pm-otazka]');
+      if (m < 1000) {
+        otazka.textContent = 'Napiš svou hrubou měsíční mzdu v korunách.';
+        cislo.textContent = '–';
+        kontext.textContent = '';
+        return;
+      }
+      if (N.typ === 'majetek') {
+        const let_ = castka / (m * 12);
+        const n = let_ >= 10 ? Math.round(let_) : Math.round(let_ * 10) / 10;
+        otazka.textContent = 'S tvou mzdou bys na to pracoval(a)';
+        cislo.textContent = `${n >= 10 ? fmt.format(n) : fmt1.format(n)} ${tvar(n, 'rok', 'roky', 'let', 'roku')}`;
+        const zivoty = let_ / 45;
+        kontext.textContent = zivoty >= 2
+          ? `To je ${fmt.format(Math.round(zivoty))} pracovních životů po 45 letech. A celou dobu bys nesměl(a) nic utratit.`
+          : 'A celou dobu bys nesměl(a) nic utratit.';
+      } else {
+        const zaSekundu = castka / (365 * 24 * 3600);
+        const s = (m * 12) / zaSekundu;
+        otazka.textContent = 'Tvou roční hrubou mzdu utrží za';
+        if (s < 90) {
+          const n = s >= 10 ? Math.round(s) : Math.round(s * 10) / 10;
+          cislo.textContent = `${n >= 10 ? fmt.format(n) : fmt1.format(n)} ${tvar(n, 'sekundu', 'sekundy', 'sekund', 'sekundy')}`;
+        } else {
+          const n = Math.round(s / 60);
+          cislo.textContent = `${fmt.format(n)} ${tvar(n, 'minutu', 'minuty', 'minut', 'minuty')}`;
+        }
+        kontext.textContent = 'Tržby nejsou zisk. Z tržeb firma platí materiál, energie, mzdy i daně.';
+      }
+    }
+
+    // Počítadlo tržeb od otevření stránky
+    if (pocitadlo) {
+      const tik = () => {
+        const p = N.polozky[Number(kdo.value)];
+        const kc = ((performance.now() - otevreno) / 1000) * ((p.hodnota * 1e9) / (365 * 24 * 3600));
+        const b = document.createElement('b');
+        b.textContent = `${fmt.format(kc)} Kč`;
+        pocitadlo.replaceChildren('Od chvíle, kdy jsi otevřel(a) tuhle stránku, utržila tahle firma ', b, '.');
+      };
+      tik();
+      setInterval(tik, matchMedia('(prefers-reduced-motion: reduce)').matches ? 1000 : 120);
+    }
+
+    vstup.addEventListener('input', prepocitej);
+    vstup.addEventListener('blur', () => { const m = mzda(); if (m) vstup.value = fmt.format(m); });
+    kdo.addEventListener('change', prepocitej);
+    prepocitej();
+  }
+</script>

@@ -2,7 +2,14 @@
 import { getCollection, render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import InteraktivniGraf from '../../components/InteraktivniGraf.astro';
+import ZebricekVCase from '../../components/ZebricekVCase.astro';
+import VyvojZeme from '../../components/VyvojZeme.astro';
+import PorovnejMzdu from '../../components/PorovnejMzdu.astro';
+import Piktogramy from '../../components/Piktogramy.astro';
+import NaObyvatele from '../../components/NaObyvatele.astro';
 import GrafCard from '../../components/GrafCard.astro';
+import vysokoskolaci from '../../data/grafy/vysokoskolaci.json';
+import turiste from '../../data/grafy/turiste.json';
 import { datum } from '../../lib/format';
 
 export async function getStaticPaths() {
@@ -18,6 +25,13 @@ const vsechny = await getCollection('grafy');
 const stejneTema = vsechny.filter((g) => g.id !== graf.id && g.data.tema === data.tema);
 const ostatni = vsechny.filter((g) => g.id !== graf.id && g.data.tema !== data.tema);
 const souvisejici = [...stejneTema, ...ostatni].slice(0, 3);
+
+const RADY = { vysokoskolaci, turiste } as const;
+const rada = data.vyvoj ? (RADY[data.vyvoj] as any) : null;
+const NAPOVEDA_VYVOJE: Record<string, string> = {
+  vysokoskolaci: 'Pusť přehrávání nebo posuň rok. Klikni na zemi a porovnej ji níž s Českem.',
+  turiste: 'Pusť přehrávání nebo posuň rok. Klikni na zemi a níž uvidíš její vývoj.',
+};
 ---
 
 <Base titul={`${data.titul} — data.cesky`} popis={data.perex} obrazek={data.obrazek}>
@@ -46,12 +60,39 @@ const souvisejici = [...stejneTema, ...ostatni].slice(0, 3);
             <h2 class="nadpis-grafu" style="font-size: clamp(1.4rem, 3vw, 2rem);">{data.titul}</h2>
             {data.popisGrafu && <p class="stitek" style="font-size: 0.95rem;">{data.popisGrafu}</p>}
           </div>
-          <InteraktivniGraf polozky={data.polozky} jednotka={data.jednotka} soucet={data.soucet} barvy={data.barvy} desetinna={data.desetinna} />
+          {rada ? (
+            <ZebricekVCase rada={rada} pocet={data.vyvojPocet} nazevHodnoty={data.jednotka === '%' ? 'Podíl' : 'Hostů'} napoveda={NAPOVEDA_VYVOJE[data.vyvoj!]} />
+          ) : data.forma === 'piktogramy' ? (
+            <Piktogramy polozky={data.polozky} barvy={data.barvy} jednotka={data.jednotka} zaIkonu={data.zaIkonu ?? 10} />
+          ) : (
+            <InteraktivniGraf polozky={data.polozky} jednotka={data.jednotka} soucet={data.soucet} barvy={data.barvy} desetinna={data.desetinna} />
+          )}
           <div class="rada rada--mezi">
             <span class="drobne">Zdroj: {data.zdroj}</span>
             <span class="znacka">@data<span>.cesky</span></span>
           </div>
         </div>
+
+        {data.porovnej && (
+          <section class="karta sloupec porovnej" style="gap: 1.1rem;" id="porovnej">
+            <h2 style="font-size: clamp(1.4rem, 3vw, 1.9rem);">Porovnej se</h2>
+            {data.porovnej === 'zeme-vs' && rada && (
+              <VyvojZeme rada={rada} typ="vs" vychozi={data.porovnejVychozi ?? 'SVK'} otazka="Se kterou zemí chceš Česko porovnat?" zdroj={rada.zdroj} />
+            )}
+            {data.porovnej === 'zeme-hoste' && rada && (
+              <VyvojZeme rada={rada} typ="hoste" vychozi={data.porovnejVychozi ?? 'DEU'} otazka="Odkud jsi, nebo odkud jsou tví hosté?" zdroj={rada.zdroj} />
+            )}
+            {data.porovnej === 'mzda-majetek' && (
+              <PorovnejMzdu polozky={data.polozky} typ="majetek" coJeHodnota="majetku" poznamka="Majetek je odhad Forbes Česko, mzda je hrubá, před zdaněním." />
+            )}
+            {data.porovnej === 'mzda-trzby' && (
+              <PorovnejMzdu polozky={data.polozky} typ="trzby" coJeHodnota="tržeb za rok 2024" poznamka="Tržby jsou za celý rok 2024 podle CZECH TOP 100, rozpočítané rovnoměrně na každou sekundu roku." />
+            )}
+            {data.porovnej === 'obyvatele' && (
+              <NaObyvatele polozky={data.polozky} tvary={['prodejna', 'prodejny', 'prodejen']} naJednu="prodejnu" />
+            )}
+          </section>
+        )}
 
         <section class="sloupec" style="gap: 1.25rem;">
           <h2 style="font-size: clamp(1.4rem, 3vw, 1.9rem);">Co z toho plyne</h2>

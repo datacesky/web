@@ -25,6 +25,25 @@ Po `git push` do větve main se web sám nasadí.
 | Hlasování o dalším dílu | `src/data/hlasovani.ts`, skript `navody/hlasovani-apps-script.gs` |
 | Ověření pro Google, Seznam a měření návštěvnosti | `src/data/web.ts` |
 | Náhledové obrázky pro sdílení | `public/og/` |
+| Vývoj v čase a „Porovnej se“ u grafů | `src/data/grafy/*.json`, obnoví je `python3 skripty/data_grafu.py` |
+| Novinky z dat | `src/content/novinky/RRRR-MM.md`, připravuje je `skripty/novinky.py` |
+| Vrstevnice v úvodu | `public/vrstevnice.svg`, generuje `navody/vrstevnice.py` |
+
+## Novinky z dat
+
+Jednou měsíčně (12. den v 8:00) spustí GitHub skript `skripty/novinky.py`. Ten stáhne čerstvá čísla
+z otevřených dat ČSÚ (DataStat) a Eurostatu, vybere to nejzajímavější a pošle to jako **návrh ke schválení**
+(Pull request „Novinky z dat: RRRR-MM“). Projdi ho, případně uprav text a klikni **Merge**. Až pak se
+novinky objeví na webu. Ručně jde spustit v záložce Actions → Novinky z dat → Run workflow.
+
+Aby GitHub mohl návrh vytvořit, musí být v Settings → Actions → General → Workflow permissions
+zapnuté **Read and write permissions** a **Allow GitHub Actions to create and approve pull requests**.
+
+## Data u grafů
+
+Vývoj v čase (vysokoškoláci, turisté) a průměrná mzda u „Porovnej se“ jsou v `src/data/grafy/`.
+Obnovíš je příkazem `python3 skripty/data_grafu.py` (potřebuje jen Python 3). Změny se ukážou
+v `git diff`, zkontroluj je před pushnutím.
 
 ## Hlasování
 

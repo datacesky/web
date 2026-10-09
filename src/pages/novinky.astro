@@ -1,0 +1,39 @@
+---
+import { getCollection } from 'astro:content';
+import Base from '../layouts/Base.astro';
+import NovinkaKarta from '../components/NovinkaKarta.astro';
+
+const vydani = (await getCollection('novinky')).sort((a, b) => b.data.datum.valueOf() - a.data.datum.valueOf());
+---
+
+<Base
+  titul="Novinky z dat — data.cesky"
+  popis="Nejzajímavější čísla, která za poslední měsíc zveřejnil Český statistický úřad a Eurostat. Inflace, ceny, mzdy, nezaměstnanost."
+>
+  <section class="obal sekce--mala sloupec" style="gap: 1.75rem;">
+    <div class="sloupec" style="max-width: 62ch;">
+      <h1>Novinky z dat</h1>
+      <p class="perex">Jednou měsíčně vybírám nejzajímavější čísla, která zveřejnil Český statistický úřad a Eurostat. U každého je odkaz na datovou sadu, ze které pochází.</p>
+    </div>
+
+    {vydani.length === 0 && <p class="drobne">První vydání chystám.</p>}
+    {vydani.map((v) => (
+      <section class="sloupec" style="gap: 1rem;" id={v.id}>
+        <h2 class="vydani__titul">{v.data.titul.replace('Novinky z dat: ', '')}</h2>
+        <ul class="mrizka mrizka--3">
+          {v.data.polozky.map((p) => <NovinkaKarta p={p} />)}
+        </ul>
+      </section>
+    ))}
+
+    <p class="drobne" style="max-width: 70ch;">
+      Čísla stahuje automat přímo z otevřených dat ČSÚ (DataStat) a Eurostatu. Před zveřejněním každé vydání projdu a ověřím.
+      Najdeš chybu? Napiš na <a href="mailto:data.cesky@gmail.com">data.cesky@gmail.com</a>.
+    </p>
+  </section>
+</Base>
+
+<style>
+  .vydani__titul { font-size: clamp(1.4rem, 3vw, 1.9rem); text-transform: none; }
+  .vydani__titul::first-letter { text-transform: uppercase; }
+</style>

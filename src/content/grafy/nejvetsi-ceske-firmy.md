@@ -12,6 +12,7 @@ desetinna: 1
 popisGrafu: "Tržby za rok 2024 v miliardách Kč"
 metodika: "Žebříček CZECH TOP 100 řadí firmy podle tržeb za rok 2024. Hodnoty jsou v miliardách korun."
 instagram: "https://www.instagram.com/reel/DdZEK2UK9n8/"
+porovnej: "mzda-trzby"
 polozky:
   - { nazev: "EP Group", hodnota: 692.0 }
   - { nazev: "Škoda Auto", hodnota: 639.8 }

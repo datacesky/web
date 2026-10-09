@@ -24,6 +24,12 @@ const polozky = (() => {
       <span class="stitek">{data.tema}</span>
       <h3>{data.titul}</h3>
       {data.popisGrafu && <p class="drobne kg__popis">{data.popisGrafu}</p>}
+      {(data.vyvoj || data.porovnej) && (
+        <span class="kg__umi">
+          {data.vyvoj && <span>Vývoj v čase</span>}
+          {data.porovnej && <span>Porovnej se</span>}
+        </span>
+      )}
     </div>
     <div class="kg__graf">
       {data.obrazek ? (
@@ -49,6 +55,8 @@ const polozky = (() => {
   .kg__hlava { display: flex; flex-direction: column; gap: 0.35rem; padding: 1.3rem 1.3rem 0; }
   .kg__hlava h3 { font-size: 1.12rem; line-height: 1.4; }
   .kg__popis { font-size: 0.82rem; line-height: 1.5; }
+  .kg__umi { display: flex; flex-wrap: wrap; gap: 0.3rem; margin-top: 0.2rem; }
+  .kg__umi span { padding: 0.12rem 0.55rem; border-radius: 999px; background: #FDF0E3; color: var(--orange-text); font-size: 0.72rem; font-weight: 800; }
   .kg__graf { flex-grow: 1; display: flex; align-items: center; padding: 1.1rem 1.3rem 1.2rem; }
   .kg__graf img { width: 100%; border-radius: 10px; }
   .kg__pata { display: flex; justify-content: space-between; gap: 1rem; padding: 0.8rem 1.3rem; border-top: 1px solid var(--line); background: var(--plocha-2); font-size: 0.78rem; font-weight: 600; color: var(--muted); }

@@ -223,7 +223,7 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
   .hlavicka__hlasuj:hover { color: var(--navy); }
   .hlavicka__hlasuj:active { transform: scale(0.96); }
   .hlavicka__hlasuj[aria-current='page'] { box-shadow: inset 0 0 0 2px var(--navy); }
-  .navigace a.navigace__hlasuj { display: none; }
+  .hlavicka .navigace a.navigace__hlasuj { display: none; }
   .navigace {
     width: calc(100% + 2.5rem); margin-inline: -1.25rem; padding: 0.15rem 1.25rem 0.2rem; flex-wrap: nowrap; gap: 1.2rem;
     overflow-x: auto; scrollbar-width: none; white-space: nowrap; font-size: 0.94rem;
@@ -258,7 +258,7 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
 
 /* Detail grafu */
 .detail { display: grid; grid-template-columns: minmax(0, 1fr) 340px; gap: 2.5rem; align-items: start; }
-@media (max-width: 960px) { .detail { grid-template-columns: 1fr; } }
+@media (max-width: 960px) { .detail { grid-template-columns: minmax(0, 1fr); } }
 .drobecky { display: flex; flex-wrap: wrap; gap: 0.5rem; font-size: 0.9rem; font-weight: 600; color: var(--muted); }
 .drobecky a { color: var(--muted); }
 

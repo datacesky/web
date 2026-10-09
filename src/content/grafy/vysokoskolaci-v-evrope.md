@@ -9,11 +9,15 @@ dataOtevrena: true
 jednotka: "%"
 desetinna: 1
 popisGrafu: "Podíl lidí ve věku 25 až 34 let s vysokoškolským vzděláním, 2025"
-metodika: "Podíl lidí ve věku 25 až 34 let s terciárním vzděláním (ISCED 5–8) podle výběrového šetření pracovních sil, rok 2025. Graf ukazuje prvních 24 zemí EU. Pod Českem jsou už jen Maďarsko, Itálie a Rumunsko."
+metodika: "Podíl lidí ve věku 25 až 34 let s terciárním vzděláním (ISCED 5–8) podle výběrového šetření pracovních sil. Vývoj v čase ukazuje všech 27 zemí EU v letech 2004 až 2025, data stažená z Eurostatu 9. 10. 2026 (zdroj je naposledy aktualizoval 10. 9. 2026, Lucembursko za rok 2025 se tím změnilo z 65,0 na 65,2 %). V letech 2011, 2014 a 2021 má řada metodické zlomy. Pod Českem jsou v roce 2025 už jen Maďarsko, Itálie a Rumunsko."
+dataStazena: 2026-10-09
+vyvoj: "vysokoskolaci"
+porovnej: "zeme-vs"
+porovnejVychozi: "SVK"
 instagram: "https://www.instagram.com/reel/DZ9m2mVIXY8/"
 polozky:
   - { nazev: "Irsko", hodnota: 66.8 }
-  - { nazev: "Lucembursko", hodnota: 65.0 }
+  - { nazev: "Lucembursko", hodnota: 65.2 }
   - { nazev: "Litva", hodnota: 60.8 }
   - { nazev: "Kypr", hodnota: 60.0 }
   - { nazev: "Nizozemsko", hodnota: 56.1 }

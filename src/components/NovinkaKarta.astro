@@ -1,0 +1,24 @@
+---
+// Jedna novinka z dat: nadpis, velké číslo, krátký text a zdroj s odkazem na datovou sadu.
+interface Props {
+  p: { nadpis: string; cislo: string; popisCisla?: string; text: string; zdroj: string; sada: string; url: string };
+}
+const { p } = Astro.props;
+---
+
+<li class="nk">
+  <h3 class="nk__nadpis">{p.nadpis}</h3>
+  <p class="nk__cislo">{p.cislo}{p.popisCisla && <span>{p.popisCisla}</span>}</p>
+  <p class="nk__text">{p.text}</p>
+  <p class="nk__zdroj">Zdroj: <a href={p.url}>{p.zdroj} ({p.sada})</a></p>
+</li>
+
+<style>
+  .nk { display: flex; flex-direction: column; gap: 0.55rem; padding: 1.3rem 1.35rem 1.15rem; border-radius: 20px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); }
+  .nk__nadpis { font-size: 1.02rem; line-height: 1.35; }
+  .nk__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.2rem 0.5rem; font-size: clamp(1.8rem, 4vw, 2.3rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.025em; color: var(--navy); }
+  .nk__cislo span { font-size: 0.9rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
+  .nk__text { flex-grow: 1; font-size: 0.93rem; line-height: 1.6; color: var(--text-2); }
+  .nk__zdroj { padding-top: 0.6rem; border-top: 1px solid var(--line); font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+  .nk__zdroj a { color: var(--muted); }
+</style>

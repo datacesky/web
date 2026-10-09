@@ -12,6 +12,9 @@ popisGrafu: "Počet prodejen v Česku, rok 2026"
 metodika: "Počty prodejen podle údajů řetězců a Kupi.cz za rok 2026. Družstevní sítě COOP a CBA nejsou zahrnuté, protože mají jiný formát prodejen. Tržby Lidlu a Penny jsou z účetních závěrek za poslední účetní rok (2024/25)."
 barvy: { "Nejvíc prodejen": "orange" }
 instagram: "https://www.instagram.com/reel/DZvQHKnNNew/"
+forma: "piktogramy"
+zaIkonu: 20
+porovnej: "obyvatele"
 polozky:
   - { nazev: "Penny", hodnota: 443, kategorie: "Nejvíc prodejen" }
   - { nazev: "Albert", hodnota: 348 }

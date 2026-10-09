@@ -1,0 +1,356 @@
+---
+// „Porovnej se" pro země: vybereš zemi a čárový graf ukáže její vývoj v čase.
+// typ="vs": vybraná země proti Česku a průměru EU (vysokoškoláci)
+// typ="hoste": jedna země, její pořadí a srovnání s rokem 2019 před covidem (turisté)
+interface Rada {
+  jednotka: string;
+  desetinna: number;
+  roky: string[];
+  zeme: Record<string, { nazev: string; a2: string; hodnoty: Record<string, number> }>;
+  reference?: { nazev: string; hodnoty: Record<string, number> };
+  souhrn?: { nazev: string; hodnoty: Record<string, number> };
+}
+interface Props {
+  rada: Rada;
+  typ: 'vs' | 'hoste';
+  vychozi: string;
+  otazka: string;
+  zdroj: string;
+}
+const { rada, typ, vychozi, otazka, zdroj } = Astro.props;
+const moznosti = Object.entries(rada.zeme)
+  .filter(([k]) => typ !== 'vs' || k !== 'CZE')
+  .sort((a, b) => a[1].nazev.localeCompare(b[1].nazev, 'cs'));
+const id = `vz-${typ}`;
+---
+
+<div class="vz" data-vz data-typ={typ} data-rada={JSON.stringify(rada)}>
+  <div class="vz__ovladani">
+    <label class="vz__otazka" for={id}>{otazka}</label>
+    <select id={id} data-vz-vyber>
+      {moznosti.map(([k, z]) => <option value={k} selected={k === vychozi}>{z.nazev}</option>)}
+    </select>
+  </div>
+
+  <div class="vz__shrnuti" aria-live="polite">
+    <img class="vlajka vz__vlajka" data-vz-vlajka alt="" width="44" height="33" />
+    <div class="vz__veta">
+      <p class="vz__hlavni" data-vz-hlavni></p>
+      <p class="vz__vedlejsi" data-vz-vedlejsi></p>
+    </div>
+  </div>
+
+  <ul class="legenda vz__legenda" data-vz-legenda></ul>
+  <div class="vz__graf" data-vz-graf>
+    <svg class="vz__svg" viewBox="0 0 680 300" role="img" data-vz-svg aria-label="Vývoj v čase"></svg>
+    <div class="vz__tooltip" data-vz-tooltip hidden></div>
+  </div>
+
+  <details class="vz__cisla">
+    <summary>Čísla po letech</summary>
+    <div class="tabulka-obal">
+      <table>
+        <thead data-vz-thead></thead>
+        <tbody data-vz-tbody></tbody>
+      </table>
+    </div>
+  </details>
+  <p class="drobne">Zdroj: {zdroj}</p>
+</div>
+
+<style>
+  .vz { display: flex; flex-direction: column; gap: 1rem; }
+  .vz__ovladani { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
+  .vz__otazka { font-size: 1rem; font-weight: 800; }
+  .vz__ovladani select { min-width: 220px; border-radius: 999px; border-color: var(--line); box-shadow: var(--stin-maly); padding-left: 1.1rem; }
+  .vz__shrnuti { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 0.9rem; align-items: start; padding: 1rem 1.1rem; border-radius: 16px; background: var(--navy); color: var(--cream); }
+  .vz__vlajka { width: 44px; height: 33px; border-radius: 6px; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2); }
+  .vz__veta { display: flex; flex-direction: column; gap: 0.35rem; }
+  .vz__hlavni { font-size: 1.05rem; font-weight: 700; line-height: 1.55; }
+  .vz__hlavni strong { color: var(--orange); font-weight: 900; }
+  .vz__vedlejsi { font-size: 0.92rem; font-weight: 600; color: #D9D3C7; line-height: 1.55; }
+  .vz__vedlejsi:empty { display: none; }
+  .vz__legenda { gap: 0.4rem 1.2rem; }
+  :global(.vz__klic) { display: inline-block; width: 18px; height: 3px; border-radius: 2px; }
+  .vz__graf { position: relative; }
+  .vz__svg { width: 100%; height: auto; display: block; overflow: visible; touch-action: pan-y; }
+  .vz__svg:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; border-radius: 6px; }
+  :global(.vz__mrizka) { stroke: var(--line); stroke-width: 1; shape-rendering: crispEdges; }
+  :global(.vz__osa-text) { font-size: 11px; font-weight: 700; fill: var(--muted); font-family: inherit; }
+  :global(.vz__covid) { fill: rgba(27, 42, 74, 0.05); }
+  :global(.vz__covid-text) { font-size: 11px; font-weight: 800; fill: var(--muted); }
+  :global(.vz__cara) { fill: none; stroke-width: 2.25; stroke-linejoin: round; stroke-linecap: round; }
+  :global(.vz__cara--ref) { stroke-width: 1.75; }
+  :global(.vz__bod) { stroke: #FFFFFF; stroke-width: 2; }
+  :global(.vz__stitek) { font-size: 12px; font-weight: 800; fill: var(--navy); font-family: inherit; paint-order: stroke; stroke: #FFFFFF; stroke-width: 3px; stroke-linejoin: round; }
+  :global(.vz__stitek-hodnota) { font-weight: 700; fill: var(--text-2); }
+  :global(.vz__vodic) { stroke: var(--line-2); stroke-width: 1; }
+  :global(.vz__zamerovac) { stroke: var(--navy); stroke-width: 1; stroke-opacity: 0.35; }
+  .vz__tooltip {
+    position: absolute; z-index: 5; pointer-events: none; min-width: 9rem; transform: translate(-50%, calc(-100% - 12px));
+    padding: 0.55rem 0.75rem; border-radius: 12px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin);
+    font-size: 0.82rem; font-weight: 600; color: var(--text-2);
+  }
+  :global(.vz__tooltip strong) { display: block; font-size: 0.78rem; color: var(--muted); margin-bottom: 0.2rem; }
+  :global(.vz__tooltip-radek) { display: grid; grid-template-columns: 14px auto 1fr; gap: 0.45rem; align-items: center; }
+  :global(.vz__tooltip-radek b) { color: var(--navy); font-weight: 900; text-align: right; font-variant-numeric: tabular-nums; }
+  .vz__cisla summary { cursor: pointer; font-weight: 800; font-size: 0.92rem; }
+  .vz__cisla table { margin-top: 0.6rem; font-size: 0.85rem; }
+  @media (max-width: 560px) {
+    .vz__ovladani select { width: 100%; }
+    .vz__hlavni { font-size: 0.98rem; }
+    .vz__shrnuti { grid-template-columns: 36px minmax(0, 1fr); padding: 0.9rem; }
+    .vz__vlajka { width: 36px; height: 27px; }
+  }
+</style>
+
+<script>
+  type Rada = {
+    jednotka: string; desetinna: number; roky: string[];
+    zeme: Record<string, { nazev: string; a2: string; hodnoty: Record<string, number> }>;
+    reference?: { nazev: string; hodnoty: Record<string, number> };
+    souhrn?: { nazev: string; hodnoty: Record<string, number> };
+  };
+  type Serie = { nazev: string; barva: string; hodnoty: Record<string, number>; ref?: boolean };
+  const NS = 'http://www.w3.org/2000/svg';
+  const ORANZ = '#F08829', NAVY = '#1B2A4A', SLATE = '#6E7C96';
+
+  for (const koren of document.querySelectorAll<HTMLElement>('[data-vz]')) {
+    const R = JSON.parse(koren.dataset.rada!) as Rada;
+    const typ = koren.dataset.typ as 'vs' | 'hoste';
+    const $ = <T extends Element>(s: string) => koren.querySelector<T>(s)!;
+    const vyber = $<HTMLSelectElement>('[data-vz-vyber]');
+    const svg = $<SVGSVGElement>('[data-vz-svg]');
+    const tooltip = $<HTMLElement>('[data-vz-tooltip]');
+    const roky = R.roky;
+    const L = roky.at(-1)!, F = roky[0];
+    const dp = R.desetinna;
+    const f = new Intl.NumberFormat('cs-CZ', { minimumFractionDigits: dp, maximumFractionDigits: dp });
+    const f0 = new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 0 });
+    const proc = R.jednotka === '%';
+    const t = (v: number) => (proc ? `${f.format(v)} %` : f.format(v));
+    const kratce = (v: number) => (proc ? `${f0.format(v)} %` : v >= 1e6 ? `${new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 1 }).format(v / 1e6)} mil.` : v >= 1e3 ? `${f0.format(v / 1e3)} tis.` : f0.format(v));
+    const el = (tag: string, a: Record<string, string | number> = {}, trida?: string) => {
+      const e = document.createElementNS(NS, tag);
+      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      if (trida) e.setAttribute('class', trida);
+      return e;
+    };
+    const poradi = (k: string, rok: string) => {
+      const v = R.zeme[k].hodnoty[rok];
+      if (v === undefined) return undefined;
+      return 1 + Object.values(R.zeme).filter((z) => (z.hodnoty[rok] ?? -Infinity) > v).length;
+    };
+    // změna v procentních bodech se znaménkem: +23,1 p. b.
+    const pb = (d: number) => `${d > 0 ? '+' : d < 0 ? '−' : ''}${f.format(Math.abs(d))} p. b.`;
+
+    function serie(k: string): Serie[] {
+      const z = R.zeme[k];
+      if (typ === 'vs') return [
+        { nazev: z.nazev, barva: NAVY, hodnoty: z.hodnoty },
+        { nazev: 'Česko', barva: ORANZ, hodnoty: R.zeme.CZE.hodnoty },
+        ...(R.reference ? [{ nazev: R.reference.nazev, barva: SLATE, hodnoty: R.reference.hodnoty, ref: true }] : []),
+      ];
+      return [{ nazev: z.nazev, barva: NAVY, hodnoty: z.hodnoty }];
+    }
+
+    // Hezká čísla na ose: 0, 10, 20…
+    function osa(max: number) {
+      const hrube = max / 4;
+      const rad = Math.pow(10, Math.floor(Math.log10(hrube)));
+      const krok = [1, 2, 2.5, 5, 10].map((m) => m * rad).find((k) => k >= hrube)!;
+      const vrchol = Math.ceil(max / krok) * krok;
+      return { vrchol, ticky: Array.from({ length: Math.round(vrchol / krok) + 1 }, (_, i) => i * krok) };
+    }
+
+    function shrnuti(k: string) {
+      const z = R.zeme[k];
+      const v = z.hodnoty[L];
+      const hl = $<HTMLElement>('[data-vz-hlavni]');
+      const ve = $<HTMLElement>('[data-vz-vedlejsi]');
+      const img = $<HTMLImageElement>('[data-vz-vlajka]');
+      img.src = `/vlajky/${z.a2}.svg`;
+      const silne = (text: string) => { const s = document.createElement('strong'); s.textContent = text; return s; };
+      if (typ === 'vs') {
+        const cz = R.zeme.CZE.hodnoty[L], eu = R.reference?.hodnoty[L];
+        hl.replaceChildren(`${z.nazev}: v roce ${L} má vysokou školu `, silne(t(v)), ` lidí ve věku 25 až 34 let, ${poradi(k, L)}. místo v EU. Česko má ${t(cz)}${eu !== undefined ? `, průměr EU ${t(eu)}` : ''}.`);
+        const a = z.hodnoty[F], acz = R.zeme.CZE.hodnoty[F];
+        // bez slovesa, ať nevadí rod názvu země (Slovensko přidalo, Francie přidala…)
+        ve.textContent = a !== undefined && acz !== undefined
+          ? `V roce ${F} to bylo ${t(a)} proti ${t(acz)} v Česku. Změna od roku ${F}: ${z.nazev} ${pb(v - a)}, Česko ${pb(cz - acz)}`
+          : '';
+      } else {
+        const r = poradi(k, L);
+        const celkem = R.souhrn?.hodnoty[L];
+        const podil = celkem ? ` To je ${new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 1 }).format((v / celkem) * 100)} % všech zahraničních hostů.` : '';
+        hl.replaceChildren(`${z.nazev}: v roce ${L} přijelo `, silne(`${f0.format(v)} hostů`), `, ${r === 1 ? 'nejvíc ze všech zemí' : `${r}. místo mezi zeměmi`}.${podil}`);
+        const p19 = z.hodnoty['2019'];
+        const nej = Object.entries(z.hodnoty).sort((a, b) => b[1] - a[1])[0];
+        const casti: string[] = [];
+        if (p19) {
+          const p = (v / p19 - 1) * 100;
+          casti.push(Math.abs(p) < 1 ? 'Je to skoro stejně jako v roce 2019 před covidem.' : `Proti roku 2019 před covidem je to o ${f0.format(Math.abs(p))} % ${p > 0 ? 'víc' : 'méně'}.`);
+        }
+        if (nej && nej[0] !== L) casti.push(`Nejvíc hostů přijelo v roce ${nej[0]}: ${f0.format(nej[1])}.`);
+        else if (nej) casti.push(`Je to nejvíc od roku ${F}, kdy začíná řada.`);
+        ve.textContent = casti.join(' ');
+      }
+    }
+
+    const graf = $<HTMLElement>('[data-vz-graf]');
+    function kresli(k: string) {
+      const S = serie(k);
+      // Kreslí se ve skutečných pixelech kontejneru, takže písmo má na mobilu i na počítači stejnou velikost
+      const W = Math.max(300, Math.round(graf.clientWidth || 680));
+      const uzky = W < 520;
+      const H = uzky ? 250 : 300, ML = uzky ? 40 : 50, MR = uzky ? 92 : 132, MT = 18, MB = 30;
+      svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
+      const sirka = W - ML - MR, vyska = H - MT - MB;
+      const max = Math.max(...S.flatMap((s) => Object.values(s.hodnoty)));
+      const { vrchol, ticky } = osa(max);
+      const x = (i: number) => ML + (i / (roky.length - 1)) * sirka;
+      const y = (v: number) => MT + vyska - (v / vrchol) * vyska;
+      svg.replaceChildren();
+      svg.setAttribute('aria-label', `Vývoj v letech ${F} až ${L}: ${S.map((s) => s.nazev).join(', ')}`);
+
+      // covid
+      if (typ === 'hoste' && roky.includes('2020') && roky.includes('2021')) {
+        const i0 = roky.indexOf('2020'), i1 = roky.indexOf('2021');
+        const krok = sirka / (roky.length - 1);
+        svg.append(el('rect', { x: x(i0) - krok / 2, y: MT, width: x(i1) - x(i0) + krok, height: vyska }, 'vz__covid'));
+        const tx = el('text', { x: (x(i0) + x(i1)) / 2, y: MT + 13, 'text-anchor': 'middle' }, 'vz__covid-text'); tx.textContent = 'covid'; svg.append(tx);
+      }
+      // mřížka a osa Y
+      for (const tk of ticky) {
+        svg.append(el('line', { x1: ML, x2: ML + sirka, y1: y(tk), y2: y(tk) }, 'vz__mrizka'));
+        const tx = el('text', { x: ML - 8, y: y(tk) + 4, 'text-anchor': 'end' }, 'vz__osa-text'); tx.textContent = kratce(tk); svg.append(tx);
+      }
+      // osa X: každý pátý rok (na mobilu sedmý) + poslední
+      const kazdy = uzky ? 7 : 5;
+      roky.forEach((r, i) => {
+        if (i % kazdy !== 0 && i !== roky.length - 1) return;
+        if (i !== roky.length - 1 && roky.length - 1 - i < 3) return;
+        const tx = el('text', { x: x(i), y: H - 8, 'text-anchor': 'middle' }, 'vz__osa-text'); tx.textContent = r; svg.append(tx);
+      });
+      // čáry (reference dospod)
+      const poradiKresleni = [...S].sort((a, b) => Number(!a.ref) - Number(!b.ref));
+      for (const s of poradiKresleni) {
+        let d = '', pero = false;
+        roky.forEach((r, i) => {
+          const v = s.hodnoty[r];
+          if (v === undefined) { pero = false; return; }
+          d += `${pero ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)}`;
+          pero = true;
+        });
+        svg.append(el('path', { d, stroke: s.barva }, `vz__cara${s.ref ? ' vz__cara--ref' : ''}`));
+      }
+      // konce čar s popisky; popisky se nepřekrývají, posunuté mají vodicí čárku
+      const konce = S.map((s) => ({ s, v: s.hodnoty[L], yy: y(s.hodnoty[L] ?? 0) })).filter((q) => q.v !== undefined).sort((a, b) => a.yy - b.yy);
+      const MEZERA = 34;
+      const ly = konce.map((q) => q.yy);
+      for (let i = 1; i < ly.length; i++) if (ly[i] - ly[i - 1] < MEZERA) ly[i] = ly[i - 1] + MEZERA;
+      const pres = ly.length ? ly[ly.length - 1] - (MT + vyska) : 0;
+      if (pres > 0) for (let i = 0; i < ly.length; i++) ly[i] -= pres;
+      konce.forEach((q, i) => {
+        const xe = x(roky.length - 1);
+        if (Math.abs(ly[i] - q.yy) > 3) svg.append(el('line', { x1: xe + 6, y1: q.yy, x2: xe + 14, y2: ly[i] }, 'vz__vodic'));
+        svg.append(el('circle', { cx: xe, cy: q.yy, r: 4.5, fill: q.s.barva }, 'vz__bod'));
+        const tx = el('text', { x: xe + 16, y: ly[i] - 2 }, 'vz__stitek');
+        const maxZn = uzky ? 11 : 16;
+        tx.textContent = q.s.nazev.length > maxZn ? `${q.s.nazev.slice(0, maxZn - 1)}…` : q.s.nazev;
+        const hod = el('tspan', { x: xe + 16, dy: 14 }, 'vz__stitek-hodnota'); hod.textContent = t(q.v); tx.append(hod);
+        svg.append(tx);
+      });
+      // legenda pro dvě a víc čar (u jedné čáry stačí název v popisku na konci)
+      const leg = $<HTMLElement>('[data-vz-legenda]');
+      leg.hidden = S.length < 2;
+      leg.replaceChildren(...S.map((s) => {
+        const li = document.createElement('li');
+        const k2 = document.createElement('span'); k2.className = 'vz__klic'; k2.style.background = s.barva;
+        li.append(k2, s.nazev); return li;
+      }));
+      // zaměřovač a tooltip
+      const zam = el('line', { y1: MT, y2: MT + vyska, x1: 0, x2: 0, visibility: 'hidden' }, 'vz__zamerovac');
+      const body = S.map((s) => el('circle', { r: 4.5, fill: s.barva, visibility: 'hidden' }, 'vz__bod'));
+      svg.append(zam, ...body);
+      const plocha = el('rect', { x: ML, y: MT, width: sirka, height: vyska, fill: 'transparent' });
+      svg.append(plocha);
+      const ukazRok = (i: number) => {
+        const r = roky[i];
+        zam.setAttribute('x1', String(x(i))); zam.setAttribute('x2', String(x(i))); zam.setAttribute('visibility', 'visible');
+        S.forEach((s, j) => {
+          const v = s.hodnoty[r];
+          body[j].setAttribute('visibility', v === undefined ? 'hidden' : 'visible');
+          if (v !== undefined) { body[j].setAttribute('cx', String(x(i))); body[j].setAttribute('cy', String(y(v))); }
+        });
+        const nadpis = document.createElement('strong'); nadpis.textContent = r;
+        const radky = S.filter((s) => s.hodnoty[r] !== undefined).sort((a, b) => b.hodnoty[r] - a.hodnoty[r]).map((s) => {
+          const d = document.createElement('div'); d.className = 'vz__tooltip-radek';
+          const k2 = document.createElement('span'); k2.className = 'vz__klic'; k2.style.background = s.barva;
+          const n = document.createElement('span'); n.textContent = s.nazev;
+          const b = document.createElement('b'); b.textContent = t(s.hodnoty[r]);
+          d.append(k2, n, b); return d;
+        });
+        tooltip.replaceChildren(nadpis, ...radky);
+        tooltip.hidden = false;
+        const bb = svg.getBoundingClientRect();
+        const minY = Math.min(...S.map((s) => (s.hodnoty[r] !== undefined ? y(s.hodnoty[r]) : Infinity)));
+        const px = (x(i) / W) * bb.width;
+        tooltip.style.left = `${Math.min(Math.max(px, 80), bb.width - 80)}px`;
+        tooltip.style.top = `${(minY / H) * bb.height}px`;
+      };
+      const skryj = () => { zam.setAttribute('visibility', 'hidden'); body.forEach((b) => b.setAttribute('visibility', 'hidden')); tooltip.hidden = true; };
+      let aktivni = roky.length - 1;
+      svg.onpointermove = (e) => {
+        const bb = svg.getBoundingClientRect();
+        const sx = ((e.clientX - bb.left) / bb.width) * W;
+        aktivni = Math.max(0, Math.min(roky.length - 1, Math.round(((sx - ML) / sirka) * (roky.length - 1))));
+        ukazRok(aktivni);
+      };
+      svg.onpointerleave = skryj;
+      svg.tabIndex = 0;
+      svg.onkeydown = (e) => {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        e.preventDefault();
+        aktivni = Math.max(0, Math.min(roky.length - 1, aktivni + (e.key === 'ArrowRight' ? 1 : -1)));
+        ukazRok(aktivni);
+      };
+      svg.onblur = skryj;
+
+      // tabulka po letech
+      const th = (text: string, cislo = false) => { const e = document.createElement('th'); e.textContent = text; e.scope = 'col'; if (cislo) e.className = 'cislo'; return e; };
+      const hlavicka = document.createElement('tr'); hlavicka.append(th('Rok'), ...S.map((s) => th(s.nazev, true)));
+      $<HTMLElement>('[data-vz-thead]').replaceChildren(hlavicka);
+      $<HTMLElement>('[data-vz-tbody]').replaceChildren(...[...roky].reverse().map((r) => {
+        const tr = document.createElement('tr');
+        const td0 = document.createElement('td'); td0.textContent = r; tr.append(td0);
+        for (const s of S) { const td = document.createElement('td'); td.className = 'cislo'; td.textContent = s.hodnoty[r] !== undefined ? t(s.hodnoty[r]) : '–'; tr.append(td); }
+        return tr;
+      }));
+    }
+
+    let aktualni = vyber.value;
+    let sirka = 0;
+    new ResizeObserver(() => {
+      const w = Math.round(graf.clientWidth);
+      if (w && Math.abs(w - sirka) > 8) { sirka = w; kresli(aktualni); }
+    }).observe(graf);
+    function nastav(k: string, oznamit = true) {
+      if (!R.zeme[k] || (typ === 'vs' && k === 'CZE')) return;
+      vyber.value = k;
+      aktualni = k;
+      shrnuti(k);
+      kresli(k);
+      if (oznamit) document.dispatchEvent(new CustomEvent('vz:zmena', { detail: k }));
+    }
+    vyber.addEventListener('change', () => nastav(vyber.value));
+    document.addEventListener('zvc:vyber', (e) => {
+      const k = (e as CustomEvent<string>).detail;
+      if (!R.zeme[k] || (typ === 'vs' && k === 'CZE')) return;
+      nastav(k, false);
+      const bb = koren.getBoundingClientRect();
+      if (bb.top > innerHeight || bb.bottom < 0) koren.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'center' });
+    });
+    nastav(vyber.value, false);
+  }
+</script>
