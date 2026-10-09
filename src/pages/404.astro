@@ -3,9 +3,26 @@ import Base from '../layouts/Base.astro';
 ---
 
 <Base titul="Stránka nenalezena — data.cesky">
-  <section class="obal sekce sloupec" style="text-align: center; align-items: center;">
-    <h1>Tahle stránka tu není</h1>
-    <p class="perex">Možná změnila adresu, nebo nikdy neexistovala.</p>
-    <a class="tlacitko tlacitko--plny" href="/grafy/">Procházet grafy</a>
-  </section>
+  <div class="ztraceno">
+    <section class="obal sekce sloupec" style="text-align: center; align-items: center;">
+      <h1>Tahle stránka tu není</h1>
+      <p class="perex">Možná změnila adresu, nebo nikdy neexistovala. Zkus grafy, nebo se vrať na úvod.</p>
+      <div class="rada" style="justify-content: center;">
+        <a class="tlacitko tlacitko--plny" href="/grafy/">Procházet grafy</a>
+        <a class="tlacitko" href="/">Na úvod</a>
+      </div>
+    </section>
+  </div>
+
 </Base>
+
+<style>
+  /* Stejné vrstevnice jako v úvodu */
+  .ztraceno { position: relative; isolation: isolate; min-height: 60vh; display: grid; align-items: center; }
+  .ztraceno::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: url('/vrstevnice.svg') center / cover no-repeat;
+    -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+    mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+  }
+</style>

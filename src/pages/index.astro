@@ -30,17 +30,17 @@ const FB = 'https://www.facebook.com/data.cesky';
 ---
 
 <Base titul="data.cesky — Česko v mapách, grafech a číslech" obrazek="/og/uvod.png">
+  <div class="vrstevnice">
   <section class="uvod obal">
     <div class="uvod__text">
-      <span class="nadpis__stitek">Ověřená data · zdroj u každého grafu</span>
       <h1>Česko v mapách, grafech a&nbsp;číslech</h1>
       <p class="perex">Data z ČSÚ, Eurostatu, Světové banky a dalších primárních zdrojů. Všechno, co tu vidíš, se dá rozkliknout.</p>
       <div class="uvod__hledani" data-uvod-hledani data-zeme={zemeHledani}>
-        <span class="uvod__hledani-titul">Porovnej Česko s jakoukoli zemí</span>
+        <label class="uvod__hledani-titul" for="uvod-hledani">Porovnej Česko s jakoukoli zemí</label>
         <div class="hledani">
           <div class="hledani__pole">
             <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
-            <input type="search" enterkeyhint="search" placeholder="Napiš zemi, třeba Japonsko" aria-label="Najdi zemi a porovnej ji s Českem" />
+            <input id="uvod-hledani" type="search" enterkeyhint="search" placeholder="Napiš zemi, třeba Japonsko" />
           </div>
           <ul class="naseptavac" hidden></ul>
         </div>
@@ -54,18 +54,16 @@ const FB = 'https://www.facebook.com/data.cesky';
       <HeroGlobus />
     </a>
   </section>
+  </div>
 
-  <section class="obal sekce--mala odhal">
+  <section class="obal sekce--mala">
     <HlasovaniPozvanka />
   </section>
 
-  <section class="obal sekce--mala odhal">
+  <section class="obal sekce--mala">
     <div class="karta sloupec" style="gap: 1.25rem;">
       <div class="nadpis-sekce" style="margin-bottom: 0;">
-        <div class="nadpis">
-          <span class="nadpis__stitek">Česko ve světě</span>
-          <h2>Kde je Česko ve světových žebříčcích</h2>
-        </div>
+        <h2>Kde je Česko ve světových žebříčcích</h2>
         <p class="drobne" style="max-width: 38ch;">Vyber žebříček a rozbalí se: kde leží Česko mezi všemi zeměmi, kdo vede a kdo je hned vedle nás.</p>
       </div>
       <CeskoVeSvete />
@@ -73,13 +71,13 @@ const FB = 'https://www.facebook.com/data.cesky';
   </section>
 
   {tydne && (
-    <section class="obal sekce--mala odhal">
+    <section class="obal sekce--mala">
       <a class="tydne" href={`/grafy/${tydne.id}/`}>
         <div class="tydne__text">
           <span class="znacka">Graf týdne</span>
           <h2>{tydne.data.titul}</h2>
           <p class="perex">{tydne.data.perex}</p>
-          <span class="drobne">Zdroj: {tydne.data.zdroj} · {datum(tydne.data.datum)}</span>
+          <span class="drobne tydne__meta"><span>Zdroj: {tydne.data.zdroj}</span><span>Vyšlo {datum(tydne.data.datum)}</span></span>
         </div>
         <div class="tydne__graf">
           <div class="sloupec" style="gap: 0.3rem; text-align: center;">
@@ -96,16 +94,14 @@ const FB = 'https://www.facebook.com/data.cesky';
     </section>
   )}
 
-  <section class="obal sekce--mala odhal">
+  <section class="obal sekce--mala">
     <div class="nadpis-sekce" style="justify-content: center; text-align: center;">
-      <div class="nadpis" style="align-items: center;">
-        <span class="nadpis__stitek">Mapa Česka</span>
-        <h2>Porovnej kraje na jedné mapě</h2>
-      </div>
+      <h2>Porovnej kraje na jedné mapě</h2>
     </div>
     <MapaMini />
-    <div class="rada" style="justify-content: center; margin-top: 1.25rem;">
-      <a class="tlacitko tlacitko--plny" href="/mapa/">Otevřít celou mapu: města, satelit, vývoj v čase</a>
+    <div class="mapa-odkaz">
+      <a class="tlacitko tlacitko--plny" href="/mapa/">Otevřít celou mapu</a>
+      <span class="drobne">Na celé mapě jsou i města, satelit a vývoj v čase.</span>
     </div>
   </section>
 
@@ -117,7 +113,7 @@ const FB = 'https://www.facebook.com/data.cesky';
           Animované verze grafů vycházejí nejdřív na sociálních sítích. Sleduj data.cesky, ať ti nic neuteče.
         </p>
       </div>
-      <div class="rada">
+      <div class="rada pas__site">
         <a class="tlacitko tlacitko--oranzovy" href={IG}>Instagram</a>
         <a class="tlacitko tlacitko--svetly" href={TT}>TikTok</a>
         <a class="tlacitko tlacitko--svetly" href={FB}>Facebook</a>
@@ -138,18 +134,28 @@ const FB = 'https://www.facebook.com/data.cesky';
 </script>
 
 <style>
-  .uvod { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 4rem); align-items: center; padding-block: clamp(2rem, 6vw, 4.5rem) clamp(1rem, 3vw, 2rem); }
+  /* Vrstevnice jako na titulních slidech: jen v úvodu, dole se ztratí do stránky */
+  .vrstevnice { position: relative; isolation: isolate; }
+  .vrstevnice::before {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: url('/vrstevnice.svg') center top / cover no-repeat;
+    opacity: 0.8;
+    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+  }
+  .uvod { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 4rem); align-items: center; padding-block: clamp(2.5rem, 7vw, 5.5rem) clamp(2rem, 5vw, 4rem); }
   @media (max-width: 860px) { .uvod { grid-template-columns: 1fr; text-align: center; } .uvod__text { align-items: center; } }
   .uvod__text { display: flex; flex-direction: column; gap: 1.3rem; align-items: flex-start; }
   .uvod h1 { font-size: clamp(2.3rem, 4.6vw, 3.6rem); line-height: 1.14; }
   .uvod__hledani { display: flex; flex-direction: column; gap: 0.45rem; width: min(100%, 420px); position: relative; z-index: 15; }
   .uvod__hledani .hledani { width: 100%; }
-  .uvod__hledani-titul { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .uvod__hledani-titul { font-size: 0.92rem; font-weight: 800; color: var(--navy); }
   @media (max-width: 860px) { .uvod__hledani { margin-inline: auto; text-align: left; } }
   .uvod__legenda { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; font-size: 0.85rem; font-weight: 700; color: var(--text-2); }
   .uvod__legenda span { display: inline-flex; align-items: center; gap: 0.45rem; }
   .uvod__legenda i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
   .uvod__globus { display: block; max-width: 560px; justify-self: center; width: 100%; -webkit-touch-callout: none; transition: transform 0.2s var(--ease-out); }
+  @media (max-width: 860px) { .uvod__globus { max-width: 340px; } }
   .uvod__globus:active { transform: scale(0.985); }
 
   .tydne { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center; text-decoration: none; color: var(--navy); }
@@ -160,4 +166,9 @@ const FB = 'https://www.facebook.com/data.cesky';
   .tydne__text { display: flex; flex-direction: column; gap: 1rem; align-items: flex-start; }
   .tydne__graf { background: var(--paper); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--stin); padding: clamp(1.25rem, 3vw, 2.25rem); display: flex; flex-direction: column; gap: 1.2rem; transition: box-shadow 0.25s var(--ease-out), transform 0.2s var(--ease-out); }
   :global(.tydne__graf .legenda) { justify-content: center; }
+  .tydne__meta { display: flex; flex-direction: column; gap: 0.15rem; }
+  .mapa-odkaz { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; margin-top: 1.4rem; text-align: center; }
+  @media (max-width: 560px) {
+    .pas__site { display: grid; grid-template-columns: 1fr; width: 100%; }
+  }
 </style>

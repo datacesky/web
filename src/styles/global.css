@@ -52,6 +52,8 @@ body {
 h1, h2, h3 { margin: 0; line-height: 1.2; font-weight: 900; text-wrap: balance; }
 h1 { font-size: clamp(2.1rem, 5.5vw, 3.6rem); letter-spacing: -0.028em; }
 h2 { font-size: clamp(1.6rem, 3.4vw, 2.5rem); letter-spacing: -0.02em; }
+/* Kotvy (#opravy, #svet…) nezajedou pod lepkavou hlavičku */
+[id] { scroll-margin-top: 5.5rem; }
 h3 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.008em; }
 .perex, .text-clanku { text-wrap: pretty; }
 p { margin: 0; }
@@ -92,6 +94,13 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
 .drobne { font-size: 0.9rem; font-weight: 500; color: var(--muted); }
 .nadpis-grafu { font-size: clamp(1.2rem, 2.6vw, 1.75rem); font-weight: 900; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.25; }
 .text-clanku { display: flex; flex-direction: column; gap: 1.1rem; font-size: 1.08rem; line-height: 1.85; color: #2E3B58; max-width: 68ch; }
+/* Nadpisy uvnitř textu: o stupeň menší než nadpisy sekcí a s větším odstupem nad sebou než pod sebou,
+   ať je jasné, ke kterému odstavci patří */
+.text-clanku h2 { font-size: clamp(1.35rem, 2.4vw, 1.7rem); letter-spacing: -0.015em; line-height: 1.25; color: var(--navy); margin-top: 1.9rem; }
+.text-clanku h2 + p, .text-clanku h2 + ul { margin-top: -0.35rem; }
+.text-clanku h3 { font-size: 1.12rem; margin-top: 0.9rem; color: var(--navy); }
+.text-clanku h1 { color: var(--navy); }
+.text-clanku .perex { margin-top: -0.2rem; margin-bottom: 0.6rem; }
 
 /* Tlačítka */
 .tlacitko {
@@ -202,13 +211,28 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
 .hlavicka__site { display: flex; gap: 1rem; font-size: 0.88rem; font-weight: 600; }
 .hlavicka__site a { color: var(--muted); text-decoration: none; }
 @media (max-width: 860px) { .hlavicka__site { display: none; } }
+/* Hlasuj na mobilu: v horním řádku vedle loga, aby nezmizelo mimo obrazovku na konci menu */
+.hlavicka__hlasuj { display: none; }
 @media (max-width: 700px) {
   .hlavicka__obsah { gap: 0.35rem; padding-block: 0.6rem 0.45rem; }
+  .hlavicka__hlasuj {
+    display: inline-flex; align-items: center; min-height: 34px; padding: 0 0.95rem; margin-left: auto;
+    border-radius: 999px; background: var(--orange); color: var(--navy); font-size: 0.9rem; font-weight: 800; text-decoration: none;
+    touch-action: manipulation; -webkit-user-select: none; user-select: none; transition: transform var(--stisk) var(--ease-out);
+  }
+  .hlavicka__hlasuj:hover { color: var(--navy); }
+  .hlavicka__hlasuj:active { transform: scale(0.96); }
+  .hlavicka__hlasuj[aria-current='page'] { box-shadow: inset 0 0 0 2px var(--navy); }
+  .navigace a.navigace__hlasuj { display: none; }
   .navigace {
-    width: calc(100% + 2.5rem); margin-inline: -1.25rem; padding: 0.15rem 1.25rem 0.2rem; flex-wrap: nowrap; gap: 1.35rem;
+    width: calc(100% + 2.5rem); margin-inline: -1.25rem; padding: 0.15rem 1.25rem 0.2rem; flex-wrap: nowrap; gap: 1.2rem;
     overflow-x: auto; scrollbar-width: none; white-space: nowrap; font-size: 0.94rem;
   }
   .navigace::-webkit-scrollbar { display: none; }
+  .navigace--preteka {
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent);
+    mask-image: linear-gradient(90deg, #000 calc(100% - 3rem), transparent);
+  }
 }
 
 /* Hero */
@@ -285,7 +309,8 @@ select {
 
 /* Nadpis sekce s malým štítkem nad ním */
 .nadpis { display: flex; flex-direction: column; gap: 0.45rem; }
-.nadpis__stitek { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange-text); }
+/* Štítek nad nadpisem jen tam, kde nese informaci (série, číslo dílu); psaný normálně, ne verzálkami */
+.nadpis__stitek { font-size: 0.92rem; font-weight: 800; color: var(--orange-text); }
 .vlajka { display: inline-block; width: 28px; height: 21px; border-radius: 4px; object-fit: cover; box-shadow: 0 0 0 1px rgba(27, 42, 74, 0.14); flex-shrink: 0; }
 
 /* Vyhledávání s našeptávačem */

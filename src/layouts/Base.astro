@@ -61,6 +61,7 @@ const FB = 'https://www.facebook.com/data.cesky';
     <header class="hlavicka">
       <div class="obal hlavicka__obsah">
         <a class="logo" href="/" aria-label="data.cesky, úvodní stránka">data<span class="logo__cesky">.cesky</span></a>
+        {hlasovaniZapnute && <a href="/hlasovani/" class="hlavicka__hlasuj" aria-current={aktivni('/hlasovani')}>Hlasuj</a>}
         <nav class="navigace" aria-label="Hlavní navigace">
           <a href="/grafy/" aria-current={aktivni('/grafy')}>Grafy</a>
           <a href="/mapa/" aria-current={aktivni('/mapa')}>Mapa Česka</a>
@@ -163,6 +164,19 @@ const FB = 'https://www.facebook.com/data.cesky';
           posun();
           requestAnimationFrame(() => jezdec.classList.remove('bez-prechodu'));
         }).observe(seg);
+      }
+
+      // Menu na mobilu: když se nevejde, okraj se ztratí do ztracena, ať je vidět, že jde posunout
+      const menu = document.querySelector<HTMLElement>('.navigace');
+      if (menu) {
+        const zkontrolujMenu = () => {
+          const preteka = menu.scrollWidth > menu.clientWidth + 2;
+          menu.classList.toggle('navigace--preteka', preteka && menu.scrollLeft + menu.clientWidth < menu.scrollWidth - 4);
+        };
+        new ResizeObserver(zkontrolujMenu).observe(menu);
+        menu.addEventListener('scroll', zkontrolujMenu, { passive: true });
+        // aktivní položka v záběru
+        menu.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
       }
 
       const prvky = document.querySelectorAll('.odhal, .odhal-graf');

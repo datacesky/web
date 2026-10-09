@@ -34,7 +34,6 @@ const souvisejici = [...stejneTema, ...ostatni].slice(0, 3);
     <p class="perex" style="max-width: 62ch;">{data.perex}</p>
 
     <div class="rada">
-      <span class="chip chip--info">Zdroj: {data.zdroj}</span>
       <span class="chip chip--info">Publikováno {datum(data.datum)}</span>
       <span class="chip chip--info">Téma: {data.tema}</span>
       {data.serie && <span class="chip chip--info">Série: {data.serie}</span>}
@@ -72,44 +71,42 @@ const souvisejici = [...stejneTema, ...ostatni].slice(0, 3);
         )}
       </div>
 
-      <aside class="sloupec" style="gap: 1.25rem;" aria-label="Zdroj, stažení a sdílení">
-        <div class="karta sloupec" style="gap: 0.7rem;">
-          <h2 style="font-size: 1.1rem;">Zdroj</h2>
+      <!-- Jeden panel místo čtyř karet: sekce oddělené tenkou linkou, nejdůležitější akce (sdílení) nahoře -->
+      <aside class="karta panel-grafu" aria-label="Sdílení, zdroj a stažení">
+        <section class="panel-grafu__cast">
+          <h2>Sdílet a převzít</h2>
+          <button class="tlacitko tlacitko--oranzovy tlacitko--plna-sirka" type="button" data-kopirovat>Kopírovat odkaz</button>
+          <p class="drobne">
+            Graf můžeš převzít i upravit. Uveď autora @data.cesky, odkaz na tuto stránku a licenci <a href="https://creativecommons.org/licenses/by/4.0/deed.cs">CC BY 4.0</a>.
+          </p>
+        </section>
+
+        {(data.instagram || data.tiktok) && (
+          <section class="panel-grafu__cast">
+            <h2>Animovaná verze</h2>
+            {data.instagram && <a class="tlacitko tlacitko--plna-sirka" href={data.instagram}>Přehrát na Instagramu</a>}
+            {data.tiktok && <a class="tlacitko tlacitko--plna-sirka" href={data.tiktok}>Přehrát na TikToku</a>}
+          </section>
+        )}
+
+        <section class="panel-grafu__cast">
+          <h2>Zdroj</h2>
           <p style="font-weight: 700;">{data.zdroj}</p>
           {data.dataStazena && <p class="drobne">Data převzata {datum(data.dataStazena)}</p>}
           <a href={data.zdrojUrl} style="font-weight: 800;">Otevřít zdroj</a>
-        </div>
+        </section>
 
-        <div class="karta sloupec" style="gap: 0.7rem;">
-          <h2 style="font-size: 1.1rem;">Stáhnout</h2>
+        <section class="panel-grafu__cast">
+          <h2>Stáhnout</h2>
           {data.obrazek && (
             <a class="tlacitko tlacitko--plny tlacitko--plna-sirka" href={data.obrazek} download>Obrázek grafu</a>
           )}
           {data.dataOtevrena && data.dataSoubor ? (
             <a class="tlacitko tlacitko--plna-sirka" href={data.dataSoubor} download>Data v CSV</a>
           ) : (
-            <>
-              <button class="tlacitko tlacitko--plna-sirka" type="button" disabled aria-describedby="csv-pozn">Data nejsou ke stažení</button>
-              <p class="drobne" id="csv-pozn">Data nejsou otevřená, proto je tu nesdílím. U dat z ČSÚ nebo Eurostatu tu CSV najdeš.</p>
-            </>
+            <p class="drobne">Data nejsou otevřená, proto je tu nesdílím. U dat z ČSÚ nebo Eurostatu tu najdeš CSV ke stažení.</p>
           )}
-        </div>
-
-        {(data.instagram || data.tiktok) && (
-          <div class="karta sloupec" style="gap: 0.7rem;">
-            <h2 style="font-size: 1.1rem;">Animovaná verze</h2>
-            {data.instagram && <a class="tlacitko tlacitko--plna-sirka" href={data.instagram}>Přehrát na Instagramu</a>}
-            {data.tiktok && <a class="tlacitko tlacitko--plna-sirka" href={data.tiktok}>Přehrát na TikToku</a>}
-          </div>
-        )}
-
-        <div class="karta sloupec" style="gap: 0.7rem;">
-          <h2 style="font-size: 1.1rem;">Sdílet a převzít</h2>
-          <button class="tlacitko tlacitko--oranzovy tlacitko--plna-sirka" type="button" data-kopirovat>Kopírovat odkaz</button>
-          <p class="drobne">
-            Graf můžeš převzít i upravit. Uveď autora @data.cesky, odkaz na tuto stránku a licenci <a href="https://creativecommons.org/licenses/by/4.0/deed.cs">CC BY 4.0</a>.
-          </p>
-        </div>
+        </section>
       </aside>
     </div>
 
@@ -138,3 +135,11 @@ const souvisejici = [...stejneTema, ...ostatni].slice(0, 3);
     });
   }
 </script>
+
+<style>
+  .panel-grafu { display: flex; flex-direction: column; padding: 0.4rem clamp(1.25rem, 3vw, 1.6rem); position: sticky; top: 5.5rem; }
+  @media (max-width: 960px) { .panel-grafu { position: static; } }
+  .panel-grafu__cast { display: flex; flex-direction: column; gap: 0.65rem; padding-block: 1.25rem; }
+  .panel-grafu__cast + .panel-grafu__cast { border-top: 1px solid var(--line); }
+  .panel-grafu h2 { font-size: 1.05rem; letter-spacing: -0.01em; }
+</style>

@@ -13,7 +13,7 @@ const [jmenoPosl, a2Posl] = ZEME[posledniDil.a3];
 {hlasovaniZapnute && (
   <div class="hp" data-pozvanka data-nastaveni={nastaveni}>
     <div class="hp__text">
-      <span class="hp__stitek">Česko vs. svět · díl {epizody.length + 1}</span>
+      <span class="hp__stitek">Česko vs. svět, díl {epizody.length + 1}</span>
       <h2 class="hp__titul">Kterou zemi chceš příště?</h2>
       <p class="hp__perex">
         Poslední díl: <img src={`/vlajky/${a2Posl}.svg`} alt="" class="vlajka hp__mala-vlajka" /> {jmenoPosl}. Vyber zemi, kterou postavíme vedle Česka v dalším dílu.
@@ -31,7 +31,7 @@ const [jmenoPosl, a2Posl] = ZEME[posledniDil.a3];
   .hp::after { content: ''; position: absolute; right: -80px; top: -80px; width: 260px; height: 260px; border-radius: 50%; background: radial-gradient(circle, rgba(240, 136, 41, 0.28), transparent 70%); pointer-events: none; }
   @media (max-width: 760px) { .hp { grid-template-columns: 1fr; } }
   .hp__text { display: flex; flex-direction: column; gap: 0.9rem; align-items: flex-start; position: relative; z-index: 1; }
-  .hp__stitek { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #F6C08C; }
+  .hp__stitek { font-size: 0.92rem; font-weight: 800; color: #F6C08C; }
   .hp__titul { color: var(--cream); font-size: clamp(1.6rem, 3.4vw, 2.3rem); }
   .hp__perex { margin: 0; color: #D9D3C7; font-size: 1rem; line-height: 1.6; }
   .hp__mala-vlajka { width: 22px; height: 16px; border-radius: 3px; vertical-align: -2px; }
