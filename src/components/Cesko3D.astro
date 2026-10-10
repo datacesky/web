@@ -1,0 +1,270 @@
+---
+// Česko ve 3D: sloupce obcí podle počtu obyvatel, hustota ve čtvercích 3 × 3 km, změna od roku 2000 a kraje jako hranoly.
+// Model (three.js) a data (public/data/cesko3d.json, generuje skripty/data_3d.py) se načtou, až se sekce přiblíží.
+import { vrstvy } from '../data/vrstvy';
+
+const vrstvyKraju = vrstvy
+  .filter((v) => v.typ === 'ciselna')
+  .map((v) => ({ id: v.id, nazev: v.nazev, jednotka: v.jednotka, desetinna: v.desetinna, obdobi: v.obdobi, zdroj: v.zdroj, hodnoty: v.hodnoty }));
+const REZIMY = [
+  { id: 'obce', nazev: 'Obyvatelé obcí', kratce: 'Obce' },
+  { id: 'hustota', nazev: 'Hustota', kratce: 'Hustota' },
+  { id: 'zmena', nazev: 'Změna od 2000', kratce: 'Změna' },
+  { id: 'kraje', nazev: 'Kraje', kratce: 'Kraje' },
+];
+---
+
+<section class="obal sekce--mala c3" id="cesko-3d" style="--obal: 1320px;">
+  <div class="nadpis-sekce">
+    <div class="nadpis">
+      <span class="nadhlavi nadhlavi--zive">Nově · 3D model</span>
+      <h2>Česko ve 3D</h2>
+      <p class="drobne" style="max-width: 60ch;">Každý sloupec je jedna z 6 254 obcí. Otáčej tažením, přibližuj kolečkem nebo dvěma prsty a najeď na sloupec.</p>
+    </div>
+  </div>
+
+  <div class="c3__panel" data-c3 data-vrstvy={JSON.stringify(vrstvyKraju)}>
+    <div class="c3__lista">
+      <div class="segment" role="group" aria-label="Co model ukazuje">
+        {REZIMY.map((r, i) => <button type="button" data-c3-rezim={r.id} aria-pressed={i === 0 ? 'true' : 'false'} aria-label={r.nazev}><span class="c3__dlouhe">{r.nazev}</span><span class="c3__kratke" aria-hidden="true">{r.kratce}</span></button>)}
+      </div>
+      <select data-c3-vrstva aria-label="Údaj za kraje" hidden>
+        {vrstvyKraju.map((v) => <option value={v.id}>{v.nazev}</option>)}
+      </select>
+      <div class="c3__prepinace">
+        <button type="button" class="prepinac-pilulka" data-c3-prepni="zeleznice" aria-pressed="false">Železnice</button>
+        <button type="button" class="prepinac-pilulka" data-c3-prepni="silnice" aria-pressed="false">Dálnice</button>
+        <button type="button" class="prepinac-pilulka" data-c3-prepni="popisky" aria-pressed="true">Názvy</button>
+        <button type="button" class="prepinac-pilulka" data-c3-prepni="otacet" aria-pressed="true">Otáčet</button>
+      </div>
+    </div>
+
+    <div class="c3__scena" data-c3-scena>
+      <canvas class="c3__platno" aria-label="3D model Česka" role="img"></canvas>
+      <div class="c3__popisky" data-c3-popisky aria-hidden="true"></div>
+      <div class="c3__rok" data-c3-rok aria-hidden="true"></div>
+      <div class="c3__tip" data-c3-tip hidden></div>
+      <div class="c3__nacitani" data-c3-nacitani>
+        <span class="c3__kolecko" aria-hidden="true"></span>
+        <span>Načítám 3D model…</span>
+      </div>
+      <button type="button" class="c3__aktivace" data-c3-aktivace hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12c0 2.8-4 5-9 5s-9-2.2-9-5 4-5 9-5c2.6 0 4.9.6 6.5 1.5 M19 5l-.5 3.5L15 8" /></svg>
+        Ťukni a otáčej
+      </button>
+      <button type="button" class="c3__hotovo" data-c3-hotovo hidden>Hotovo</button>
+      <div class="zoom-ovladani" data-c3-zoom hidden>
+        <button type="button" data-c3-zoom-plus aria-label="Přiblížit">+</button>
+        <button type="button" data-c3-zoom-minus aria-label="Oddálit">−</button>
+        <button type="button" data-c3-zoom-reset aria-label="Výchozí pohled">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 1 0 2.3-5.6 M4 4v4h4" /></svg>
+        </button>
+      </div>
+    </div>
+
+    <div class="c3__spodek">
+      <div class="c3__cas" data-c3-cas>
+        <button type="button" class="c3__prehrat" data-c3-prehrat aria-label="Přehrát vývoj od roku 2000">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M8 5.5v13l10.5-6.5z" /></svg>
+        </button>
+        <input type="range" data-c3-posuvnik aria-label="Rok" min="2000" max="2025" step="1" value="2025" />
+        <span class="c3__cas-rok" data-c3-cas-rok>2025</span>
+      </div>
+      <div class="c3__legenda" data-c3-legenda></div>
+      <button type="button" class="tlacitko tlacitko--male" data-c3-obrazek disabled>Uložit obrázek</button>
+    </div>
+    <p class="drobne c3__zdroj" data-c3-zdroj></p>
+    <noscript><p class="drobne">3D model potřebuje JavaScript.</p></noscript>
+  </div>
+</section>
+
+<style>
+  .c3__panel { display: flex; flex-direction: column; gap: 1rem; padding: clamp(0.9rem, 2.4vw, 1.4rem); border-radius: 26px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin); }
+  .c3__lista { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; justify-content: space-between; }
+  .c3__lista .segment { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
+  .c3__lista select { min-height: 40px; border-radius: 999px; padding-left: 1rem; font-size: 0.9rem; }
+  .c3__prepinace { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .c3__scena { position: relative; height: clamp(380px, 62vh, 640px); border-radius: 20px; overflow: hidden; isolation: isolate;
+    background: radial-gradient(120% 90% at 50% 35%, #FBF8F2 0%, #F2EDE3 60%, #E9E1D3 100%); }
+  .c3__scena::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('/vrstevnice.svg') center / cover no-repeat; opacity: 0.45; }
+  .c3__platno { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
+  .c3__platno:active { cursor: grabbing; }
+  .c3__scena.je-zamceno .c3__platno { touch-action: pan-y; pointer-events: none; }
+  .c3__popisky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+  :global(.c3__mesto) { position: absolute; left: 0; top: 0; padding: 0.15rem 0.45rem; border-radius: 999px; background: rgba(255, 255, 255, 0.88); box-shadow: 0 1px 4px rgba(27, 42, 74, 0.18); font-size: 0.72rem; font-weight: 800; color: var(--navy); white-space: nowrap; transition: opacity 0.2s ease; will-change: transform; }
+  :global(.c3__mesto--kraj) { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.25; padding: 0.2rem 0.55rem; border-radius: 10px; }
+  :global(.c3__mesto--kraj b) { font-size: 0.8rem; font-weight: 900; color: var(--orange-text); }
+  .c3__rok { position: absolute; left: 1rem; top: 0.6rem; font-size: clamp(2.2rem, 6vw, 3.6rem); font-weight: 900; letter-spacing: -0.04em; color: rgba(27, 42, 74, 0.16); font-variant-numeric: tabular-nums; pointer-events: none; }
+  .c3__tip { position: fixed; z-index: 60; left: 0; top: 0; max-width: 280px; padding: 0.55rem 0.75rem; border-radius: 12px; background: var(--navy); color: var(--cream); font-size: 0.82rem; font-weight: 700; line-height: 1.45; pointer-events: none; box-shadow: 0 10px 26px -10px rgba(27, 42, 74, 0.6); }
+  :global(.c3__tip b) { display: block; color: var(--orange); font-weight: 900; }
+  .c3__nacitani { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; font-weight: 800; color: var(--muted); transition: opacity 0.4s ease; }
+  .c3__nacitani.je-pryc { opacity: 0; pointer-events: none; }
+  .c3__kolecko { width: 34px; height: 34px; border-radius: 50%; border: 3px solid var(--line); border-top-color: var(--orange); animation: c3-tocit 0.9s linear infinite; }
+  @keyframes c3-tocit { to { transform: rotate(360deg); } }
+  .c3__dlouhe { display: inline; }
+  .c3__kratke { display: none; }
+  .c3__aktivace { position: absolute; left: 0.75rem; bottom: 0.75rem; display: inline-flex; align-items: center; gap: 0.45rem; min-height: 42px; padding: 0 1rem; border: 0; border-radius: 999px; background: var(--navy); color: var(--cream); font-family: inherit; font-size: 0.9rem; font-weight: 800; box-shadow: var(--stin); }
+  .c3__hotovo { position: absolute; right: 0.75rem; top: 0.75rem; min-height: 38px; padding: 0 1rem; border: 0; border-radius: 999px; background: var(--orange); color: var(--navy); font-family: inherit; font-size: 0.86rem; font-weight: 800; box-shadow: var(--stin-maly); }
+  .c3__spodek { display: flex; flex-wrap: wrap; gap: 0.8rem 1.4rem; align-items: center; justify-content: space-between; }
+  .c3__cas { display: flex; align-items: center; gap: 0.7rem; flex: 1 1 280px; min-width: 0; }
+  .c3__cas[hidden] { display: none; }
+  .c3__prehrat { flex-shrink: 0; display: grid; place-items: center; width: 42px; height: 42px; border: 0; border-radius: 50%; background: var(--navy); color: var(--cream); cursor: pointer; transition: transform var(--stisk) var(--ease-out); }
+  .c3__prehrat:active { transform: scale(0.94); }
+  .c3__prehrat svg { margin-left: 2px; }
+  .c3__prehrat.hraje svg { margin-left: 0; }
+  .c3__cas input { flex: 1 1 auto; min-width: 0; accent-color: var(--orange); }
+  .c3__cas-rok { font-size: 1.15rem; font-weight: 900; font-variant-numeric: tabular-nums; min-width: 3ch; }
+  .c3__legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 0.35rem 0.9rem; font-size: 0.8rem; font-weight: 700; color: var(--text-2); }
+  :global(.c3__legenda i) { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: 0.35rem; vertical-align: -1px; }
+  .c3__zdroj { font-size: 0.8rem; }
+  @media (max-width: 640px) {
+    .c3__panel { margin-inline: -0.5rem; border-radius: 22px; }
+    .c3__scena { height: 370px; }
+    .c3__dlouhe { display: none; }
+    .c3__kratke { display: inline; }
+    .c3__lista { flex-direction: column; align-items: stretch; }
+    .c3__lista .segment { align-self: flex-start; }
+    .c3__prepinace .prepinac-pilulka { font-size: 0.78rem; }
+  }
+  @media (prefers-reduced-motion: reduce) { .c3__kolecko { animation: none; } }
+</style>
+
+<script>
+  const koren = document.querySelector<HTMLElement>('[data-c3]');
+  if (koren) {
+    const $ = <T extends Element = HTMLElement>(s: string) => koren.querySelector<T>(s)!;
+    const scena = $('[data-c3-scena]');
+    const nacitani = $('[data-c3-nacitani]');
+    const tip = $('[data-c3-tip]');
+    const vrstvy = JSON.parse(koren.dataset.vrstvy!);
+    const dotyk = matchMedia('(hover: none), (pointer: coarse)').matches;
+    let spusteno = false;
+
+    const start = async () => {
+      if (spusteno) return;
+      spusteno = true;
+      const zkusWebGL = document.createElement('canvas').getContext('webgl2') || document.createElement('canvas').getContext('webgl');
+      if (!zkusWebGL) { nacitani.lastElementChild!.textContent = 'Tenhle prohlížeč neumí 3D grafiku (WebGL). Zkus 2D mapu nahoře.'; nacitani.firstElementChild?.remove(); return; }
+      try {
+        const [{ spust }, data] = await Promise.all([import('../lib/cesko3d'), fetch('/data/cesko3d.json').then((r) => r.json())]);
+        const roky: number[] = data.meta.roky;
+        const posledni = roky[roky.length - 1];
+        const ukazInfo = (i: { titul: string; radky: string[] } | null, x: number, y: number) => {
+          if (!i) { tip.hidden = true; return; }
+          const b = document.createElement('b'); b.textContent = i.titul;
+          tip.replaceChildren(b, ...i.radky.flatMap((r, k) => (k ? [document.createElement('br'), r] : [r])));
+          tip.hidden = false;
+          const w = tip.offsetWidth, h = tip.offsetHeight;
+          tip.style.transform = `translate(${Math.min(Math.max(8, x + 14), innerWidth - w - 8)}px, ${Math.max(8, y - h - 14)}px)`;
+        };
+        const m = spust(scena, $<HTMLCanvasElement>('canvas'), data, vrstvy, ukazInfo);
+        nacitani.classList.add('je-pryc');
+        $('[data-c3-zoom]').hidden = false;
+        $<HTMLButtonElement>('[data-c3-obrazek]').disabled = false;
+
+        // Ovládání
+        const posuvnik = $<HTMLInputElement>('[data-c3-posuvnik]');
+        posuvnik.min = String(roky[0]); posuvnik.max = String(posledni); posuvnik.value = String(posledni);
+        const rokEl = $('[data-c3-rok]'), rokCas = $('[data-c3-cas-rok]'), cas = $('[data-c3-cas]'), vyberVrstvy = $<HTMLSelectElement>('[data-c3-vrstva]');
+        const legenda = $('[data-c3-legenda]'), zdroj = $('[data-c3-zdroj]');
+        let rezim = 'obce';
+        const PAL = ['#DDE2EA', '#AEB9CB', '#7D8DA8', '#4B5E82', '#1B2A4A'];
+        const ctverec = (c: string) => `<i style="background:${c}"></i>`;
+        const popis = () => {
+          const r = Number(posuvnik.value);
+          rokEl.textContent = rezim === 'obce' || rezim === 'zmena' ? String(r) : rezim === 'hustota' ? String(posledni) : '';
+          rokCas.textContent = String(r);
+          cas.hidden = !(rezim === 'obce' || rezim === 'zmena');
+          vyberVrstvy.hidden = rezim !== 'kraje';
+          const z = data.meta.zdroje;
+          if (rezim === 'obce') {
+            legenda.innerHTML = `<span>Výška = počet obyvatel obce</span><span>${ctverec(PAL[0])}do 1 000</span><span>${ctverec(PAL[1])}do 5 000</span><span>${ctverec(PAL[2])}do 20 000</span><span>${ctverec(PAL[3])}do 100 000</span><span>${ctverec(PAL[4])}víc</span>`;
+            zdroj.textContent = `Zdroj: ${z.obyvatele}, ${r}. Obce v hranicích roku ${posledni}; obce, které mezitím zanikly nebo se sloučily, tu nejsou. Hranice: ${z.hranice}.`;
+          } else if (rezim === 'zmena') {
+            legenda.innerHTML = `<span>Výška = o kolik lidí obec od roku ${roky[0]} přibyla nebo ubyla</span><span>${ctverec('#F08829')}přibylo</span><span>${ctverec('#6E7C96')}ubylo</span>`;
+            zdroj.textContent = `Zdroj: ${z.obyvatele}, ${roky[0]} a ${r}. Obce, které vznikly až po roce ${roky[0]}, změnu nemají.`;
+          } else if (rezim === 'hustota') {
+            legenda.innerHTML = `<span>Výška = obyvatel na km², čtverce ${String(data.meta.bunka_km).replace('.', ',')} km</span><span>${ctverec(PAL[0])}nejřidší pětina</span><span>${ctverec(PAL[4])}nejhustší pětina</span>`;
+            zdroj.textContent = `Zdroj: ${z.obyvatele}, ${posledni}; ${z.hranice}. Obyvatelé každé obce jsou rozdělení rovnoměrně po její ploše, takže uvnitř velkých měst je hustota zprůměrovaná.`;
+          } else {
+            const v = m.vrstva();
+            legenda.innerHTML = `<span>Výška a barva = ${v.nazev.toLowerCase()}${v.jednotka ? ` (${v.jednotka})` : ''}</span>`;
+            zdroj.textContent = `Zdroj: ${v.zdroj}, ${v.obdobi}.`;
+          }
+        };
+        for (const b of koren.querySelectorAll<HTMLButtonElement>('[data-c3-rezim]')) b.addEventListener('click', () => {
+          rezim = b.dataset.c3Rezim!;
+          for (const x of koren.querySelectorAll('[data-c3-rezim]')) x.setAttribute('aria-pressed', String(x === b));
+          zastav();
+          m.nastavRezim(rezim as any);
+          popis();
+          tip.hidden = true;
+        });
+        vyberVrstvy.addEventListener('change', () => { m.nastavVrstvu(vyberVrstvy.value); popis(); });
+        posuvnik.addEventListener('input', () => { m.nastavRok(Number(posuvnik.value)); popis(); });
+        for (const b of koren.querySelectorAll<HTMLButtonElement>('[data-c3-prepni]')) b.addEventListener('click', () => {
+          const ano = b.getAttribute('aria-pressed') !== 'true';
+          b.setAttribute('aria-pressed', String(ano));
+          m.prepni(b.dataset.c3Prepni as any, ano);
+        });
+        const otacet = $<HTMLButtonElement>('[data-c3-prepni="otacet"]');
+        if (matchMedia('(prefers-reduced-motion: reduce)').matches) otacet.setAttribute('aria-pressed', 'false');
+        m.ovladani.addEventListener('start', () => otacet.setAttribute('aria-pressed', 'false'));
+        $('[data-c3-zoom-plus]').addEventListener('click', () => m.priblizit(0.75));
+        $('[data-c3-zoom-minus]').addEventListener('click', () => m.priblizit(1.33));
+        $('[data-c3-zoom-reset]').addEventListener('click', () => m.vychozi());
+
+        // Přehrávání vývoje 2000 → poslední rok
+        const prehrat = $<HTMLButtonElement>('[data-c3-prehrat]');
+        const IKONA_PLAY = prehrat.innerHTML;
+        let casovac = 0;
+        function zastav() { clearInterval(casovac); casovac = 0; prehrat.classList.remove('hraje'); prehrat.innerHTML = IKONA_PLAY; prehrat.setAttribute('aria-label', 'Přehrát vývoj od roku 2000'); }
+        prehrat.addEventListener('click', () => {
+          if (casovac) return zastav();
+          if (Number(posuvnik.value) >= posledni) { posuvnik.value = String(roky[0]); m.nastavRok(roky[0]); popis(); }
+          prehrat.classList.add('hraje');
+          prehrat.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true"><path d="M7 5h4v14H7z M13 5h4v14h-4z"/></svg>';
+          prehrat.setAttribute('aria-label', 'Zastavit');
+          casovac = window.setInterval(() => {
+            const r = Number(posuvnik.value) + 1;
+            if (r > posledni) return zastav();
+            posuvnik.value = String(r); m.nastavRok(r); popis();
+          }, 700);
+        });
+
+        // Obrázek ke stažení
+        $('[data-c3-obrazek]').addEventListener('click', () => {
+          const nadpisy: Record<string, string> = { obce: `Obyvatelé obcí, ${posuvnik.value}`, zmena: `Změna počtu obyvatel ${roky[0]}–${posuvnik.value}`, hustota: `Hustota zalidnění, ${posledni}`, kraje: m.vrstva().nazev };
+          const a = document.createElement('a');
+          const v = m.vrstva();
+          const kratce: Record<string, string> = {
+            obce: `Zdroj: ČSÚ (OBY01B01), hranice obcí ČÚZK, ${posuvnik.value}`,
+            zmena: `Zdroj: ČSÚ (OBY01B01), hranice obcí ČÚZK, ${roky[0]} a ${posuvnik.value}`,
+            hustota: `Zdroj: ČSÚ (OBY01B01), hranice obcí ČÚZK, ${posledni}. Čtverce ${String(data.meta.bunka_km).replace('.', ',')} km`,
+            kraje: `Zdroj: ${v.zdroj}, ${v.obdobi}`,
+          };
+          a.href = m.obrazek(`Česko ve 3D: ${nadpisy[rezim]}`, kratce[rezim]);
+          a.download = `cesko-3d-${rezim}.png`;
+          a.click();
+        });
+
+        // Na dotyku model nejdřív „odemkni“, jinak by tažení prstem neposouvalo stránku
+        if (dotyk) {
+          const aktivace = $<HTMLButtonElement>('[data-c3-aktivace]'), hotovo = $<HTMLButtonElement>('[data-c3-hotovo]');
+          const zamkni = (ano: boolean) => { scena.classList.toggle('je-zamceno', ano); aktivace.hidden = !ano; hotovo.hidden = ano; m.ovladani.enabled = !ano; };
+          zamkni(true);
+          aktivace.addEventListener('click', () => zamkni(false));
+          hotovo.addEventListener('click', () => { zamkni(true); tip.hidden = true; });
+        }
+        popis();
+      } catch (e) {
+        console.error(e);
+        nacitani.lastElementChild!.textContent = 'Model se nepodařilo načíst. Zkus obnovit stránku.';
+        nacitani.firstElementChild?.remove();
+      }
+    };
+    // Načte se, až se sekce blíží do obrazu
+    new IntersectionObserver(([z], o) => { if (z.isIntersecting) { o.disconnect(); start(); } }, { rootMargin: '400px 0px' }).observe(koren);
+    addEventListener('scroll', () => { tip.hidden = true; }, { passive: true });
+  }
+</script>

@@ -27,6 +27,7 @@ Po `git push` do větve main se web sám nasadí.
 | Náhledové obrázky pro sdílení | `public/og/` |
 | Vývoj v čase a „Porovnej se“ u grafů | `src/data/grafy/*.json`, obnoví je `python3 skripty/data_grafu.py` |
 | Novinky z dat | `src/content/novinky/RRRR-MM.md`, připravuje je `skripty/novinky.py` |
+| 3D model Česka | `public/data/cesko3d.json`, obnoví ho `python3 skripty/data_3d.py` |
 | Vrstevnice v úvodu | `public/vrstevnice.svg`, generuje `navody/vrstevnice.py` |
 
 ## Novinky z dat
@@ -47,6 +48,22 @@ tak, že odstraníš celý její blok od `- id:` po `graf:` včetně.
 
 Aby GitHub mohl návrh vytvořit, musí být v Settings → Actions → General → Workflow permissions
 zapnuté **Read and write permissions** a **Allow GitHub Actions to create and approve pull requests**.
+
+## 3D model Česka
+
+Data pro 3D model na Mapě Česka jsou v `public/data/cesko3d.json`. Obnovíš je (jednou ročně, až ČSÚ zveřejní nový počet
+obyvatel obcí) takhle, každý příkaz zvlášť:
+
+```
+pip install shapely pyproj
+```
+
+```
+python3 skripty/data_3d.py
+```
+
+Skript stáhne asi 500 MB dat (ČSÚ, hranice obcí, Natural Earth), uloží si je do dočasné složky a trvá pár minut.
+Samotný model je v `src/lib/cesko3d.ts` (three.js) a `src/components/Cesko3D.astro`.
 
 ## Série a náhledovky
 

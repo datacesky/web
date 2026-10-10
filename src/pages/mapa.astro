@@ -5,6 +5,7 @@ import podklad from '../data/cesko-mapa.json';
 import mestaData from '../data/mesta.json';
 import { vrstvy } from '../data/vrstvy';
 import { hranice, barvaKraje } from '../lib/mapa';
+import Cesko3D from '../components/Cesko3D.astro';
 
 const prvni = vrstvy[0];
 const hr = prvni.typ === 'ciselna' ? hranice(Object.values(prvni.hodnoty).map(Number)) : [];
@@ -37,13 +38,14 @@ const data = JSON.stringify({
 <Base
   obrazek="/og/mapa.png"
   titul="Mapa Česka po krajích — data.cesky"
-  popis="Interaktivní mapa Česka: obyvatelé, hustota, věk, plodnost, mzdy, ceny bytů, HDP a 40 největších měst od roku 1971. Satelitní podklad, řeky a hory."
+  popis="Interaktivní mapa Česka: obyvatelé, hustota, věk, plodnost, mzdy, ceny bytů, HDP a 40 největších měst od roku 1971. Nově i 3D model všech 6 254 obcí."
 >
   <section class="obal sekce--mala sloupec mapa-stranka" style="gap: 1.25rem; --obal: 1320px;">
     <div class="mapa-hlava">
       <div class="sloupec" style="gap: 0.5rem; max-width: 62ch;">
         <h1 class="mapa-titul">Mapa Česka</h1>
         <p class="perex">Vyber, co chceš vidět. U krajů se mapa přebarví, u měst naskočí bubliny. Přepni na satelit nebo zapni řeky a hory.</p>
+        <a class="mapa-3d-odkaz" href="#cesko-3d"><span>Nově</span>Česko ve 3D: všech 6 254 obcí jako sloupce ↓</a>
       </div>
       <div class="mapa-hlava__nastroje">
         <div class="nastroj">
@@ -245,10 +247,16 @@ const data = JSON.stringify({
     </p>
   </section>
 
+  <Cesko3D />
+
   <div id="mapa-data" data-json={data} hidden></div>
 </Base>
 
 <style>
+  .mapa-3d-odkaz { display: inline-flex; align-items: center; gap: 0.55rem; align-self: flex-start; margin-top: 0.3rem; padding: 0.35rem 0.9rem 0.35rem 0.35rem; border-radius: 999px; background: var(--navy); color: var(--cream); font-size: 0.86rem; font-weight: 800; text-decoration: none; transition: transform var(--stisk) var(--ease-out); }
+  .mapa-3d-odkaz span { padding: 0.12rem 0.55rem; border-radius: 999px; background: var(--orange); color: var(--navy); font-size: 0.74rem; font-weight: 900; }
+  .mapa-3d-odkaz:hover { color: #fff; }
+  .mapa-3d-odkaz:active { transform: scale(0.97); }
   .mapa-titul { font-size: clamp(2rem, 3.8vw, 2.8rem); }
   .mapa-hlava { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; align-items: flex-end; justify-content: space-between; }
   .mapa-hlava__nastroje { display: flex; flex-wrap: nowrap; gap: 0.75rem; align-items: flex-end; }
