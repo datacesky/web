@@ -6,6 +6,7 @@ import HeroGlobus from '../components/uvod/HeroGlobus.astro';
 import ZebrickyUpoutavka from '../components/ZebrickyUpoutavka.astro';
 import { posledniNovinky } from '../lib/novinky';
 import MapaMini from '../components/uvod/MapaMini.astro';
+import NoveNaWebu from '../components/uvod/NoveNaWebu.astro';
 import HlasovaniPozvanka from '../components/HlasovaniPozvanka.astro';
 import NovinkaKarta from '../components/NovinkaKarta.astro';
 import SerieObalka from '../components/SerieObalka.astro';
@@ -62,6 +63,8 @@ const FB = 'https://www.facebook.com/data.cesky';
     </a>
   </section>
   </div>
+
+  <NoveNaWebu />
 
   {novinky.length > 0 && (
     <section class="obal sekce--mala novinky-uvod">

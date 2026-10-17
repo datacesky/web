@@ -6,6 +6,10 @@ export type Vysledky = { pocty: Map<string, number>; celkem: number };
 const KLIC_HLAS = 'dc-hlas';
 const KLIC_VOLIC = 'dc-volic';
 export const MESIC = 30 * 24 * 3600 * 1000;
+// Kolo hlasování = číslo dílu, o kterém se hlasuje. Hlasovat jde jednou za kolo:
+// po vydání dalšího dílu může každý hlasovat znovu, i když od minulého hlasu neuběhlo 30 dní.
+let kolo = 0;
+export const nastavKolo = (k: number) => { kolo = k; };
 // Google nedostane ani nenastaví žádné cookies a nedozví se, ze které stránky požadavek přišel
 const BEZ_COOKIES: RequestInit = { credentials: 'omit', referrerPolicy: 'no-referrer' };
 
@@ -17,16 +21,19 @@ export function volic(): string {
       id = (crypto.randomUUID?.() ?? `${Date.now()}-${Math.random()}`).replace(/[^a-z0-9-]/gi, '');
       localStorage.setItem(KLIC_VOLIC, id);
     }
-    return id;
+    // Skript hlídá opakovaný hlas podle tohohle čísla, s číslem kola je v novém kole „nový“ hlasující.
+    return kolo ? `${id}-k${kolo}` : id;
   } catch {
     return '';
   }
 }
 
-export function mujHlas(): { a3: string; cas: number } | null {
+export function mujHlas(): { a3: string; cas: number; kolo?: number } | null {
   try {
     const x = JSON.parse(localStorage.getItem(KLIC_HLAS) ?? 'null');
-    return x && Date.now() - x.cas < MESIC ? x : null;
+    if (!x) return null;
+    if (kolo) return x.kolo === kolo ? x : null;
+    return Date.now() - x.cas < MESIC ? x : null;
   } catch {
     return null;
   }
@@ -34,7 +41,7 @@ export function mujHlas(): { a3: string; cas: number } | null {
 
 export function ulozMujHlas(a3: string) {
   try {
-    localStorage.setItem(KLIC_HLAS, JSON.stringify({ a3, cas: Date.now() }));
+    localStorage.setItem(KLIC_HLAS, JSON.stringify({ a3, cas: Date.now(), kolo }));
     sessionStorage.setItem('dc-hlas-cerstvy', a3);
   } catch {}
 }

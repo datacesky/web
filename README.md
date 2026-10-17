@@ -28,6 +28,10 @@ Po `git push` do větve main se web sám nasadí.
 | Vývoj v čase a „Porovnej se“ u grafů | `src/data/grafy/*.json`, obnoví je `python3 skripty/data_grafu.py` |
 | Novinky z dat | `src/content/novinky/RRRR-MM.md`, připravuje je `skripty/novinky.py` |
 | 3D model Česka | `public/data/cesko3d.json`, obnoví ho `python3 skripty/data_3d.py` |
+| Vlaky za 24 hodin (Mapa Česka) | `public/data/vlaky.json`, vyrobí ho `python3 skripty/data_vlaky.py` z GTFS jízdního řádu (postup je v hlavičce skriptu) |
+| Cesta čápů (Svět) | `src/data/capi.json`, vyrobí ho `python3 skripty/data_capi.py` ze zamčených dat `skripty/capi_data.py` |
+| Upoutávka „Nově na webu“ na úvodu | `src/components/uvod/NoveNaWebu.astro`, náhledy v `public/nahledy/` |
+| Odkaz z dílu série na interaktivní verzi | pole `web` u dílu v `src/data/serie.ts` |
 | Vrstevnice v úvodu | `public/vrstevnice.svg`, generuje `navody/vrstevnice.py` |
 
 ## Novinky z dat

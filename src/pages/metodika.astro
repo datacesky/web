@@ -79,7 +79,30 @@ const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
       v měřítku 1 : 10 milionů, jde o zjednodušenou síť. Kraje ve 3D používají stejná čísla jako 2D mapa.
     </p>
 
-    <h2 id="porovnej">Porovnej se</h2>
+    <h2 id="vlaky">Vlaky za 24 hodin</h2>
+    <p>
+      Vrstva na Mapě Česka ukazuje osobní vlaky podle jízdního řádu Správy železnic (CIS JŘ), který do formátu GTFS převádí
+      projekt <a href="https://ggu.cz/services/">JrUtil</a>, stav k 8. 10. 2026. Zobrazený den je úterý 6. 10. 2026, hodiny po půlnoci
+      patří nočním vlakům z pondělka. Za den vyjede 9 143 vlaků, služební vlaky a nabídkové trasy nepočítám. Je to jízdní řád, ne
+      skutečná poloha vlaků, zpoždění tedy mapa neukazuje.
+    </p>
+    <p>
+      Polohy mezi stanicemi jsou dopočtené. Síť tratí skládám ze zastávkových vlaků a rychlíky a expresy po ní vedu přes stanice,
+      kde nestaví. Čas mezi dvěma zastávkami rozdělím podle vzdálenosti, proto jsou i ujeté kilometry jen odhad. Zahraniční stanice
+      nemají v datech souřadnice, vlaky se proto ukazují jen na českém území. Odjezdy ze stanice jsou odjezdy, při kterých mohou
+      cestující nastoupit, během úterý 6. 10. Skript, který data vyrábí, je v repozitáři webu (skripty/data_vlaky.py).
+    </p>
+
+    <h2 id="capi">Cesta čápů</h2>
+    <p>
+      Polohy čápů černých pochází z projektu Africká odysea Českého rozhlasu (deník projektu z let 1995 až 1999) a ze studie
+      Bobek et al. (2008), Journal of Avian Biology. Čápy bílé Kryštofa a Míru sledovala Záchranná stanice živočichů Plzeň
+      v letech 2019 až 2021, podle zpráv ČTK, Novinek.cz a Seznam Zpráv. Všechny sezóny jsou v jednom kalendáři od srpna do května,
+      29. únor se nepočítá. Čáry mezi zaznamenanými polohami jsou zjednodušené. U Kryštofa nejsou data cesty na zimu zveřejněná
+      a celá Mírova trasa je odhad, na mapě i v kalendáři jsou proto tyrkysově.
+    </p>
+
+        <h2 id="porovnej">Porovnej se</h2>
     <p>
       Výpočty u grafů jsou jednoduché a dají se zkontrolovat: majetek nebo tržby vydělené tvou roční hrubou mzdou,
       počet prodejen na počet obyvatel Česka. Předvyplněná mzda je průměrná hrubá měsíční mzda podle ČSÚ za poslední
@@ -92,7 +115,7 @@ const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
     </p>
     <p>Do úložiště tvého prohlížeče se něco zapíše jen ve dvou případech, a to až ve chvíli, kdy to sám uděláš:</p>
     <ul>
-      <li><strong>Hlasování o dalším dílu:</strong> náhodné číslo a země, pro kterou jsi hlasoval(a), aby šlo hlasovat jednou za 30 dní. Číslo tě nijak neidentifikuje.</li>
+      <li><strong>Hlasování o dalším dílu:</strong> náhodné číslo a země, pro kterou jsi hlasoval(a), aby šlo o každém dílu hlasovat jen jednou. Číslo tě nijak neidentifikuje.</li>
       <li><strong>Můj kraj na Mapě Česka:</strong> který kraj sis vybral(a), aby ho mapa příště rovnou ukázala.</li>
     </ul>
     <p>Obojí smažeš tím, že v prohlížeči vymažeš data tohoto webu.</p>

@@ -1,0 +1,392 @@
+---
+// Cesta čápů: devět čápů z Česka se satelitní vysílačkou v jednom kalendáři od srpna do května.
+// Data: src/data/capi.json (vyrábí skripty/data_capi.py ze zamčených dat videa).
+import { geoMercator, geoPath } from 'd3-geo';
+import { feature } from 'topojson-client';
+import svet from '../data/svet.json';
+import capi from '../data/capi.json';
+
+const REEL = 'https://www.instagram.com/reel/Deb-U4ZBFvc/';
+const DNU = 302;
+const W = 900;
+const oblast = { type: 'MultiPoint', coordinates: [[-30, -7], [56, 55], [-30, 55], [56, -7]] } as any;
+const proj = geoMercator().fitWidth(W, oblast);
+const cesta = geoPath(proj);
+const [[, by0], [, by1]] = cesta.bounds(oblast);
+const H = Math.round(by1 - by0);
+const [tx, ty] = proj.translate();
+proj.translate([tx, ty - by0]).clipExtent([[0, 0], [W, H]]);
+const zeme = ((feature(svet.topo as any, (svet.topo as any).objects.countries) as any).features as any[])
+  .map((f) => ({ a2: f.properties.a2 as string, n: f.properties.n as string, d: cesta(f) ?? '' }))
+  .filter((z) => z.d && z.d.length > 10);
+const p = (lat: number, lon: number) => proj([lon, lat])!.map((v) => Math.round(v * 10) / 10);
+const ptaci = capi.ptaci.map((b) => ({ ...b, body: b.body.map((x) => ({ ...x, xy: p(x.lat, x.lon) })) }));
+const BARVA: Record<string, string> = { zapad: '#F08829', vychod: '#1B2A4A', odhad: '#1E9E91' };
+const MESICE = ['srp', 'zář', 'říj', 'lis', 'pro', 'led', 'úno', 'bře', 'dub', 'kvě'];
+const ZACATKY = [0, 31, 61, 92, 122, 153, 184, 212, 243, 273];
+// úseky pro kalendář: mezi sousedními body, barva podle fáze
+const useky = (b: (typeof ptaci)[number]) => b.body.slice(1).map((x, i) => ({
+  od: b.body[i].d, do: x.d, faze: x.faze === 'winter' && b.body[i].faze === 'winter' ? 'zima' : 'cesta', gap: x.gap,
+})).filter((u) => u.do > u.od);
+const konecText: Record<string, string> = { domov: 'zpět doma', ztracen: 'vysílačka utichla', uhynul: 'uhynul' };
+const data = JSON.stringify({ ptaci: ptaci.map((b) => ({ k: b.klic, j: b.jmeno, s: b.strana, konec: b.konec, body: b.body.map((x) => [x.xy[0], x.xy[1], x.d, x.faze === 'winter' ? 1 : 0, x.gap ? 1 : 0, x.a2]) })) });
+---
+
+<section class="obal sekce sloupec cc" id="capi" style="gap: 1.25rem; --obal: 1320px;" data-capi={data}>
+  <div class="cc__hlava">
+    <div class="sloupec" style="gap: 0.5rem; max-width: 64ch;">
+      <span class="nadhlavi">Cesty na mapě · nově</span>
+      <h2 class="cc__titul">Kam letí čeští čápi na zimu</h2>
+      <p class="perex">Satelitní vysílačky ukázaly, že čápi ze stejné části Čech letí na zimu opačnými směry. Jedni přes Gibraltar do západní Afriky, druzí přes Izrael až do Etiopie. Devět čápů z let 1995 až 2021 tu letí v jednom kalendáři od srpna do května.</p>
+    </div>
+    <a class="tlacitko tlacitko--male" href={REEL}>Video na Instagramu</a>
+  </div>
+
+  <div class="cc__mrizka">
+    <div class="cc__mapa-karta">
+      <div class="cc__mapa">
+        <svg viewBox={`0 0 ${W} ${H}`} class="cc-svg" role="img" aria-label="Mapa Evropy a Afriky s trasami čápů" data-cc-svg>
+          <rect width={W} height={H} class="cc-more" />
+          <g class="cc-zeme">
+            {zeme.map((z) => <path d={z.d} data-a2={z.a2} class:list={{ 'je-cesko': z.a2 === 'cz' }}><title>{z.n}</title></path>)}
+          </g>
+          <g class="cc-trasy" aria-hidden="true">
+            {ptaci.map((b) => (
+              <path class="cc-trasa" data-cc-trasa={b.klic} d={'M' + b.body.map((x) => x.xy.join(' ')).join('L')} style={`--b: ${BARVA[b.strana]};`} />
+            ))}
+          </g>
+          <g data-cc-ulet aria-hidden="true"></g>
+          <g data-cc-ptaci></g>
+        </svg>
+        <div class="cc__datum" aria-live="off"><span data-cc-datum>1. srpna</span><small data-cc-pocet>Všichni jsou zatím doma</small></div>
+        <ul class="cc__legenda" aria-label="Legenda">
+          <li><i style="background: #F08829;"></i>Západní trasa přes Gibraltar</li>
+          <li><i style="background: #1B2A4A;"></i>Východní trasa přes Izrael</li>
+          <li><i class="cc__leg-odhad"></i>Trasa je odhad</li>
+          <li><i class="cc__leg-signal"></i>Bez signálu</li>
+        </ul>
+      </div>
+      <div class="cc__ovladani">
+        <button type="button" class="cc__prehrat" data-cc-prehrat aria-label="Přehrát sezónu">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" /></svg>
+        </button>
+        <div class="cc__osa">
+          <input type="range" min="0" max={DNU} step="0.5" value="0" data-cc-posuvnik aria-label="Den sezóny" />
+          <div class="cc__mesice" aria-hidden="true">{MESICE.map((m, i) => <span style={`left: ${(ZACATKY[i] / DNU) * 100}%;`}>{m}</span>)}</div>
+        </div>
+      </div>
+    </div>
+
+    <aside class="cc__panel">
+      <ul class="cc__cisla">
+        <li><strong data-cc-n="doma">9</strong><span>v Česku</span></li>
+        <li><strong data-cc-n="cesta">0</strong><span>na cestě</span></li>
+        <li><strong data-cc-n="zima">0</strong><span>na zimovišti</span></li>
+        <li><strong data-cc-n="ztraceno">0</strong><span>nevrátili se</span></li>
+      </ul>
+      <div class="cc__detail" data-cc-detail aria-live="polite">
+        <span class="cc__maly">Devět čápů, šest návratů</span>
+        <strong class="cc__jmeno">Klepni na čápa</strong>
+        <p>V kalendáři pod mapou nebo přímo na mapě. Ukážu jeho trasu, zimoviště a všechny zaznamenané polohy.</p>
+      </div>
+    </aside>
+  </div>
+
+  <div class="cc__kalendar" role="list" aria-label="Kalendář čápů">
+    <div class="cc__kal-osa" aria-hidden="true">
+      <span></span>
+      <div>{MESICE.map((m, i) => <span style={`left: ${(ZACATKY[i] / DNU) * 100}%;`}>{m}</span>)}</div>
+    </div>
+    {ptaci.map((b) => (
+      <button type="button" class="cc__radek" role="listitem" data-cc-radek={b.klic} aria-pressed="false" style={`--b: ${BARVA[b.strana]};`}>
+        <span class="cc__radek-jmeno"><b>{b.jmeno}</b><small>{b.druh}, {b.sezona}</small></span>
+        <span class="cc__radek-osa">
+          {b.nezname.map(([a, z]) => <i class="cc__nezname" style={`left: ${(a / DNU) * 100}%; width: ${((z - a) / DNU) * 100}%;`} title="Časování bez přesných dat"></i>)}
+          {useky(b).map((u) => (
+            <i class:list={['cc__usek', `cc__usek--${u.faze}`, { 'cc__usek--gap': u.gap, 'cc__usek--odhad': b.odhad }]} style={`left: ${(u.od / DNU) * 100}%; width: ${((u.do - u.od) / DNU) * 100}%;`}></i>
+          ))}
+          <i class:list={['cc__konec', `cc__konec--${b.konec}`]} style={`left: ${(b.body.at(-1)!.d / DNU) * 100}%;`} title={konecText[b.konec]}></i>
+        </span>
+      </button>
+    ))}
+    <div class="cc__kurzor-obal" aria-hidden="true"><i class="cc__kurzor" data-cc-kurzor></i></div>
+  </div>
+  <div class="cc__pata">
+    <ul class="cc__kal-legenda" aria-hidden="true">
+      <li><i class="cc__usek cc__usek--cesta" style="--b: #1B2A4A;"></i>let</li>
+      <li><i class="cc__usek cc__usek--zima" style="--b: #1B2A4A;"></i>zimoviště</li>
+      <li><i class="cc__usek cc__usek--gap" style="--b: #1B2A4A;"></i>bez signálu</li>
+      <li><i class="cc__nezname"></i>bez přesných dat</li>
+      <li><i class="cc__konec cc__konec--domov"></i>doma</li>
+      <li><i class="cc__konec cc__konec--ztracen"></i>konec signálu</li>
+    </ul>
+    <p class="drobne">Zdroj: {capi.zdroj}. {capi.pozn} U Kryštofa nejsou data cesty na zimu zveřejněná a Mírova trasa je celá odhad, obojí je označené tyrkysově.</p>
+  </div>
+
+  <template data-cc-sablona>
+    {ptaci.map((b) => (
+      <div data-cc-info={b.klic}>
+        <span class="cc__maly">{b.druh} · sezóna {b.sezona}</span>
+        <strong class="cc__jmeno">{b.jmeno}</strong>
+        <p class="cc__fakta">
+          Domov: {b.domov}.{' '}
+          {b.strana === 'odhad' ? 'Trasa je celá odhad.' : b.strana === 'zapad' ? 'Západní trasa přes Gibraltar.' : 'Východní trasa přes Izrael.'}{' '}
+          {b.zimoviste.length ? `Zimoviště: ${b.zimoviste.join(' → ')}.` : ''}
+        </p>
+        <ol class="cc__body">
+          {b.body.filter((x) => x.datum).map((x) => <li data-d={x.d}><b>{x.datum.replace(/ \d{4}$/, '')}</b><span>{x.nazev}</span></li>)}
+        </ol>
+        <p class="cc__vysledek">
+          {b.klic === 'tereza' ? 'Uhynula v marockém Antiatlasu.' : b.klic === 'jakub' ? 'Vysílačka utichla v Nigérii, dál se ho sledovat nepodařilo.' : b.klic === 'mira' ? 'Vysílačka utichla pod Kilimandžárem 8. 3. 2020. Zdroj neuvádí stát, trasa je odhad.' : b.klic === 'krystof' ? 'Data cesty na zimu nejsou zveřejněná, v kalendáři jsou odhadem. Po návratu se ukázalo, že Kryštof je samice.' : `Zpět doma ${b.body.at(-1)!.datum}.`}
+        </p>
+      </div>
+    ))}
+  </template>
+</section>
+
+<style>
+  .cc__hlava { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: flex-end; justify-content: space-between; }
+  .cc__titul { font-size: clamp(1.7rem, 3.2vw, 2.4rem); }
+  .cc__mrizka { display: grid; grid-template-columns: minmax(0, 1fr) 330px; gap: clamp(1rem, 2vw, 1.5rem); align-items: start; }
+  @media (max-width: 1000px) { .cc__mrizka { grid-template-columns: 1fr; } }
+  .cc__mapa-karta { background: var(--paper); border: 1px solid var(--line); border-radius: 24px; box-shadow: var(--stin); padding: clamp(0.7rem, 1.8vw, 1.2rem); display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+  .cc__mapa { position: relative; border-radius: 16px; overflow: hidden; background: var(--more-svetle); }
+  .cc-svg { width: 100%; height: auto; display: block; }
+  .cc-more { fill: var(--more-svetle); }
+  .cc-zeme path { fill: var(--pevnina); stroke: #FFFFFF; stroke-width: 0.6; transition: fill 0.5s ease; }
+  .cc-zeme path.je-cesko { fill: #FBD3AE; stroke: var(--navy); stroke-width: 0.8; }
+  .cc-zeme path.je-zimoviste { fill: #F6E1C6; }
+  .cc-trasa { fill: none; stroke: var(--b); stroke-width: 1.2; stroke-opacity: 0.18; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 2 4; }
+  .cc-svg.ma-vyber .cc-trasa { stroke-opacity: 0.06; }
+  .cc-svg :global(.cc-trasa.je-vybrana) { stroke-opacity: 0.5; stroke-width: 1.6; }
+  .cc-svg :global(.cc-let) { fill: none; stroke-width: calc(2.6px * var(--k)); stroke-linejoin: round; stroke-linecap: round; }
+  .cc-svg :global(.cc-let--gap) { stroke-dasharray: 1 6; stroke-width: 2.4; }
+  .cc-svg :global(.cc-let--odhad) { stroke-dasharray: 6 5; }
+  .cc-svg.ma-vyber :global(.cc-let:not(.je-vybrana)) { stroke-opacity: 0.2; }
+  .cc-svg :global(.cc-ptak) { cursor: pointer; }
+  .cc-svg :global(.cc-ptak circle) { stroke: #FFFFFF; stroke-width: 2; }
+  .cc-svg { --k: 1; }
+  .cc-svg :global(.cc-ptak circle) { transform: scale(var(--k)); }
+  .cc-svg :global(.cc-ptak text) { font-size: calc(12px * var(--k)); stroke-width: calc(3.5px * var(--k)) !important; font-weight: 800; fill: var(--navy); paint-order: stroke; stroke: rgba(255, 255, 255, 0.92); stroke-width: 3.5px; stroke-linejoin: round; }
+  .cc-svg :global(.cc-ptak.je-vybrana text) { font-size: calc(14px * var(--k)); font-weight: 900; }
+  .cc-svg.ma-vyber :global(.cc-ptak:not(.je-vybrana)) { opacity: 0.35; }
+  .cc-svg :global(.cc-ptak--konec circle) { stroke-dasharray: 2 2; }
+  .cc__datum { position: absolute; left: 0.9rem; top: 0.7rem; display: flex; flex-direction: column; gap: 0.2rem; pointer-events: none; }
+  @media (max-width: 600px) { .cc__mapa { display: flex; flex-direction: column; } .cc__datum { position: static; order: -1; flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 0.2rem 0.6rem; padding: 0.7rem 0.8rem 0.3rem; } .cc__mesice span:nth-child(even), .cc__kal-osa > div span:nth-child(even) { display: none; } }
+  .cc__datum span { font-size: clamp(1.5rem, 3.6vw, 2.3rem); font-weight: 900; color: var(--navy); line-height: 1; paint-order: stroke; -webkit-text-stroke: 0; text-shadow: 0 0 10px rgba(213, 231, 243, 0.95); }
+  .cc__datum small { font-size: 0.8rem; font-weight: 800; color: var(--orange-text); text-shadow: 0 0 8px rgba(213, 231, 243, 0.95); }
+  .cc__legenda { position: absolute; left: 0.8rem; bottom: 0.7rem; display: flex; flex-direction: column; gap: 0.25rem; margin: 0; padding: 0.55rem 0.7rem; list-style: none; border-radius: 12px; background: rgba(255, 255, 255, 0.82); font-size: 0.74rem; font-weight: 700; color: var(--navy); }
+  .cc__legenda li { display: flex; align-items: center; gap: 0.45rem; }
+  .cc__legenda i { width: 18px; height: 4px; border-radius: 2px; }
+  .cc__leg-odhad { background: repeating-linear-gradient(90deg, #1E9E91 0 5px, transparent 5px 8px); }
+  .cc__leg-signal { background: repeating-linear-gradient(90deg, var(--slate) 0 2px, transparent 2px 6px); }
+  @media (max-width: 560px) { .cc__legenda { position: static; flex-direction: row; flex-wrap: wrap; gap: 0.3rem 0.8rem; background: transparent; padding: 0.5rem 0.2rem 0; } }
+
+  .cc__ovladani { display: flex; align-items: center; gap: 1rem; padding: 0.6rem 0.9rem; border-radius: 16px; background: var(--plocha-2); border: 1px solid var(--line); }
+  .cc__prehrat { width: 46px; height: 46px; flex-shrink: 0; border-radius: 50%; border: 0; background: var(--navy); color: var(--cream); cursor: pointer; display: grid; place-items: center; transition: transform var(--stisk) var(--ease-out); }
+  .cc__prehrat:active { transform: scale(0.94); }
+  .cc__osa { flex-grow: 1; display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+  .cc__osa input { width: 100%; margin: 0; accent-color: var(--orange); }
+  .cc__mesice, .cc__kal-osa > div { position: relative; height: 1rem; font-size: 0.7rem; font-weight: 700; color: var(--muted); }
+  .cc__mesice span, .cc__kal-osa > div span { position: absolute; top: 0; }
+
+  .cc__panel { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 84px; }
+  @media (max-width: 1000px) { .cc__panel { position: static; } }
+  .cc__cisla { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem; list-style: none; margin: 0; padding: 0; }
+  @media (max-width: 1000px) and (min-width: 520px) { .cc__cisla { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .cc__cisla li { display: flex; flex-direction: column; padding: 0.7rem 0.9rem; border-radius: 16px; background: var(--paper); border: 1px solid var(--line); }
+  .cc__cisla strong { font-size: 1.7rem; font-weight: 900; color: var(--navy); line-height: 1.1; font-variant-numeric: tabular-nums; }
+  .cc__cisla span { font-size: 0.78rem; font-weight: 800; color: var(--muted); }
+  .cc__detail { background: var(--navy); color: var(--cream); border-radius: 20px; padding: 1.3rem 1.4rem; display: flex; flex-direction: column; gap: 0.45rem; min-height: 180px; }
+  .cc__detail :global(.cc__maly) { font-size: 0.78rem; font-weight: 700; color: #D9D3C7; }
+  .cc__detail :global(.cc__jmeno) { font-size: 1.45rem; font-weight: 900; line-height: 1.2; }
+  .cc__detail :global(p) { margin: 0; font-size: 0.9rem; font-weight: 600; color: #E4DED2; line-height: 1.55; }
+  .cc__detail :global(.cc__body) { list-style: none; margin: 0.2rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; max-height: 260px; overflow-y: auto; }
+  .cc__detail :global(.cc__body li) { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); gap: 0.5rem; font-size: 0.82rem; font-weight: 700; color: #B9B3A7; transition: color 0.2s ease; }
+  .cc__detail :global(.cc__body li b) { font-variant-numeric: tabular-nums; font-weight: 800; }
+  .cc__detail :global(.cc__body li.je-hotovo) { color: var(--cream); }
+  .cc__detail :global(.cc__body li.je-hotovo b) { color: var(--orange); }
+  .cc__detail :global(.cc__vysledek) { margin-top: 0.3rem; padding: 0.6rem 0.8rem; border-radius: 12px; background: var(--navy-2); font-weight: 700; }
+  .cc__detail :global(button) { align-self: flex-start; margin-top: 0.4rem; min-height: 36px; padding: 0 0.9rem; border: 1.5px solid var(--cream); border-radius: 999px; background: transparent; color: var(--cream); font-family: inherit; font-weight: 700; cursor: pointer; }
+
+  .cc__kalendar { position: relative; display: flex; flex-direction: column; gap: 0.2rem; padding: 0.9rem clamp(0.7rem, 1.8vw, 1.2rem); background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin-maly); }
+  .cc__kal-osa, .cc__radek { display: grid; grid-template-columns: minmax(7.5rem, 11rem) minmax(0, 1fr); gap: 0.8rem; align-items: center; }
+  .cc__radek { width: 100%; padding: 0.3rem 0.4rem; border: 0; border-radius: 10px; background: transparent; color: var(--navy); font-family: inherit; text-align: left; cursor: pointer; transition: background-color 0.15s ease; }
+  @media (hover: hover) and (pointer: fine) { .cc__radek:hover { background: var(--plocha-2); } }
+  .cc__radek[aria-pressed='true'] { background: var(--draha); }
+  .cc__radek-jmeno { display: flex; flex-direction: column; line-height: 1.2; }
+  .cc__radek-jmeno b { font-size: 0.9rem; font-weight: 900; }
+  .cc__radek-jmeno small { font-size: 0.7rem; font-weight: 700; color: var(--muted); }
+  .cc__radek-osa { position: relative; height: 16px; border-radius: 4px; background: linear-gradient(90deg, rgba(27, 42, 74, 0.05), rgba(27, 42, 74, 0.05)) center / 100% 2px no-repeat; }
+  .cc__usek { position: absolute; top: 3px; height: 10px; background: var(--b); opacity: 0.45; }
+  .cc__usek--zima { opacity: 1; top: 1px; height: 14px; border-radius: 3px; }
+  .cc__usek--gap { background: transparent; opacity: 1; border-top: 2px dotted var(--b); top: 7px; height: 0; }
+  .cc__usek--odhad { background: repeating-linear-gradient(135deg, #1E9E91 0 3px, rgba(30, 158, 145, 0.25) 3px 6px); opacity: 1; }
+  .cc__nezname { position: absolute; top: -2px; bottom: -2px; border-radius: 4px; background: repeating-linear-gradient(135deg, rgba(30, 158, 145, 0.35) 0 3px, transparent 3px 6px); }
+  .cc__konec { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -2px; border-radius: 50%; }
+  .cc__konec--domov { background: var(--paper); border: 2.5px solid var(--b, var(--navy)); }
+  .cc__konec--ztracen, .cc__konec--uhynul { border-radius: 0; background: linear-gradient(45deg, transparent 42%, #C2412D 42% 58%, transparent 58%), linear-gradient(-45deg, transparent 42%, #C2412D 42% 58%, transparent 58%); }
+  .cc__kurzor-obal { position: absolute; inset: 0.9rem clamp(0.7rem, 1.8vw, 1.2rem); display: grid; grid-template-columns: minmax(7.5rem, 11rem) minmax(0, 1fr); gap: 0.8rem; padding: 0 0.4rem; pointer-events: none; }
+  .cc__kurzor { grid-column: 2; position: relative; display: block; }
+  .cc__kurzor::after { content: ''; position: absolute; top: 1rem; bottom: 0; left: var(--x, 0%); width: 2px; margin-left: -1px; background: var(--orange); border-radius: 2px; }
+  .cc__pata { display: flex; flex-direction: column; gap: 0.6rem; }
+  .cc__kal-legenda { display: flex; flex-wrap: wrap; gap: 0.4rem 1.1rem; list-style: none; margin: 0; padding: 0; font-size: 0.76rem; font-weight: 700; color: var(--muted); }
+  .cc__kal-legenda li { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .cc__kal-legenda .cc__usek, .cc__kal-legenda .cc__nezname, .cc__kal-legenda .cc__konec { position: relative; top: auto; left: auto; display: inline-block; width: 22px; margin: 0; }
+  .cc__kal-legenda .cc__nezname { height: 12px; }
+  .cc__kal-legenda .cc__konec { width: 10px; }
+  @media (max-width: 560px) { .cc__kal-osa, .cc__radek, .cc__kurzor-obal { grid-template-columns: 5.6rem minmax(0, 1fr); gap: 0.5rem; } .cc__radek-jmeno small { display: none; } }
+</style>
+
+<script>
+  type Ptak = { k: string; j: string; s: string; konec: string; body: [number, number, number, number, number, string][] };
+  const koren = document.querySelector<HTMLElement>('[data-capi]');
+  if (koren) {
+    const { ptaci } = JSON.parse(koren.dataset.capi!) as { ptaci: Ptak[] };
+    const $ = <T extends Element>(s: string) => koren.querySelector<T>(s)!;
+    const svg = $<SVGSVGElement>('[data-cc-svg]');
+    const ulet = $<SVGGElement>('[data-cc-ulet]');
+    const vrstvaPtaku = $<SVGGElement>('[data-cc-ptaci]');
+    const posuvnik = $<HTMLInputElement>('[data-cc-posuvnik]');
+    const prehrat = $<HTMLButtonElement>('[data-cc-prehrat]');
+    const detail = $<HTMLElement>('[data-cc-detail]');
+    const sablona = $<HTMLTemplateElement>('[data-cc-sablona]');
+    const kurzor = $<HTMLElement>('[data-cc-kurzor]');
+    const zemeEl = new Map<string, SVGPathElement>(Array.from(svg.querySelectorAll<SVGPathElement>('.cc-zeme path')).map((p) => [p.dataset.a2!, p]));
+    const BARVA: Record<string, string> = { zapad: '#F08829', vychod: '#1B2A4A', odhad: '#1E9E91' };
+    const DNU = 302;
+    const klidne = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const IKONA_PLAY = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>';
+    const IKONA_PAUZA = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7z M13.5 5H17v14h-3.5z" fill="currentColor"/></svg>';
+    const MESIC = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
+    const NS = 'http://www.w3.org/2000/svg';
+    const el = (tag: string, a: Record<string, string | number> = {}) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v)); return e; };
+
+    let t = 0, hraje = false, vybrany: string | null = null, posledni = 0, snimek = 0;
+    const datum = (d: number) => { const x = new Date(Date.UTC(2001, 7, 1) + Math.floor(d) * 86400000); return `${x.getUTCDate()}. ${MESIC[x.getUTCMonth()]}`; };
+
+    // značky ptáků
+    const znacky = ptaci.map((b) => {
+      const g = el('g', { class: 'cc-ptak', 'data-k': b.k, tabindex: 0, role: 'button', 'aria-label': b.j });
+      const c = el('circle', { r: 6, fill: BARVA[b.s] });
+      const tx = el('text', { x: 10, y: 4 }); tx.textContent = b.j;
+      g.append(c, tx); vrstvaPtaku.append(g);
+      g.addEventListener('click', () => vyber(vybrany === b.k ? null : b.k));
+      g.addEventListener('keydown', (e) => { if ((e as KeyboardEvent).key === 'Enter') vyber(vybrany === b.k ? null : b.k); });
+      return { g, c, tx };
+    });
+
+    function stav(b: Ptak, d: number) {
+      const B = b.body;
+      if (d < B[0][2]) return { x: B[0][0], y: B[0][1], i: 0, f: 0, kde: 'doma' as const };
+      const posl = B[B.length - 1];
+      if (d >= posl[2]) return { x: posl[0], y: posl[1], i: B.length - 1, f: 1, kde: b.konec === 'domov' ? ('doma' as const) : ('ztraceno' as const) };
+      let i = 0;
+      while (i < B.length - 2 && B[i + 1][2] <= d) i++;
+      const a = B[i], c = B[i + 1];
+      const f = c[2] > a[2] ? (d - a[2]) / (c[2] - a[2]) : 1;
+      const zima = a[3] === 1 && c[3] === 1;
+      return { x: a[0] + (c[0] - a[0]) * f, y: a[1] + (c[1] - a[1]) * f, i, f, kde: zima ? ('zima' as const) : ('cesta' as const), a2: zima ? (f < 0.5 ? a[5] : c[5]) : '' };
+    }
+
+    function kresli() {
+      const pocty = { doma: 0, cesta: 0, zima: 0, ztraceno: 0 };
+      const zimuje = new Set<string>();
+      ulet.replaceChildren();
+      const kk = Number(svg.style.getPropertyValue('--k')) || 1;
+      const [vbX, , vbW] = svg.getAttribute('viewBox')!.split(' ').map(Number);
+      ptaci.forEach((b, k) => {
+        const s = stav(b, t);
+        pocty[s.kde]++;
+        if (s.kde === 'zima' && s.a2) zimuje.add(s.a2);
+        // uletěná trasa: plná, úseky bez signálu tečkovaně
+        if (t >= b.body[0][2]) {
+          const B = b.body;
+          const konec = t >= B[B.length - 1][2];
+          let plna = `M${B[0][0]} ${B[0][1]}`, tecky = '';
+          for (let j = 1; j <= s.i + 1 && j < B.length; j++) {
+            const cil = j === s.i + 1 && !konec ? `${s.x.toFixed(1)} ${s.y.toFixed(1)}` : `${B[j][0]} ${B[j][1]}`;
+            if (B[j][4]) { tecky += `M${B[j - 1][0]} ${B[j - 1][1]}L${cil}`; plna += `M${cil}`; }
+            else plna += `L${cil}`;
+          }
+          const vybr = vybrany === b.k ? ' je-vybrana' : '';
+          ulet.append(el('path', { d: plna, class: `cc-let${b.s === 'odhad' ? ' cc-let--odhad' : ''}${vybr}`, stroke: BARVA[b.s] }));
+          if (tecky) ulet.append(el('path', { d: tecky, class: `cc-let cc-let--gap${vybr}`, stroke: BARVA[b.s] }));
+        }
+        const z = znacky[k];
+        z.g.setAttribute('transform', `translate(${s.x.toFixed(1)} ${s.y.toFixed(1)})`);
+        z.g.classList.toggle('je-vybrana', vybrany === b.k);
+        z.g.classList.toggle('cc-ptak--konec', s.kde === 'ztraceno');
+        // jména jen u ptáků mimo domov (doma by se překrývala), vybraný vždy
+        const ukaz = vybrany === b.k || (s.kde !== 'doma' && !(vybrany && vybrany !== b.k));
+        z.tx.style.display = ukaz ? '' : 'none';
+        // popisek doleva u ptáků blízko pravého okraje (a u každého druhého, ať se tolik nepřekrývají)
+        const vlevo = s.x > vbX + vbW * 0.72 || (k % 2 === 1 && s.x > vbX + vbW * 0.2);
+        z.tx.setAttribute('x', String((vlevo ? -10 : 10) * kk));
+        z.tx.setAttribute('y', String(4 * kk));
+        z.tx.setAttribute('text-anchor', vlevo ? 'end' : 'start');
+      });
+      if (vybrany) vrstvaPtaku.append(znacky[ptaci.findIndex((b) => b.k === vybrany)].g);
+      for (const [a2, p] of zemeEl) p.classList.toggle('je-zimoviste', zimuje.has(a2));
+      for (const [k, v] of Object.entries(pocty)) $<HTMLElement>(`[data-cc-n="${k}"]`).textContent = String(v);
+      $<HTMLElement>('[data-cc-datum]').textContent = datum(t);
+      $<HTMLElement>('[data-cc-pocet]').textContent = pocty.doma === 9 && t < 40 ? 'Všichni jsou zatím doma' : pocty.zima ? `${pocty.zima} ${pocty.zima === 1 ? 'čáp zimuje' : pocty.zima < 5 ? 'čápi zimují' : 'čápů zimuje'} v Africe a Španělsku` : `${pocty.cesta} na cestě`;
+      posuvnik.value = String(t);
+      kurzor.style.setProperty('--x', `${(t / DNU) * 100}%`);
+      for (const li of detail.querySelectorAll<HTMLElement>('.cc__body li')) li.classList.toggle('je-hotovo', Number(li.dataset.d) <= t);
+    }
+
+    function vyber(k: string | null) {
+      vybrany = k;
+      svg.classList.toggle('ma-vyber', !!k);
+      for (const p of svg.querySelectorAll<SVGPathElement>('[data-cc-trasa]')) p.classList.toggle('je-vybrana', p.dataset.ccTrasa === k);
+      for (const r of koren!.querySelectorAll<HTMLButtonElement>('[data-cc-radek]')) r.setAttribute('aria-pressed', String(r.dataset.ccRadek === k));
+      if (k) {
+        const info = sablona.content.querySelector<HTMLElement>(`[data-cc-info="${k}"]`)!.cloneNode(true) as HTMLElement;
+        const zrusit = document.createElement('button');
+        zrusit.type = 'button'; zrusit.textContent = 'Ukázat všechny čápy';
+        zrusit.addEventListener('click', () => vyber(null));
+        detail.replaceChildren(...Array.from(info.childNodes), zrusit);
+      } else {
+        detail.replaceChildren(...Array.from(vychozi.childNodes).map((n) => n.cloneNode(true)));
+      }
+      kresli();
+    }
+    const vychozi = detail.cloneNode(true) as HTMLElement;
+    for (const r of koren.querySelectorAll<HTMLButtonElement>('[data-cc-radek]')) r.addEventListener('click', () => vyber(vybrany === r.dataset.ccRadek ? null : r.dataset.ccRadek!));
+
+    function smycka(now: number) {
+      if (!hraje) return;
+      const dt = Math.min(0.1, (now - posledni) / 1000); posledni = now;
+      t = Math.min(DNU, t + dt * 12);
+      kresli();
+      if (t >= DNU) { zastav(); return; }
+      snimek = requestAnimationFrame(smycka);
+    }
+    function hraj() { if (t >= DNU) t = 0; hraje = true; posledni = performance.now(); prehrat.innerHTML = IKONA_PAUZA; prehrat.setAttribute('aria-label', 'Zastavit'); snimek = requestAnimationFrame(smycka); }
+    function zastav() { hraje = false; cancelAnimationFrame(snimek); prehrat.innerHTML = IKONA_PLAY; prehrat.setAttribute('aria-label', 'Přehrát sezónu'); }
+    prehrat.addEventListener('click', () => (hraje ? zastav() : hraj()));
+    posuvnik.addEventListener('input', () => { zastav(); t = Number(posuvnik.value); kresli(); });
+
+    // Na úzkém displeji mapu ořízneme na oblast, kudy čápi létají, a písmo držíme čitelné.
+    const [, , VW, VH] = svg.getAttribute('viewBox')!.split(' ').map(Number);
+    new ResizeObserver(() => {
+      const w = svg.getBoundingClientRect().width;
+      if (!w) return;
+      const uzky = w < 600;
+      svg.setAttribute('viewBox', uzky ? `${VW * 0.12} 0 ${VW * 0.71} ${VH}` : `0 0 ${VW} ${VH}`);
+      const sirka = uzky ? VW * 0.71 : VW;
+      svg.style.setProperty('--k', Math.max(1, Math.min(2.6, (sirka / w) * 0.85)).toFixed(3));
+      kresli();
+    }).observe(svg);
+
+    const odkaz = location.hash.match(/^#capi(?:=(\w+))?/);
+    if (odkaz?.[1]) vyber(odkaz[1]);
+    kresli();
+    // spustí se samo, až na mapu doscrolluješ
+    if (!klidne) {
+      const io = new IntersectionObserver((z) => { if (z[0].isIntersecting) { io.disconnect(); if (t === 0 && !hraje) hraj(); } }, { threshold: 0.3 });
+      io.observe(svg);
+    }
+  }
+</script>

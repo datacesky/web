@@ -10,8 +10,8 @@ const moznosti = Object.entries(ZEME)
   .map(([a3, [n, a2]]) => ({ a3, n, a2, pop: hodnota('pop', a3) ?? null, area: hodnota('area', a3) ?? null, km: hodnota('km', a3) ?? null }))
   .sort((a, b) => a.n.localeCompare(b.n, 'cs'));
 const cz = { pop: hodnota('pop', 'CZE')!, area: hodnota('area', 'CZE')! };
-const nastaveni = JSON.stringify({ ...hlasovani, zapnute: hlasovaniZapnute, moznosti, cz, hotove: [...hotove] });
 const dalsiDil = epizody.length + 1;
+const nastaveni = JSON.stringify({ ...hlasovani, zapnute: hlasovaniZapnute, moznosti, cz, hotove: [...hotove], kolo: dalsiDil });
 ---
 
 <div class="hl" data-hlasovani data-nastaveni={nastaveni}>
@@ -53,7 +53,7 @@ const dalsiDil = epizody.length + 1;
     <ol class="hl__poradi" data-poradi>
       <li class="drobne">Načítám hlasy…</li>
     </ol>
-    <p class="drobne hl__pata">Hlasovat jde jednou za 30 dní. Vítěz dostane vlastní díl.</p>
+    <p class="drobne hl__pata">Hlasovat jde jednou za díl. Vítěz dostane vlastní díl.</p>
   </div>
 </div>
 
@@ -102,15 +102,16 @@ const dalsiDil = epizody.length + 1;
 
 <script>
   import { naseptavac, bezDiakritiky } from '../lib/naseptavac';
-  import { nactiVysledky, odesliHlas, mujHlas, ulozMujHlas, MESIC, type Vysledky } from '../lib/hlasy';
+  import { nactiVysledky, odesliHlas, mujHlas, ulozMujHlas, nastavKolo, type Vysledky } from '../lib/hlasy';
 
   type Moznost = { a3: string; n: string; a2: string; pop: number | null; area: number | null; km: number | null };
   const koren = document.querySelector<HTMLElement>('[data-hlasovani]');
   if (koren) {
     const N = JSON.parse(koren.dataset.nastaveni!) as {
       skript: string; formular: string; pole: string; vysledky: string; zapnute: boolean;
-      moznosti: Moznost[]; cz: { pop: number; area: number }; hotove: string[];
+      moznosti: Moznost[]; cz: { pop: number; area: number }; hotove: string[]; kolo: number;
     };
+    nastavKolo(N.kolo);
     const podleKodu = new Map(N.moznosti.map((m) => [m.a3, m]));
     const podleJmena = new Map(N.moznosti.map((m) => [bezDiakritiky(m.n), m.a3]));
     const $ = <T extends Element>(s: string) => koren.querySelector<T>(s)!;
@@ -146,9 +147,8 @@ const dalsiDil = epizody.length + 1;
       if (!N.zapnute) { odeslat.disabled = true; odeslat.textContent = 'Hlasování zatím není zapnuté'; return; }
       if (m) {
         odeslat.disabled = true;
-        const dni = Math.ceil((MESIC - (Date.now() - m.cas)) / 86400000);
         odeslat.textContent = `Hlasoval(a) jsi pro ${podleKodu.get(m.a3)?.n ?? m.a3}`;
-        if (!stav.textContent) stav.textContent = `Další hlas půjde za ${dni} ${dni === 1 ? 'den' : dni <= 4 ? 'dny' : 'dní'}.`;
+        if (!stav.textContent) stav.textContent = `Znovu hlasovat půjde, až vyjde díl ${N.kolo}.`;
         sdilet.hidden = false;
         return;
       }
@@ -237,7 +237,7 @@ const dalsiDil = epizody.length + 1;
         const o = await odesliHlas(N, z.a3);
         if (!o.ok && o.chyba === 'uz-hlasoval') {
           ulozMujHlas(z.a3);
-          stav.textContent = 'Z tohoto prohlížeče už hlas v posledních 30 dnech přišel.';
+          stav.textContent = 'Z tohoto prohlížeče už hlas pro tenhle díl přišel.';
         } else if (!o.ok) {
           throw new Error(o.chyba ?? 'chyba');
         } else {

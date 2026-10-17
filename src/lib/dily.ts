@@ -4,7 +4,7 @@ import { epizody, odkazDilu } from '../data/epizody';
 
 export type Dil = {
   slug: string; serie: string; serieId: string; typ: 'vs' | 'index' | 'sto'; dil?: number; nazev: string; popis: string;
-  datum: string; odkaz: string; a3?: string; ikona?: string;
+  datum: string; odkaz: string; a3?: string; ikona?: string; web?: string;
 };
 export type Rada = { id: string; nazev: string; popis: string; dily: Dil[] };
 
@@ -22,8 +22,8 @@ export const rady: Rada[] = [
   ...serie.map((s) => ({
     id: s.id, nazev: s.nazev, popis: s.popis,
     dily: s.dily.map((d, i): Dil => ({
-      slug: `${s.id}-${i + 1}`, serie: s.nazev, serieId: s.id, typ: s.id === 'index-tydne' ? 'index' : 'sto',
-      dil: d.cislo, nazev: d.nazev, popis: d.popis, datum: d.datum, odkaz: d.instagram ?? IG, ikona: d.ikona,
+      slug: `${s.id}-${i + 1}`, serie: s.nazev, serieId: s.id, typ: s.id === 'kdyby-cesko-bylo-100-lidi' ? 'sto' : 'index',
+      dil: d.cislo, nazev: d.nazev, popis: d.popis, datum: d.datum, odkaz: d.instagram ?? IG, ikona: d.ikona, web: d.web,
     })),
   })),
 ];

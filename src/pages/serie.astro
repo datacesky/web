@@ -13,7 +13,7 @@ const zemi = new Set(epizody.map((e) => e.a3)).size;
 const den = (d: string) => datum(new Date(d));
 ---
 
-<Base titul="Série — data.cesky" popis="Česko vs. svět, Index týdne a Kdyby Česko bylo 100 lidí. Všechny díly na jednom místě, s odkazem na video.">
+<Base titul="Série — data.cesky" popis="Česko vs. svět, Index týdne, Kdyby Česko bylo 100 lidí, Česko v pohybu a Cesty na mapě. Všechny díly na jednom místě, s odkazem na video.">
   <div class="se-uvod">
     <section class="obal se-uvod__obsah">
       <span class="nadhlavi">Série</span>
@@ -73,6 +73,7 @@ const den = (d: string) => datum(new Date(d));
               <strong class="se-dil__nazev">{d.nazev}</strong>
               <span class="se-dil__popis">{d.popis}</span>
             </a>
+            {d.web && <a class="se-dil__web" href={d.web}>Interaktivní mapa na webu →</a>}
           </li>
         ))}
       </ul>
@@ -118,6 +119,7 @@ const den = (d: string) => datum(new Date(d));
   .se-dil:active :global(.so) { transform: scale(0.98); transition-duration: 80ms; }
   .se-dil__meta { font-size: 0.76rem; font-weight: 700; color: var(--orange-text); }
   .se-dil__nazev { font-size: 1rem; font-weight: 900; line-height: 1.3; }
+  .se-dil__web { display: inline-block; margin-top: 0.4rem; font-size: 0.8rem; font-weight: 800; color: var(--orange-text); }
   .se-dil__popis { font-size: 0.82rem; line-height: 1.5; color: var(--muted); display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
   @media (prefers-reduced-motion: reduce) { .se-nove__obalka, .se-dil :global(.so) { transition: none; } .se-nove__obalka:hover, .se-dil:hover :global(.so) { transform: none; } }
 </style>

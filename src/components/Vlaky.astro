@@ -1,0 +1,659 @@
+---
+// Vrstva „Vlaky za 24 hodin" na Mapě Česka: každá tečka je jeden osobní vlak podle jízdního řádu.
+// Komponenta se na stránce použije dvakrát: cast="mapa" (mapa s ovládáním) a cast="panel" (stanice vpravo).
+// Data se načtou až po zapnutí vrstvy z /data/vlaky.json (generuje skripty/data_vlaky.py).
+import geo from '../data/kraje.json';
+import podklad from '../data/cesko-mapa.json';
+import mestaData from '../data/mesta.json';
+
+interface Props { cast: 'mapa' | 'panel' }
+const { cast } = Astro.props;
+const KRAJSKA = ['Praha', 'Brno', 'Ostrava', 'Plzeň', 'Liberec', 'Olomouc', 'České Budějovice', 'Hradec Králové', 'Pardubice', 'Ústí nad Labem', 'Zlín', 'Jihlava', 'Karlovy Vary'];
+const mesta = mestaData.mesta.filter((m) => KRAJSKA.includes(m.n));
+const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'];
+---
+
+{cast === 'mapa' ? (
+  <div class="vl" data-vl hidden>
+    <div class="vl__hlava">
+      <div class="sloupec" style="gap: 0.2rem; min-width: 0;">
+        <h2 class="vl__titul">Vlaky za 24 hodin</h2>
+        <p class="drobne">Každá tečka je jeden osobní vlak, přesně tam, kde má podle jízdního řádu být. Úterý 6. 10. 2026.</p>
+      </div>
+      <ul class="vl__legenda" aria-label="Legenda">
+        <li><i class="vl__bod vl__bod--dalkovy"></i>Dálkové</li>
+        <li><i class="vl__bod"></i>Regionální</li>
+      </ul>
+    </div>
+
+    <div class="vl__platno">
+      <div class="vl__plocha" data-vl-plocha>
+        <svg viewBox={`0 0 ${geo.sirka} ${geo.vyska}`} class="vl-svg" data-vl-svg role="img" aria-label="Železniční síť Česka a poloha vlaků v čase">
+          <defs><clipPath id="vl-orez"><rect x="0" y="0" width={geo.sirka} height={geo.vyska} rx="14" /></clipPath></defs>
+          <g clip-path="url(#vl-orez)">
+            <g data-vl-zoom>
+              <path class="vl-podstin" d={podklad.obrys} />
+              <g class="vl-kraje">{geo.kraje.map((k) => <path d={k.d} fill-rule="evenodd" />)}</g>
+              <path class="vl-obrys" d={podklad.obrys} />
+              <g class="vl-sit"><path class="vl-sit0" data-vl-sit="0" /><path class="vl-sit1" data-vl-sit="1" /><path class="vl-sit2" data-vl-sit="2" /></g>
+              <g class="vl-mesta">
+                {mesta.map((m) => (
+                  <g transform={`translate(${m.x} ${m.y})`}>
+                    <g class="vl-skaluj"><text x={VLEVO.includes(m.n) ? -7 : 7} y="-6" text-anchor={VLEVO.includes(m.n) ? 'end' : 'start'}>{m.n}</text></g>
+                  </g>
+                ))}
+              </g>
+            </g>
+          </g>
+        </svg>
+        <canvas class="vl-platno" data-vl-canvas aria-hidden="true"></canvas>
+        <div class="vl__hodiny" aria-live="off"><span data-vl-hodiny>6:30</span><small data-vl-faze>ranní špička</small></div>
+        <div class="vl__nacitani" data-vl-nacitani>Načítám jízdní řád…</div>
+        <div class="vl__tip" data-vl-tip hidden></div>
+      </div>
+      <div class="zoom-ovladani" role="group" aria-label="Přiblížení mapy">
+        <button type="button" data-vl-plus aria-label="Přiblížit">+</button>
+        <button type="button" data-vl-minus aria-label="Oddálit" disabled>−</button>
+        <button type="button" data-vl-reset aria-label="Zobrazit celé Česko" title="Celé Česko" disabled>
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5" /></svg>
+        </button>
+      </div>
+      <div class="zoom-napoveda" data-vl-napoveda hidden>Přiblížíš podržením Ctrl a kolečkem</div>
+    </div>
+
+    <div class="vl__cas">
+      <button type="button" class="vl__prehrat" data-vl-prehrat aria-label="Přehrát den">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor" /></svg>
+      </button>
+      <div class="vl__osa">
+        <svg class="vl__graf" viewBox="0 0 1440 100" preserveAspectRatio="none" aria-hidden="true">
+          <path class="vl__graf-plocha" data-vl-graf />
+          <path class="vl__graf-hotovo" data-vl-graf-hotovo />
+          <line class="vl__graf-kurzor" data-vl-kurzor x1="0" x2="0" y1="0" y2="100" />
+        </svg>
+        <input type="range" min="0" max="1440" step="1" value="390" data-vl-posuvnik aria-label="Čas během dne" />
+        <div class="vl__osa-popisky" aria-hidden="true"><span>0:00</span><span>6:00</span><span>12:00</span><span>18:00</span><span>24:00</span></div>
+      </div>
+      <div class="segment vl__rychlost" role="group" aria-label="Rychlost přehrávání">
+        <button type="button" data-vl-rychlost="15" aria-pressed="false">1×</button>
+        <button type="button" data-vl-rychlost="30" aria-pressed="true">2×</button>
+        <button type="button" data-vl-rychlost="60" aria-pressed="false">4×</button>
+      </div>
+    </div>
+
+    <div class="vl__cisla">
+      <div class="vl__cislo"><span>Na trati teď</span><strong data-vl-beh>–</strong><small>vlaků</small></div>
+      <div class="vl__cislo"><span>Vyjelo od půlnoci</span><strong data-vl-odj>–</strong><small data-vl-odj-z>vlaků</small></div>
+      <div class="vl__cislo vl__cislo--odhad"><span>Ujeto po Česku <em>odhad</em></span><strong data-vl-km>–</strong><small>km od půlnoci</small></div>
+    </div>
+
+    <div class="vl__dopravci">
+      <span class="vl__dopravci-titul">Dopravci <small>klepnutím skryješ nebo ukážeš</small></span>
+      <div class="vl__chipy" data-vl-dopravci role="group" aria-label="Dopravci"></div>
+    </div>
+
+    <p class="drobne vl__zdroj">
+      Zdroj: jízdní řád Správy železnic (CIS JŘ) převedený do GTFS projektem <a href="https://ggu.cz/services/">JrUtil</a>, stav k 8. 10. 2026.
+      Polohy mezi stanicemi a ujeté kilometry jsou dopočtené z jízdního řádu, rychlíky vedeme po trati přes stanice, kde nestaví. Podle jízdního řádu, ne skutečné polohy vlaků.
+    </p>
+  </div>
+) : (
+  <div class="vl-panel" data-vl-panel hidden>
+    <div class="hledani" style="width: 100%;">
+      <div class="hledani__pole">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
+        <input type="search" enterkeyhint="search" placeholder="Najdi stanici" aria-label="Najdi stanici" data-vl-hledat />
+      </div>
+      <ul class="naseptavac" data-vl-naseptavac hidden></ul>
+    </div>
+    <div class="mapa__detail vl-detail" aria-live="polite" data-vl-detail>
+      <span class="maly">Stanice</span>
+      <span class="jmeno">Klepni na stanici v mapě</span>
+      <span class="radek">Ukážu, kolik vlaků z ní za den odjede a které pojedou jako další.</span>
+    </div>
+    <div class="vl-poradi">
+      <h2>Nejrušnější stanice</h2>
+      <p class="drobne" style="padding-left: 0.4rem; font-size: 0.8rem;">Odjezdy osobních vlaků za celý den</p>
+      <ol class="poradi" data-vl-poradi></ol>
+    </div>
+  </div>
+)}
+
+<script is:inline>
+  // Odkaz #v=vlaky si zapamatujeme dřív, než ho stránka mapy přepíše na výchozí vrstvu.
+  window.__dcHashVlaky = window.__dcHashVlaky ?? location.hash;
+</script>
+
+<style>
+  .vl { display: flex; flex-direction: column; gap: 1rem; }
+  .vl[hidden], .vl-panel[hidden] { display: none; }
+  .vl__hlava { display: flex; flex-wrap: wrap; gap: 0.75rem 1rem; align-items: flex-start; justify-content: space-between; }
+  .vl__titul { font-size: clamp(1.25rem, 2.4vw, 1.6rem); }
+  .vl__legenda { display: flex; gap: 0.9rem; list-style: none; margin: 0; padding: 0.35rem 0 0; font-size: 0.82rem; font-weight: 800; color: var(--navy); }
+  .vl__legenda li { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .vl__bod { width: 11px; height: 11px; border-radius: 50%; background: var(--navy); box-shadow: 0 0 0 2px rgba(27, 42, 74, 0.15); }
+  .vl__bod--dalkovy { background: var(--orange); box-shadow: 0 0 0 2px rgba(240, 136, 41, 0.25); }
+
+  .vl__platno { position: relative; border-radius: 16px; background: var(--plocha-2); }
+  .vl__plocha { position: relative; }
+  .vl-svg { width: 100%; height: auto; max-height: 70vh; max-height: 70svh; display: block; touch-action: pan-y; user-select: none; -webkit-user-select: none; --s: 1; }
+  .vl-svg:global(.je-priblizeno) { touch-action: none; cursor: grab; }
+  .vl-svg:global(.se-taha) { cursor: grabbing; }
+  .vl-platno { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .vl-podstin { fill: #EFE8DA; }
+  .vl-kraje path { fill: #F7F3EB; stroke: #FFFFFF; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+  .vl-obrys { fill: none; stroke: var(--navy); stroke-width: 1.4; stroke-opacity: 0.35; vector-effect: non-scaling-stroke; }
+  .vl-sit path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  .vl-sit0 { stroke: #CFC7B8; stroke-width: 0.8; }
+  .vl-sit1 { stroke: #B8AE9D; stroke-width: 1.1; }
+  .vl-sit2 { stroke: #9C9282; stroke-width: 1.6; }
+  .vl-skaluj { transform: scale(var(--s)); }
+  .vl-mesta text { font-size: 10.5px; font-weight: 800; fill: var(--navy); fill-opacity: 0.75; paint-order: stroke; stroke: rgba(247, 243, 235, 0.9); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+  @media (max-width: 640px) { .vl-mesta text { font-size: 9px; } }
+
+  .vl__hodiny { position: absolute; left: 0.9rem; top: 0.7rem; display: flex; flex-direction: column; line-height: 1; pointer-events: none; }
+  .vl__hodiny span { font-size: clamp(1.8rem, 4.4vw, 2.8rem); font-weight: 900; color: var(--navy); font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+  .vl__hodiny small { margin-top: 0.3rem; font-size: 0.78rem; font-weight: 800; color: var(--orange-text); }
+  @media (max-width: 700px) { .vl__plocha { display: flex; flex-direction: column; } .vl__hodiny { position: static; order: -1; flex-direction: row; align-items: baseline; gap: 0.6rem; padding: 0.2rem 0 0.5rem; } }
+  .vl__nacitani { position: absolute; inset: 0; display: grid; place-items: center; font-weight: 800; color: var(--muted); pointer-events: none; transition: opacity 0.3s ease; }
+  .vl__nacitani.je-hotovo { opacity: 0; }
+  .vl__tip {
+    position: absolute; pointer-events: none; z-index: 8; transform: translate(-50%, calc(-100% - 12px));
+    background: var(--navy); color: var(--cream); padding: 0.45rem 0.75rem; border-radius: 10px;
+    font-size: 0.82rem; font-weight: 700; white-space: nowrap; box-shadow: 0 8px 20px rgba(27, 42, 74, 0.25);
+  }
+  .vl__tip small { display: block; font-weight: 600; color: #D9D3C7; font-size: 0.74rem; }
+  @media (max-width: 700px) { .vl__platno .zoom-ovladani { position: static; width: max-content; margin: 0.45rem 0 0 auto; flex-direction: row; } .vl__platno { background: transparent; } }
+
+  .vl__cas { display: flex; align-items: center; gap: 1rem; padding: 0.7rem 1rem; border-radius: 16px; background: var(--plocha-2); border: 1px solid var(--line); }
+  .vl__prehrat { width: 46px; height: 46px; flex-shrink: 0; border-radius: 50%; border: 0; background: var(--navy); color: var(--cream); cursor: pointer; display: grid; place-items: center; transition: transform var(--stisk) var(--ease-out); }
+  .vl__prehrat:active { transform: scale(0.94); }
+  .vl__osa { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
+  .vl__graf { width: 100%; height: 38px; display: block; }
+  .vl__graf-plocha { fill: rgba(27, 42, 74, 0.13); }
+  .vl__graf-hotovo { fill: rgba(240, 136, 41, 0.55); }
+  .vl__graf-kurzor { stroke: var(--navy); stroke-width: 2; vector-effect: non-scaling-stroke; }
+  .vl__osa input { width: 100%; margin: 0; accent-color: var(--orange); }
+  .vl__osa-popisky { display: flex; justify-content: space-between; font-size: 0.7rem; font-weight: 700; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .vl__rychlost button { min-height: 36px; padding: 0 0.7rem; font-size: 0.82rem; }
+  @media (max-width: 560px) { .vl__cas { flex-wrap: wrap; gap: 0.6rem 0.8rem; } .vl__osa { flex-basis: calc(100% - 60px); } .vl__rychlost { margin-left: auto; } }
+
+  .vl__cisla { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.6rem; }
+  .vl__cislo { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.75rem 0.9rem; border-radius: 16px; background: var(--paper); border: 1px solid var(--line); min-width: 0; }
+  .vl__cislo span { font-size: 0.76rem; font-weight: 800; color: var(--muted); }
+  .vl__cislo strong { font-size: clamp(1.25rem, 2.6vw, 1.75rem); font-weight: 900; color: var(--navy); font-variant-numeric: tabular-nums; line-height: 1.15; }
+  .vl__cislo small { font-size: 0.74rem; font-weight: 700; color: var(--muted); }
+  .vl__cislo--odhad strong { color: var(--teal); }
+  .vl__cislo--odhad em { font-style: normal; margin-left: 0.25rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: rgba(30, 158, 145, 0.12); color: #146F66; font-size: 0.68rem; }
+  @media (max-width: 520px) { .vl__cisla { gap: 0.4rem; } .vl__cislo { padding: 0.55rem 0.6rem; } .vl__cislo span { font-size: 0.68rem; line-height: 1.25; } .vl__cislo strong { font-size: 1.12rem; } .vl__cislo small { font-size: 0.66rem; } .vl__cislo--odhad em { display: inline-block; margin: 0.15rem 0 0; } }
+
+  .vl__dopravci { display: flex; flex-direction: column; gap: 0.5rem; }
+  .vl__dopravci-titul { font-size: 0.82rem; font-weight: 800; color: var(--navy); }
+  .vl__dopravci-titul small { font-weight: 600; color: var(--muted); margin-left: 0.35rem; }
+  .vl__chipy { display: flex; flex-wrap: wrap; gap: 0.4rem; }
+  .vl__chipy :global(button) {
+    display: inline-flex; align-items: center; gap: 0.45rem; min-height: 36px; padding: 0 0.75rem; border: 1.5px solid var(--line); border-radius: 999px;
+    background: var(--paper); color: var(--navy); font-family: inherit; font-size: 0.8rem; font-weight: 800; cursor: pointer;
+    transition: transform var(--stisk) var(--ease-out), border-color 0.2s ease, opacity 0.2s ease; touch-action: manipulation;
+  }
+  .vl__chipy :global(button b) { font-variant-numeric: tabular-nums; color: var(--orange-text); font-weight: 900; min-width: 2.2ch; text-align: right; }
+  .vl__chipy :global(button[aria-pressed='false']) { opacity: 0.45; border-style: dashed; }
+  .vl__chipy :global(button[aria-pressed='false'] b) { color: var(--muted); }
+  .vl__chipy :global(button:active) { transform: scale(0.96); }
+  @media (hover: hover) and (pointer: fine) { .vl__chipy :global(button:hover) { border-color: var(--navy); } }
+  .vl__zdroj { font-size: 0.78rem; padding-top: 0.8rem; border-top: 1px solid var(--line); }
+
+  .vl-panel { display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
+  .vl-detail { background: var(--navy); color: var(--cream); border-radius: 20px; padding: 1.3rem 1.4rem; min-height: 150px; display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
+  .vl-poradi { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin-maly); padding: 1.1rem 0.9rem 0.9rem; display: flex; flex-direction: column; gap: 0.35rem; min-height: 0; }
+  .vl-poradi h2 { font-size: 1.05rem; padding-left: 0.4rem; }
+  .vl-poradi ol { list-style: none; margin: 0.3rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.1rem; overflow-y: auto; min-height: 0; }
+  .vl-detail :global(.vl-hodiny) { display: flex; align-items: flex-end; gap: 2px; height: 54px; margin-top: 0.35rem; }
+  .vl-detail :global(.vl-hodiny i) { flex: 1 1 0; border-radius: 2px 2px 0 0; background: rgba(242, 237, 227, 0.32); min-height: 2px; }
+  .vl-detail :global(.vl-hodiny i.je-ted) { background: var(--orange); }
+  .vl-detail :global(.vl-hodiny-osa) { display: flex; justify-content: space-between; font-size: 0.68rem; font-weight: 700; color: #B9B3A7; }
+  .vl-detail :global(.vl-odjezdy) { list-style: none; margin: 0.3rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
+  .vl-detail :global(.vl-odjezdy li) { display: grid; grid-template-columns: 3.1rem 4.6rem minmax(0, 1fr); gap: 0.4rem; align-items: baseline; font-size: 0.84rem; font-weight: 700; }
+  .vl-detail :global(.vl-odjezdy b) { font-variant-numeric: tabular-nums; color: var(--orange); font-weight: 900; }
+  .vl-detail :global(.vl-odjezdy .vl-vlak) { color: #D9D3C7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vl-detail :global(.vl-odjezdy .vl-smer) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vl-poradi { flex: 1 1 auto; }
+  @media (max-width: 1060px) { .vl-panel { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } .vl-panel .hledani { grid-column: 1 / -1; } }
+  @media (max-width: 700px) { .vl-panel { grid-template-columns: 1fr; } }
+</style>
+
+<script>
+  import { zoomSkupiny, type Zoom } from '../lib/zoom';
+  import { naseptavac } from '../lib/naseptavac';
+
+  type Data = {
+    den: string; zdroj: string; skupiny: string[]; uzly: [number, number][]; jmena: string[]; cile: string[]; sit: string[];
+    spoje: [number, number, string, number, number, number[], number[]][];
+    beh: number[][]; odj: number[][]; km: number[][];
+  };
+  type Spoj = { g: number; dal: boolean; nazev: string; cil: number; uz: Int32Array; od: Uint8Array; ca: Float32Array; t0: number; t1: number };
+
+  const koren = document.querySelector<HTMLElement>('[data-vl]');
+  const panel = document.querySelector<HTMLElement>('[data-vl-panel]');
+  const tlacitko = document.querySelector<HTMLButtonElement>('[data-vlaky]');
+  const stranka = document.querySelector<HTMLElement>('.mapa-stranka');
+  if (koren && panel && tlacitko && stranka) {
+    const $ = <T extends Element>(s: string, r: ParentNode = document) => r.querySelector<T>(s)!;
+    const svg = $<SVGSVGElement>('[data-vl-svg]', koren);
+    const g = $<SVGGElement>('[data-vl-zoom]', koren);
+    const platno = $<HTMLCanvasElement>('[data-vl-canvas]', koren);
+    const ctx = platno.getContext('2d')!;
+    const plocha = $<HTMLElement>('[data-vl-plocha]', koren);
+    const elHodiny = $<HTMLElement>('[data-vl-hodiny]', koren);
+    const elFaze = $<HTMLElement>('[data-vl-faze]', koren);
+    const elPosuvnik = $<HTMLInputElement>('[data-vl-posuvnik]', koren);
+    const elPrehrat = $<HTMLButtonElement>('[data-vl-prehrat]', koren);
+    const elTip = $<HTMLElement>('[data-vl-tip]', koren);
+    const elDetail = $<HTMLElement>('[data-vl-detail]', panel);
+    const elPoradi = $<HTMLElement>('[data-vl-poradi]', panel);
+    const klidne = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const IKONA_PLAY = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>';
+    const IKONA_PAUZA = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7z M13.5 5H17v14h-3.5z" fill="currentColor"/></svg>';
+    const cislo = (v: number) => new Intl.NumberFormat('cs-CZ').format(Math.round(v));
+    const cas = (m: number) => { const x = Math.min(1440, Math.max(0, Math.floor(m))); return `${Math.floor(x / 60)}:${String(x % 60).padStart(2, '0')}`; };
+    const faze = (m: number) => (m < 270 ? 'noc' : m < 360 ? 'brzké ráno' : m < 510 ? 'ranní špička' : m < 840 ? 'dopoledne a poledne' : m < 1080 ? 'odpolední špička' : m < 1320 ? 'večer' : 'noc');
+    const KRATKE = ['ČD', 'Arriva', 'RegioJet', 'GW Train', 'Länderbahn', 'Leo Express', 'ostatní'];
+
+    let D: Data | null = null;
+    let spoje: Spoj[] = [];
+    let X = new Float32Array(0), Y = new Float32Array(0);
+    let stanice: number[] = []; // uzly s aspoň jedním odjezdem
+    let odjezdu = new Int32Array(0);
+    let m = 390; // 6:30
+    let rychlost = 30; // minut dne za sekundu
+    let hraje = false;
+    let aktivni = false;
+    let zapnute = [true, true, true, true, true, true, true];
+    let vybrana: number | null = null;
+    let najeto: number | null = null;
+    let zoom: Zoom | null = null;
+    let zAkt = 1;
+    let posledni = 0;
+    let snimek = 0;
+    let nacitani: Promise<void> | null = null;
+
+    // --- zapnutí a vypnutí vrstvy
+    function zapni(zHashe = false) {
+      aktivni = true;
+      stranka!.classList.add('mapa-stranka--vlaky');
+      koren!.hidden = false; panel!.hidden = false;
+      for (const b of document.querySelectorAll<HTMLButtonElement>('[data-vrstva]')) b.setAttribute('aria-pressed', 'false');
+      tlacitko!.setAttribute('aria-pressed', 'true');
+      meritko();
+      nacti().then(() => {
+        if (!zHashe && !klidne && !hraje && m < 1440) hraj();
+        prekresli();
+      });
+      zapisHash();
+    }
+    function vypni() {
+      if (!aktivni) return;
+      aktivni = false;
+      zastav();
+      stranka!.classList.remove('mapa-stranka--vlaky');
+      koren!.hidden = true; panel!.hidden = true;
+      tlacitko!.setAttribute('aria-pressed', 'false');
+    }
+    tlacitko.addEventListener('click', () => { if (!aktivni) zapni(); });
+    // Kliknutí na jinou vrstvu mapy vlaky vypne (stránka mapy si pak vrstvu vykreslí sama).
+    document.addEventListener('click', (e) => {
+      const b = (e.target as Element).closest('[data-vrstva]');
+      if (b && aktivni) vypni();
+    }, true);
+    for (const a of document.querySelectorAll<HTMLAnchorElement>('[data-vlaky-odkaz]')) a.addEventListener('click', (e) => {
+      e.preventDefault();
+      if (!aktivni) zapni();
+      koren!.closest('.mc')?.scrollIntoView({ behavior: klidne ? 'auto' : 'smooth', block: 'start' });
+    });
+
+    // --- načtení dat
+    function nacti() {
+      if (nacitani) return nacitani;
+      nacitani = fetch('/data/vlaky.json').then((r) => r.json()).then((d: Data) => {
+        D = d;
+        X = new Float32Array(d.uzly.map((u) => u[0]));
+        Y = new Float32Array(d.uzly.map((u) => u[1]));
+        odjezdu = new Int32Array(d.uzly.length);
+        spoje = d.spoje.filter((s) => s[5].length > 1).map(([gr, fl, nazev, cil, t0, uz, dt]) => {
+          const n = uz.length;
+          const u = new Int32Array(n), od = new Uint8Array(n), ca = new Float32Array(n);
+          let t = t0;
+          for (let i = 0; i < n; i++) {
+            t += dt[i];
+            u[i] = uz[i] >> 2; od[i] = uz[i] & 2 ? 1 : 0; ca[i] = t / 10;
+            if (od[i] && ca[i] >= 0 && ca[i] < 1440) odjezdu[u[i]]++;
+          }
+          return { g: gr, dal: (fl & 1) === 1, nazev, cil, uz: u, od, ca, t0: ca[0], t1: ca[n - 1] };
+        });
+        stanice = [];
+        for (let i = 0; i < odjezdu.length; i++) if (odjezdu[i] > 0) stanice.push(i);
+        for (const p of koren!.querySelectorAll<SVGPathElement>('[data-vl-sit]')) p.setAttribute('d', d.sit[Number(p.dataset.vlSit)]);
+        $<HTMLElement>('[data-vl-nacitani]', koren!).classList.add('je-hotovo');
+        stavChipy();
+        grafPlocha();
+        poradiStanic();
+        hledani();
+        const par = new URLSearchParams((window as any).__dcHashVlaky?.slice(1) ?? '');
+        const s = par.get('stanice');
+        if (s) { const i = d.jmena.indexOf(s); if (i >= 0 && odjezdu[i]) vyberStanici(i, false); }
+      }).catch(() => {
+        $<HTMLElement>('[data-vl-nacitani]', koren!).textContent = 'Jízdní řád se nepodařilo načíst. Zkus stránku obnovit.';
+      });
+      return nacitani;
+    }
+
+    // --- poloha vlaku v čase
+    function poloha(s: Spoj, t: number, out: Float32Array): boolean {
+      if (t < s.t0 || t > s.t1) return false;
+      const c = s.ca;
+      let lo = 0, hi = c.length - 1;
+      while (hi - lo > 1) { const md = (lo + hi) >> 1; if (c[md] <= t) lo = md; else hi = md; }
+      const a = s.uz[lo], b = s.uz[hi];
+      const f = c[hi] > c[lo] ? Math.min(1, Math.max(0, (t - c[lo]) / (c[hi] - c[lo]))) : 0;
+      out[0] = X[a] + (X[b] - X[a]) * f; out[1] = Y[a] + (Y[b] - Y[a]) * f;
+      return true;
+    }
+
+    // --- kreslení
+    let dpr = 1;
+    function velikost() {
+      const r = plocha.getBoundingClientRect();
+      dpr = Math.min(2, window.devicePixelRatio || 1);
+      const w = Math.round(r.width * dpr), h = Math.round(r.height * dpr);
+      if (platno.width !== w || platno.height !== h) { platno.width = w; platno.height = h; }
+    }
+    let u = 1;
+    const nastavS = () => svg.style.setProperty('--s', (u / zAkt).toFixed(4));
+    function meritko() { u = 1000 / Math.max(240, svg.getBoundingClientRect().width); nastavS(); velikost(); }
+    new ResizeObserver(() => { if (aktivni) { meritko(); prekresli(); } }).observe(plocha);
+
+    const A = new Float32Array(2), B = new Float32Array(2);
+    const pocetBeh = new Int32Array(7);
+    function kresli() {
+      if (!D) return;
+      const cr = plocha.getBoundingClientRect();
+      const M = g.getScreenCTM();
+      if (!M || !cr.width) return;
+      const sx = M.a * dpr, ox = (M.e - cr.left) * dpr, oy = (M.f - cr.top) * dpr;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.clearRect(0, 0, platno.width, platno.height);
+      const zz = Math.max(1, zAkt);
+      const r = (2.1 + 0.9 * Math.log2(zz)) * dpr;
+      const rd = r * 1.25;
+      const stopa = Math.min(5, 3.2 / Math.sqrt(zz)); // minuty dozadu
+      pocetBeh.fill(0);
+      const tecky = [new Path2D(), new Path2D()];
+      const stopy = [new Path2D(), new Path2D()];
+      for (const s of spoje) {
+        if (!poloha(s, m, A)) continue;
+        pocetBeh[s.g]++;
+        if (!zapnute[s.g]) continue;
+        const x = A[0] * sx + ox, y = A[1] * sx + oy;
+        const k = s.dal ? 1 : 0;
+        if (poloha(s, m - stopa, B)) { const bx = B[0] * sx + ox, by = B[1] * sx + oy; if ((bx - x) ** 2 + (by - y) ** 2 > 1) { stopy[k].moveTo(bx, by); stopy[k].lineTo(x, y); } }
+        const rr = k ? rd : r;
+        tecky[k].moveTo(x + rr, y); tecky[k].arc(x, y, rr, 0, Math.PI * 2);
+      }
+      ctx.lineCap = 'round';
+      ctx.lineWidth = r * 1.5;
+      ctx.strokeStyle = 'rgba(27, 42, 74, 0.22)'; ctx.stroke(stopy[0]);
+      ctx.strokeStyle = 'rgba(240, 136, 41, 0.35)'; ctx.lineWidth = rd * 1.5; ctx.stroke(stopy[1]);
+      ctx.fillStyle = '#1B2A4A'; ctx.fill(tecky[0]);
+      ctx.fillStyle = '#F08829'; ctx.fill(tecky[1]);
+      ctx.lineWidth = 0.9 * dpr; ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; ctx.stroke(tecky[1]);
+      // vybraná a najetá stanice
+      for (const [i, barva] of [[najeto, 'rgba(27, 42, 74, 0.55)'], [vybrana, '#F08829']] as [number | null, string][]) {
+        if (i === null) continue;
+        const x = X[i] * sx + ox, y = Y[i] * sx + oy;
+        ctx.beginPath(); ctx.arc(x, y, 8 * dpr, 0, Math.PI * 2);
+        ctx.lineWidth = 3 * dpr; ctx.strokeStyle = '#FFFFFF'; ctx.stroke();
+        ctx.lineWidth = 2 * dpr; ctx.strokeStyle = barva; ctx.stroke();
+      }
+      ukazatele();
+    }
+
+    // --- čísla, graf, posuvník
+    const sectiSkupiny = (pole: number[][], i: number) => pole.reduce((a, row, k) => a + (zapnute[k] ? row[i] : 0), 0);
+    function ukazatele() {
+      if (!D) return;
+      const i = Math.min(1439, Math.max(0, Math.floor(m) - 1));
+      const beh = pocetBeh.reduce((a, v, k) => a + (zapnute[k] ? v : 0), 0);
+      $<HTMLElement>('[data-vl-beh]', koren!).textContent = cislo(beh);
+      $<HTMLElement>('[data-vl-odj]', koren!).textContent = cislo(m <= 0 ? 0 : sectiSkupiny(D.odj, i));
+      $<HTMLElement>('[data-vl-odj-z]', koren!).textContent = `z ${cislo(sectiSkupiny(D.odj, 1439))} za celý den`;
+      $<HTMLElement>('[data-vl-km]', koren!).textContent = `${cislo(m <= 0 ? 0 : Math.round(sectiSkupiny(D.km, i) / 100) * 100)}`;
+      elHodiny.textContent = cas(m);
+      elFaze.textContent = m >= 1440 ? 'konec dne' : faze(m);
+      elPosuvnik.value = String(Math.round(m));
+      $<SVGLineElement>('[data-vl-kurzor]', koren!).setAttribute('x1', String(m));
+      $<SVGLineElement>('[data-vl-kurzor]', koren!).setAttribute('x2', String(m));
+      grafHotovo();
+      for (const b of koren!.querySelectorAll<HTMLButtonElement>('[data-vl-skupina]')) {
+        const k = Number(b.dataset.vlSkupina);
+        b.querySelector('b')!.textContent = cislo(pocetBeh[k]);
+      }
+      if (vybrana !== null && Math.floor(m) !== posledniMinutaDetailu) detailStanice();
+    }
+    let maxBeh = 1;
+    function radaBehu() { return D ? D.beh[0].map((_, i) => sectiSkupiny(D!.beh, i)) : []; }
+    function cestaPlochy(rada: number[], doM: number) {
+      const n = Math.min(1440, Math.max(0, Math.round(doM)));
+      if (n < 1) return '';
+      let d = `M0 100`;
+      for (let i = 0; i < n; i++) d += `L${i} ${(100 - (rada[i] / maxBeh) * 96).toFixed(1)}`;
+      return `${d}L${n - 1} 100Z`;
+    }
+    let rada: number[] = [];
+    function grafPlocha() {
+      rada = radaBehu();
+      maxBeh = Math.max(1, ...D!.beh[0].map((_, i) => D!.beh.reduce((a, r) => a + r[i], 0)));
+      $<SVGPathElement>('[data-vl-graf]', koren!).setAttribute('d', cestaPlochy(rada, 1440));
+    }
+    function grafHotovo() { $<SVGPathElement>('[data-vl-graf-hotovo]', koren!).setAttribute('d', cestaPlochy(rada, m)); }
+
+    // --- přehrávání
+    function smycka(t: number) {
+      if (!hraje) return;
+      const dt = Math.min(0.1, (t - posledni) / 1000);
+      posledni = t;
+      m = Math.min(1440, m + dt * rychlost);
+      kresli();
+      if (m >= 1440) { zastav(); zapisHash(); return; }
+      snimek = requestAnimationFrame(smycka);
+    }
+    function hraj() {
+      if (!D) return;
+      if (m >= 1440) m = 0;
+      hraje = true; posledni = performance.now();
+      elPrehrat.innerHTML = IKONA_PAUZA; elPrehrat.setAttribute('aria-label', 'Zastavit');
+      snimek = requestAnimationFrame(smycka);
+    }
+    function zastav() {
+      hraje = false; cancelAnimationFrame(snimek);
+      elPrehrat.innerHTML = IKONA_PLAY; elPrehrat.setAttribute('aria-label', 'Přehrát den');
+    }
+    elPrehrat.addEventListener('click', () => { if (hraje) { zastav(); zapisHash(); } else hraj(); });
+    let cekaHash = 0;
+    elPosuvnik.addEventListener('input', () => { zastav(); m = Number(elPosuvnik.value); prekresli(); clearTimeout(cekaHash); cekaHash = window.setTimeout(zapisHash, 300); });
+    for (const b of koren.querySelectorAll<HTMLButtonElement>('[data-vl-rychlost]')) b.addEventListener('click', () => {
+      rychlost = Number(b.dataset.vlRychlost);
+      for (const x of koren!.querySelectorAll<HTMLButtonElement>('[data-vl-rychlost]')) x.setAttribute('aria-pressed', String(x === b));
+    });
+    // klepnutí do grafu nad posuvníkem
+    const graf = $<SVGSVGElement>('.vl__graf', koren);
+    graf.addEventListener('pointerdown', (e) => {
+      const r = graf.getBoundingClientRect();
+      zastav(); m = Math.round(((e.clientX - r.left) / r.width) * 1440); prekresli(); zapisHash();
+    });
+    let ceka = 0;
+    function prekresli() { if (hraje) return; cancelAnimationFrame(ceka); ceka = requestAnimationFrame(kresli); }
+
+    // --- dopravci
+    function stavChipy() {
+      const el = $<HTMLElement>('[data-vl-dopravci]', koren!);
+      el.replaceChildren(...D!.skupiny.map((n, k) => {
+        const b = document.createElement('button');
+        b.type = 'button'; b.dataset.vlSkupina = String(k);
+        b.setAttribute('aria-pressed', 'true');
+        b.title = `${n}: ${cislo(D!.odj[k][1439])} vlaků za den`;
+        b.append(KRATKE[k], document.createElement('b'));
+        b.addEventListener('click', () => {
+          zapnute[k] = !zapnute[k];
+          if (!zapnute.some(Boolean)) zapnute = zapnute.map(() => true);
+          for (const x of el.querySelectorAll<HTMLButtonElement>('button')) x.setAttribute('aria-pressed', String(zapnute[Number(x.dataset.vlSkupina)]));
+          grafPlocha(); prekresli();
+        });
+        return b;
+      }));
+    }
+
+    // --- stanice: najetí, výběr, detail
+    function doSvg(cx: number, cy: number) {
+      const M = g.getScreenCTM();
+      if (!M) return null;
+      const p = new DOMPoint(cx, cy).matrixTransform(M.inverse());
+      return { x: p.x, y: p.y, px: 1 / M.a };
+    }
+    function nejblizsi(cx: number, cy: number, dosah = 12): number | null {
+      const p = doSvg(cx, cy);
+      if (!p) return null;
+      let best: number | null = null, bd = (dosah * p.px) ** 2;
+      for (const i of stanice) {
+        const d = (X[i] - p.x) ** 2 + (Y[i] - p.y) ** 2;
+        // větší stanice mají větší dosah, ať se dají trefit i v hustém okolí
+        const vaha = odjezdu[i] > 150 ? 0.5 : 1;
+        if (d * vaha < bd) { bd = d * vaha; best = i; }
+      }
+      return best;
+    }
+    svg.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse' || !D) return;
+      const i = nejblizsi(e.clientX, e.clientY);
+      if (i !== najeto) { najeto = i; prekresli(); }
+      const r = plocha.getBoundingClientRect();
+      elTip.hidden = i === null;
+      if (i !== null) {
+        elTip.replaceChildren(D.jmena[i], Object.assign(document.createElement('small'), { textContent: `${cislo(odjezdu[i])} odjezdů za den` }));
+        elTip.style.left = `${e.clientX - r.left}px`; elTip.style.top = `${e.clientY - r.top}px`;
+      }
+    });
+    svg.addEventListener('pointerleave', () => { elTip.hidden = true; if (najeto !== null) { najeto = null; prekresli(); } });
+    svg.addEventListener('click', (e) => {
+      if (!D || zoom?.poTazeni()) return;
+      const i = nejblizsi(e.clientX, e.clientY, (e as PointerEvent).pointerType === 'touch' ? 22 : 14);
+      if (i === null) { if (vybrana !== null) { vybrana = null; detailStanice(); prekresli(); zapisHash(); } return; }
+      vyberStanici(vybrana === i ? null : i, false);
+    });
+
+    let odjezdyStanice: { t: number; s: Spoj }[] = [];
+    let posledniMinutaDetailu = -1;
+    function vyberStanici(i: number | null, priblizit = true) {
+      vybrana = i;
+      odjezdyStanice = [];
+      if (i !== null) {
+        for (const s of spoje) for (let k = 0; k < s.uz.length; k++) if (s.uz[k] === i && s.od[k]) odjezdyStanice.push({ t: s.ca[k], s });
+        odjezdyStanice.sort((a, b) => a.t - b.t);
+        if (priblizit && zoom) zoom.naObdelnik([X[i] - 70, Y[i] - 42, X[i] + 70, Y[i] + 42], 3.5);
+      }
+      for (const b of elPoradi.querySelectorAll<HTMLButtonElement>('button')) b.setAttribute('aria-pressed', String(Number(b.dataset.uzel) === i));
+      detailStanice(); prekresli(); zapisHash();
+    }
+    function detailStanice() {
+      posledniMinutaDetailu = Math.floor(m);
+      const el = (tag: string, cls?: string, text?: string) => { const x = document.createElement(tag); if (cls) x.className = cls; if (text !== undefined) x.textContent = text; return x; };
+      if (vybrana === null || !D) {
+        elDetail.replaceChildren(el('span', 'maly', 'Stanice'), el('span', 'jmeno', 'Klepni na stanici v mapě'), el('span', 'radek', 'Ukážu, kolik vlaků z ní za den odjede a které pojedou jako další.'));
+        return;
+      }
+      const dnes = odjezdyStanice.filter((o) => o.t >= 0 && o.t < 1440);
+      const hod = new Array(24).fill(0);
+      for (const o of dnes) hod[Math.floor(o.t / 60)]++;
+      const maxH = Math.max(1, ...hod);
+      const hodiny = el('div', 'vl-hodiny');
+      hodiny.setAttribute('aria-hidden', 'true');
+      hod.forEach((v, h) => { const i = el('i'); i.style.height = `${Math.max(4, (v / maxH) * 100)}%`; if (h === Math.min(23, Math.floor(m / 60))) i.className = 'je-ted'; hodiny.append(i); });
+      const osa = el('div', 'vl-hodiny-osa'); osa.append(el('span', undefined, '0'), el('span', undefined, '6'), el('span', undefined, '12'), el('span', undefined, '18'), el('span', undefined, '24 h'));
+      const dalsi = dnes.filter((o) => o.t >= m).slice(0, 5);
+      const seznam = el('ol', 'vl-odjezdy');
+      for (const o of dalsi) {
+        const li = el('li');
+        li.append(el('b', undefined, cas(o.t)), el('span', 'vl-vlak', o.s.nazev), el('span', 'vl-smer', D.cile[o.s.cil] || '—'));
+        li.title = `${o.s.nazev} směr ${D.cile[o.s.cil]}, ${D.skupiny[o.s.g]}`;
+        seznam.append(li);
+      }
+      const zrusit = el('button', undefined, 'Zrušit výběr') as HTMLButtonElement;
+      zrusit.type = 'button';
+      zrusit.addEventListener('click', () => vyberStanici(null, false));
+      elDetail.replaceChildren(
+        el('span', 'maly', 'Stanice'),
+        el('span', 'jmeno', D.jmena[vybrana]),
+        el('span', 'velky', `${cislo(dnes.length)} odjezdů`),
+        el('span', 'radek', 'za celý den, podle hodin:'),
+        hodiny, osa,
+        el('span', 'maly', dalsi.length ? `Nejbližší odjezdy po ${cas(m)}` : `Po ${cas(m)} už žádný vlak neodjíždí`),
+        seznam, zrusit,
+      );
+    }
+    function poradiStanic() {
+      const top = [...stanice].sort((a, b) => odjezdu[b] - odjezdu[a]).slice(0, 12);
+      const max = odjezdu[top[0]];
+      elPoradi.replaceChildren(...top.map((i, k) => {
+        const li = document.createElement('li');
+        const b = document.createElement('button');
+        b.type = 'button'; b.dataset.uzel = String(i); b.setAttribute('aria-pressed', 'false');
+        const jm = document.createElement('span'); jm.className = 'p-jmeno';
+        const n = document.createElement('span'); n.textContent = D!.jmena[i];
+        const pruh = document.createElement('span'); pruh.className = 'p-pruh'; pruh.style.width = `${(odjezdu[i] / max) * 100}%`; pruh.style.background = k === 0 ? '#F08829' : '#1B2A4A';
+        jm.append(n, pruh);
+        const poz = document.createElement('span'); poz.className = 'p-poz'; poz.textContent = `${k + 1}.`;
+        const hodn = document.createElement('span'); hodn.className = 'p-hodnota'; hodn.textContent = cislo(odjezdu[i]);
+        b.append(poz, jm, hodn);
+        b.addEventListener('click', () => vyberStanici(vybrana === i ? null : i));
+        li.append(b);
+        return li;
+      }));
+    }
+    function hledani() {
+      const polozky = stanice.map((i) => ({ kod: String(i), nazev: D!.jmena[i], popis: `${cislo(odjezdu[i])} odjezdů za den` }));
+      naseptavac($<HTMLInputElement>('[data-vl-hledat]', panel!), $<HTMLElement>('[data-vl-naseptavac]', panel!), polozky, (p) => {
+        vyberStanici(Number(p.kod));
+        koren!.scrollIntoView({ behavior: klidne ? 'auto' : 'smooth', block: 'nearest' });
+      }, { vymazat: true });
+    }
+
+    // --- přiblížení
+    zoom = zoomSkupiny(svg, g, {
+      sirka: 1000, vyska: 578, max: 9, napoveda: $<HTMLElement>('[data-vl-napoveda]', koren),
+      onZmena: (z) => {
+        zAkt = z; nastavS();
+        $<HTMLButtonElement>('[data-vl-minus]', koren!).disabled = z <= 1.01;
+        $<HTMLButtonElement>('[data-vl-reset]', koren!).disabled = z <= 1.01;
+        prekresli();
+      },
+    });
+    $<HTMLButtonElement>('[data-vl-plus]', koren).addEventListener('click', () => zoom!.plus());
+    $<HTMLButtonElement>('[data-vl-minus]', koren).addEventListener('click', () => zoom!.minus());
+    $<HTMLButtonElement>('[data-vl-reset]', koren).addEventListener('click', () => zoom!.reset());
+
+    // --- odkaz
+    function zapisHash() {
+      if (!aktivni) return;
+      const p = new URLSearchParams({ v: 'vlaky', cas: cas(m).replace(':', '') });
+      if (vybrana !== null && D) p.set('stanice', D.jmena[vybrana]);
+      history.replaceState(null, '', `#${p}`);
+    }
+    // Odkaz #v=vlaky zapne vrstvu až po skriptu stránky mapy, který mezitím vykreslí výchozí vrstvu.
+    const start = new URLSearchParams(((window as any).__dcHashVlaky ?? '').slice(1));
+    if (start.get('v') === 'vlaky') {
+      const c = start.get('cas');
+      if (c && /^\d{3,4}$/.test(c)) m = Math.min(1440, Math.floor(Number(c) / 100) * 60 + (Number(c) % 100));
+      const spust = () => zapni(true);
+      if (document.readyState === 'complete') spust(); else document.addEventListener('DOMContentLoaded', spust, { once: true });
+    }
+  }
+</script>

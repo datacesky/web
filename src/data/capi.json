@@ -1,0 +1,1857 @@
+{
+ "zdroj": "Bobek et al. (2008), Journal of Avian Biology; deník projektu Africká odysea (Český rozhlas 1995–99); Záchranná stanice živočichů Plzeň (2020–21)",
+ "pozn": "Sezóny 1995–2021 v jednom kalendáři od srpna do května. Trasy mezi zaznamenanými polohami jsou zjednodušené.",
+ "ptaci": [
+  {
+   "klic": "kristyna",
+   "jmeno": "Kristýna",
+   "druh": "čáp černý",
+   "sezona": "1995/96",
+   "domov": "Brdy",
+   "strana": "zapad",
+   "konec": "domov",
+   "odhad": false,
+   "nezname": [],
+   "zimoviste": [
+    "Senegal",
+    "Guinea",
+    "Pobřeží slonoviny"
+   ],
+   "body": [
+    {
+     "lat": 49.75,
+     "lon": 13.85,
+     "d": 44,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Brdy",
+     "datum": "14. 9. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 47.98,
+     "lon": 8.82,
+     "d": 47,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Tuttlingen, Německo",
+     "datum": "17. 9. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 37.05,
+     "lon": -3.3,
+     "d": 56,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Sierra Nevada, Španělsko",
+     "datum": "26. 9. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 36.0,
+     "lon": -5.6,
+     "d": 57,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Gibraltar",
+     "datum": "27. 9. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 31.1,
+     "lon": -7.9,
+     "d": 59,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Vysoký Atlas, Maroko",
+     "datum": "29. 9. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 29.6,
+     "lon": -6.0,
+     "d": 62,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "údolí Oued Drâa, Maroko",
+     "datum": "2. 10. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 16.2,
+     "lon": -12.5,
+     "d": 71,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "jižní Mauritánie",
+     "datum": "11. 10. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 13.4,
+     "lon": -12.0,
+     "d": 73,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "řeka Falémé, Senegal",
+     "datum": "13. 10. 1995",
+     "a2": "sn"
+    },
+    {
+     "lat": 13.4,
+     "lon": -12.0,
+     "d": 153,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "řeka Falémé, Senegal",
+     "datum": "1. 1. 1996",
+     "a2": "sn"
+    },
+    {
+     "lat": 13.4,
+     "lon": -12.0,
+     "d": 198,
+     "f": false,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "řeka Falémé, Senegal",
+     "datum": "",
+     "a2": "sn"
+    },
+    {
+     "lat": 10.4,
+     "lon": -10.8,
+     "d": 204,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "vnitrozemí Guineje",
+     "datum": "21. 2. 1996",
+     "a2": "gn"
+    },
+    {
+     "lat": 9.0,
+     "lon": -3.8,
+     "d": 209,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "NP Comoé, Pobřeží slonoviny",
+     "datum": "26. 2. 1996",
+     "a2": "ci"
+    },
+    {
+     "lat": 9.0,
+     "lon": -3.8,
+     "d": 225,
+     "f": false,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "NP Comoé, Pobřeží slonoviny",
+     "datum": "",
+     "a2": "ci"
+    },
+    {
+     "lat": 14.5,
+     "lon": -4.5,
+     "d": 228,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Mali",
+     "datum": "17. 3. 1996",
+     "a2": ""
+    },
+    {
+     "lat": 29.6,
+     "lon": -6.0,
+     "d": 236,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "údolí Oued Drâa, Maroko",
+     "datum": "25. 3. 1996",
+     "a2": ""
+    },
+    {
+     "lat": 36.0,
+     "lon": -5.6,
+     "d": 240.66,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Gibraltar",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 42.6,
+     "lon": 1.0,
+     "d": 246.71,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Pyreneje",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 47.6,
+     "lon": 8.6,
+     "d": 252.04,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Německo",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 49.75,
+     "lon": 13.85,
+     "d": 255,
+     "f": true,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Brdy – zpět na hnízdě",
+     "datum": "13. 4. 1996",
+     "a2": ""
+    }
+   ]
+  },
+  {
+   "klic": "viktor",
+   "jmeno": "Viktor",
+   "druh": "čáp černý",
+   "sezona": "1995/96",
+   "domov": "Rakovnicko",
+   "strana": "vychod",
+   "konec": "domov",
+   "odhad": false,
+   "nezname": [],
+   "zimoviste": [
+    "Čad",
+    "Středoafrická republika"
+   ],
+   "body": [
+    {
+     "lat": 50.1,
+     "lon": 13.73,
+     "d": 29,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Rakovnicko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 49.5,
+     "lon": 15.6,
+     "d": 29,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Vysočina",
+     "datum": "30. 8. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 48.56,
+     "lon": 16.08,
+     "d": 31,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Hollabrunn, Rakousko",
+     "datum": "1. 9. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 47.65,
+     "lon": 17.6,
+     "d": 36,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "řeka Rába, Maďarsko",
+     "datum": "6. 9. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 47.65,
+     "lon": 17.6,
+     "d": 44,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Malá uherská nížina, Maďarsko",
+     "datum": "14. 9. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 46.2,
+     "lon": 21.3,
+     "d": 56,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "západní Rumunsko",
+     "datum": "26. 9. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 40.2,
+     "lon": 26.4,
+     "d": 62,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Dardanely, Turecko",
+     "datum": "2. 10. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 38.6,
+     "lon": 31.5,
+     "d": 65.74,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 36.6,
+     "lon": 36.2,
+     "d": 69.46,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 32.62,
+     "lon": 35.55,
+     "d": 73,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Gesher, Izrael",
+     "datum": "13. 10. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 29.6,
+     "lon": 32.7,
+     "d": 79,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Suezský záliv, Egypt",
+     "datum": "19. 10. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 12.4,
+     "lon": 21.9,
+     "d": 86,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "jihovýchodní Čad",
+     "datum": "26. 10. 1995",
+     "a2": "td"
+    },
+    {
+     "lat": 12.22,
+     "lon": 21.41,
+     "d": 111,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "Goz Beida, Čad",
+     "datum": "20. 11. 1995",
+     "a2": "td"
+    },
+    {
+     "lat": 8.4,
+     "lon": 21.9,
+     "d": 139,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "Středoafrická republika",
+     "datum": "18. 12. 1995",
+     "a2": "cf"
+    },
+    {
+     "lat": 7.9,
+     "lon": 22.6,
+     "d": 153,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "povodí řeky Kotto, SAR",
+     "datum": "1. 1. 1996",
+     "a2": "cf"
+    },
+    {
+     "lat": 7.9,
+     "lon": 22.6,
+     "d": 223,
+     "f": false,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "povodí řeky Kotto, SAR",
+     "datum": "",
+     "a2": "cf"
+    },
+    {
+     "lat": 13.0,
+     "lon": 24.5,
+     "d": 227,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "západní Súdán",
+     "datum": "16. 3. 1996",
+     "a2": ""
+    },
+    {
+     "lat": 18.5,
+     "lon": 35.0,
+     "d": 233,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "severovýchodní Súdán",
+     "datum": "22. 3. 1996",
+     "a2": ""
+    },
+    {
+     "lat": 29.6,
+     "lon": 32.7,
+     "d": 249.86,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Egypt",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 32.6,
+     "lon": 35.5,
+     "d": 255.59,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Izrael",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 37.2,
+     "lon": 35.6,
+     "d": 262.46,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 40.8,
+     "lon": 29.5,
+     "d": 271.34,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 44.8,
+     "lon": 22.0,
+     "d": 281.49,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Balkán",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 48.0,
+     "lon": 17.8,
+     "d": 287.93,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Slovensko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 50.1,
+     "lon": 13.73,
+     "d": 293,
+     "f": true,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Rakovnicko – zpět doma",
+     "datum": "21. 5. 1996",
+     "a2": ""
+    }
+   ]
+  },
+  {
+   "klic": "zuzana",
+   "jmeno": "Zuzana",
+   "druh": "čáp černý",
+   "sezona": "1995/96",
+   "domov": "Rakovnicko",
+   "strana": "vychod",
+   "konec": "domov",
+   "odhad": false,
+   "nezname": [],
+   "zimoviste": [
+    "Etiopie"
+   ],
+   "body": [
+    {
+     "lat": 50.02,
+     "lon": 13.45,
+     "d": 26,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Rakovnicko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 47.2,
+     "lon": 17.0,
+     "d": 31,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "západní Maďarsko",
+     "datum": "1. 9. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 46.2,
+     "lon": 21.4,
+     "d": 44,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "západní Rumunsko",
+     "datum": "14. 9. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 46.2,
+     "lon": 21.4,
+     "d": 60,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "západní Rumunsko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 44.6,
+     "lon": 21.2,
+     "d": 75,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Srbsko",
+     "datum": "15. 10. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 42.2,
+     "lon": 26.6,
+     "d": 80,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "jihovýchodní Bulharsko",
+     "datum": "20. 10. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 41.1,
+     "lon": 29.05,
+     "d": 82,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Bospor",
+     "datum": "22. 10. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 39.0,
+     "lon": 32.5,
+     "d": 89,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Turecko",
+     "datum": "29. 10. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 36.6,
+     "lon": 36.2,
+     "d": 101.02,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 33.18,
+     "lon": 35.63,
+     "d": 112,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "kibuc Amir, Izrael",
+     "datum": "21. 11. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 29.6,
+     "lon": 32.6,
+     "d": 117,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Suezský záliv, Egypt",
+     "datum": "26. 11. 1995",
+     "a2": ""
+    },
+    {
+     "lat": 12.0,
+     "lon": 37.3,
+     "d": 125,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "jezero Tana, Etiopie",
+     "datum": "4. 12. 1995",
+     "a2": "et"
+    },
+    {
+     "lat": 11.8,
+     "lon": 38.0,
+     "d": 143,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "východně od jezera Tana",
+     "datum": "22. 12. 1995",
+     "a2": "et"
+    },
+    {
+     "lat": 11.8,
+     "lon": 38.0,
+     "d": 235,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "odlet ze zimoviště",
+     "datum": "24. 3. 1996",
+     "a2": "et"
+    },
+    {
+     "lat": 23.5,
+     "lon": 33.8,
+     "d": 242,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "jihovýchodní Egypt",
+     "datum": "31. 3. 1996",
+     "a2": ""
+    },
+    {
+     "lat": 29.6,
+     "lon": 32.6,
+     "d": 243,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Suezský záliv, Egypt",
+     "datum": "1. 4. 1996",
+     "a2": ""
+    },
+    {
+     "lat": 29.9,
+     "lon": 33.7,
+     "d": 244,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Sinaj",
+     "datum": "2. 4. 1996",
+     "a2": ""
+    },
+    {
+     "lat": 32.46,
+     "lon": 35.56,
+     "d": 246,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Kfar Ruppin, Izrael",
+     "datum": "4. 4. 1996",
+     "a2": ""
+    },
+    {
+     "lat": 32.46,
+     "lon": 35.56,
+     "d": 251,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Izrael",
+     "datum": "9. 4. 1996",
+     "a2": ""
+    },
+    {
+     "lat": 36.6,
+     "lon": 36.2,
+     "d": 257.63,
+     "f": false,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 39.4,
+     "lon": 32.2,
+     "d": 264.32,
+     "f": false,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 40.6,
+     "lon": 30.0,
+     "d": 267.61,
+     "f": false,
+     "faze": "back",
+     "gap": false,
+     "nazev": "severozápadní Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 41.1,
+     "lon": 29.05,
+     "d": 269,
+     "f": false,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Bospor",
+     "datum": "26.–28. 4. 1996",
+     "a2": ""
+    },
+    {
+     "lat": 43.8,
+     "lon": 21.0,
+     "d": 275.04,
+     "f": false,
+     "faze": "back",
+     "gap": false,
+     "nazev": "bývalá Jugoslávie",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 48.0,
+     "lon": 19.8,
+     "d": 279,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "severní Maďarsko",
+     "datum": "7. 5. 1996",
+     "a2": ""
+    },
+    {
+     "lat": 50.02,
+     "lon": 13.45,
+     "d": 300,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Rakovnicko – zpět doma",
+     "datum": "28. 5. 1996",
+     "a2": ""
+    }
+   ]
+  },
+  {
+   "klic": "martin",
+   "jmeno": "Martin",
+   "druh": "čáp černý",
+   "sezona": "1997/98",
+   "domov": "Dobříš",
+   "strana": "zapad",
+   "konec": "domov",
+   "odhad": false,
+   "nezname": [],
+   "zimoviste": [
+    "Mali"
+   ],
+   "body": [
+    {
+     "lat": 50.03,
+     "lon": 15.2,
+     "d": 41,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Kolín",
+     "datum": "11. 9. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 48.6,
+     "lon": 9.5,
+     "d": 48.97,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Německo",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 43.6,
+     "lon": 1.4,
+     "d": 64,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "jižní Francie",
+     "datum": "4. 10. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 40.5,
+     "lon": -3.0,
+     "d": 68.77,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Španělsko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 36.0,
+     "lon": -5.6,
+     "d": 74,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Gibraltar",
+     "datum": "14. 10. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 31.1,
+     "lon": -7.9,
+     "d": 75,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Vysoký Atlas, Maroko",
+     "datum": "15. 10. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 13.5,
+     "lon": -6.9,
+     "d": 84,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "u Bamaka, Mali",
+     "datum": "24. 10. 1997",
+     "a2": "ml"
+    },
+    {
+     "lat": 14.0,
+     "lon": -5.5,
+     "d": 108,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "mokřady u Nigeru, Mali",
+     "datum": "17. 11. 1997",
+     "a2": "ml"
+    },
+    {
+     "lat": 14.5,
+     "lon": -4.6,
+     "d": 150,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "vnitrozemská delta Nigeru",
+     "datum": "29. 12. 1997",
+     "a2": "ml"
+    },
+    {
+     "lat": 14.5,
+     "lon": -4.2,
+     "d": 197,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "delta Nigeru u Mopti",
+     "datum": "14. 2. 1998",
+     "a2": "ml"
+    },
+    {
+     "lat": 14.5,
+     "lon": -4.2,
+     "d": 216,
+     "f": false,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "delta Nigeru u Mopti",
+     "datum": "",
+     "a2": "ml"
+    },
+    {
+     "lat": 17.8,
+     "lon": -9.3,
+     "d": 221,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "východní Mauritánie",
+     "datum": "10. 3. 1998",
+     "a2": ""
+    },
+    {
+     "lat": 33.5,
+     "lon": -6.0,
+     "d": 227,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "za Vysokým Atlasem, Maroko",
+     "datum": "16. 3. 1998",
+     "a2": ""
+    },
+    {
+     "lat": 36.0,
+     "lon": -5.6,
+     "d": 228,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Gibraltar",
+     "datum": "17. 3. 1998",
+     "a2": ""
+    },
+    {
+     "lat": 40.9,
+     "lon": -3.0,
+     "d": 232,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "severovýchodně od Madridu",
+     "datum": "21. 3. 1998",
+     "a2": ""
+    },
+    {
+     "lat": 42.8,
+     "lon": 1.5,
+     "d": 235.55,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Pyreneje",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 46.5,
+     "lon": 5.5,
+     "d": 239.86,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Francie",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 48.8,
+     "lon": 10.5,
+     "d": 243.62,
+     "f": false,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Německo",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 49.78,
+     "lon": 14.17,
+     "d": 246,
+     "f": true,
+     "faze": "back",
+     "gap": true,
+     "nazev": "Dobříš – zpět doma",
+     "datum": "4. 4. 1998",
+     "a2": ""
+    }
+   ]
+  },
+  {
+   "klic": "jakub",
+   "jmeno": "Jakub",
+   "druh": "čáp černý",
+   "sezona": "1997/98",
+   "domov": "Rokycansko",
+   "strana": "vychod",
+   "konec": "ztracen",
+   "odhad": false,
+   "nezname": [],
+   "zimoviste": [
+    "Nigérie"
+   ],
+   "body": [
+    {
+     "lat": 49.74,
+     "lon": 13.6,
+     "d": 35,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Rokycansko",
+     "datum": "5. 9. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 49.45,
+     "lon": 11.08,
+     "d": 43,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Norimberk, Německo",
+     "datum": "13. 9. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 47.7,
+     "lon": 17.2,
+     "d": 48,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "severozápadní Maďarsko",
+     "datum": "18. 9. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 45.3,
+     "lon": 16.4,
+     "d": 49,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "povodí Sávy, Chorvatsko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 41.0,
+     "lon": 28.0,
+     "d": 55.78,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 38.5,
+     "lon": 33.0,
+     "d": 59.06,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 36.6,
+     "lon": 36.2,
+     "d": 61.32,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 32.9,
+     "lon": 35.5,
+     "d": 64,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "severní Izrael",
+     "datum": "4. 10. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 32.65,
+     "lon": 35.25,
+     "d": 67,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Ginegar, Izrael",
+     "datum": "7. 10. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 27.2,
+     "lon": 31.2,
+     "d": 75,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Asjút, Egypt",
+     "datum": "15. 10. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 13.0,
+     "lon": 19.5,
+     "d": 84,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Čad",
+     "datum": "24. 10. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 9.6,
+     "lon": 8.5,
+     "d": 96,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "střední Nigérie",
+     "datum": "5. 11. 1997",
+     "a2": "ng"
+    },
+    {
+     "lat": 9.6,
+     "lon": 8.5,
+     "d": 108,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "střední Nigérie",
+     "datum": "17. 11. 1997",
+     "a2": "ng"
+    }
+   ]
+  },
+  {
+   "klic": "tereza",
+   "jmeno": "Tereza",
+   "druh": "čáp černý",
+   "sezona": "1997/98",
+   "domov": "střední Čechy",
+   "strana": "zapad",
+   "konec": "uhynul",
+   "odhad": false,
+   "nezname": [],
+   "zimoviste": [],
+   "body": [
+    {
+     "lat": 49.78,
+     "lon": 14.17,
+     "d": 36,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "střední Čechy",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 47.08,
+     "lon": 2.4,
+     "d": 41,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Bourges, Francie",
+     "datum": "11. 9. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 39.5,
+     "lon": -4.0,
+     "d": 64,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Španělsko",
+     "datum": "4. 10. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 36.0,
+     "lon": -5.6,
+     "d": 66,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Gibraltar",
+     "datum": "6. 10. 1997",
+     "a2": ""
+    },
+    {
+     "lat": 30.0,
+     "lon": -8.5,
+     "d": 72,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Antiatlas, Maroko",
+     "datum": "12. 10. 1997",
+     "a2": ""
+    }
+   ]
+  },
+  {
+   "klic": "david",
+   "jmeno": "David",
+   "druh": "čáp černý",
+   "sezona": "1998/99",
+   "domov": "Brdy",
+   "strana": "zapad",
+   "konec": "domov",
+   "odhad": false,
+   "nezname": [],
+   "zimoviste": [
+    "Španělsko"
+   ],
+   "body": [
+    {
+     "lat": 49.75,
+     "lon": 13.85,
+     "d": 48,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Brdy",
+     "datum": "18. 9. 1998",
+     "a2": ""
+    },
+    {
+     "lat": 48.3,
+     "lon": 8.8,
+     "d": 49,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "jihozápadní Německo",
+     "datum": "19. 9. 1998",
+     "a2": ""
+    },
+    {
+     "lat": 46.9,
+     "lon": 6.2,
+     "d": 50,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "pohoří Jura, Francie",
+     "datum": "20. 9. 1998",
+     "a2": ""
+    },
+    {
+     "lat": 43.0,
+     "lon": -0.8,
+     "d": 54,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "západní Pyreneje",
+     "datum": "24. 9. 1998",
+     "a2": ""
+    },
+    {
+     "lat": 43.0,
+     "lon": -0.8,
+     "d": 60,
+     "f": true,
+     "faze": "out",
+     "gap": false,
+     "nazev": "západní Pyreneje",
+     "datum": "30. 9. 1998",
+     "a2": ""
+    },
+    {
+     "lat": 37.0,
+     "lon": -6.4,
+     "d": 70,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "Doñana, Španělsko",
+     "datum": "10. 10. 1998",
+     "a2": "es"
+    },
+    {
+     "lat": 37.0,
+     "lon": -6.4,
+     "d": 210,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "delta Guadalquiviru",
+     "datum": "27. 2. 1999",
+     "a2": "es"
+    },
+    {
+     "lat": 37.0,
+     "lon": -6.4,
+     "d": 213,
+     "f": false,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "delta Guadalquiviru",
+     "datum": "",
+     "a2": "es"
+    },
+    {
+     "lat": 39.0,
+     "lon": -4.0,
+     "d": 215,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "vnitrozemí Španělska",
+     "datum": "4. 3. 1999",
+     "a2": ""
+    },
+    {
+     "lat": 41.8,
+     "lon": -1.3,
+     "d": 216,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "údolí Ebra u Zaragozy",
+     "datum": "5. 3. 1999",
+     "a2": ""
+    },
+    {
+     "lat": 44.45,
+     "lon": 1.44,
+     "d": 221,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Cahors, Francie",
+     "datum": "10. 3. 1999",
+     "a2": ""
+    },
+    {
+     "lat": 47.0,
+     "lon": 6.0,
+     "d": 223,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "východní Francie",
+     "datum": "12. 3. 1999",
+     "a2": ""
+    },
+    {
+     "lat": 48.15,
+     "lon": 11.6,
+     "d": 225,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Mnichov, Německo",
+     "datum": "14. 3. 1999",
+     "a2": ""
+    },
+    {
+     "lat": 49.75,
+     "lon": 13.85,
+     "d": 229,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Brdy – zpět doma",
+     "datum": "18. 3. 1999",
+     "a2": ""
+    }
+   ]
+  },
+  {
+   "klic": "mira",
+   "jmeno": "Míra",
+   "druh": "čáp bílý",
+   "sezona": "2019/20",
+   "domov": "Tachovsko",
+   "strana": "odhad",
+   "konec": "ztracen",
+   "odhad": true,
+   "nezname": [
+    [
+     0,
+     219
+    ]
+   ],
+   "zimoviste": [],
+   "body": [
+    {
+     "lat": 49.8,
+     "lon": 12.63,
+     "d": 24,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Tachovsko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 48.2,
+     "lon": 16.4,
+     "d": 28.52,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Rakousko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 46.5,
+     "lon": 20.0,
+     "d": 33.07,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Maďarsko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 42.8,
+     "lon": 25.5,
+     "d": 41.33,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Bulharsko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 41.1,
+     "lon": 29.05,
+     "d": 46.14,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Bospor",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 38.8,
+     "lon": 33.5,
+     "d": 52.45,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 36.6,
+     "lon": 36.2,
+     "d": 57.15,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Turecko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 32.5,
+     "lon": 35.4,
+     "d": 63.52,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Izrael",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 29.8,
+     "lon": 32.7,
+     "d": 68.96,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Sinaj",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 23.5,
+     "lon": 32.9,
+     "d": 78.63,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Egypt",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 15.5,
+     "lon": 33.0,
+     "d": 90.89,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Súdán",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 8.5,
+     "lon": 31.7,
+     "d": 101.8,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Jižní Súdán",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 2.5,
+     "lon": 36.2,
+     "d": 113.28,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Keňa",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": -3.07,
+     "lon": 37.35,
+     "d": 122,
+     "f": false,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "pod Kilimandžárem",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": -3.07,
+     "lon": 37.35,
+     "d": 219,
+     "f": true,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "pod Kilimandžárem",
+     "datum": "8. 3. 2020",
+     "a2": ""
+    }
+   ]
+  },
+  {
+   "klic": "krystof",
+   "jmeno": "Kryštof",
+   "druh": "čáp bílý",
+   "sezona": "2020/21",
+   "domov": "Polžice",
+   "strana": "zapad",
+   "konec": "domov",
+   "odhad": false,
+   "nezname": [
+    [
+     0,
+     91
+    ],
+    [
+     212,
+     246
+    ]
+   ],
+   "zimoviste": [
+    "Senegal"
+   ],
+   "body": [
+    {
+     "lat": 49.7,
+     "lon": 13.1,
+     "d": 24,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Plzeňsko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 48.4,
+     "lon": 8.2,
+     "d": 26.55,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Německo",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 45.8,
+     "lon": 2.3,
+     "d": 30.06,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Francie",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 40.42,
+     "lon": -3.7,
+     "d": 35.16,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Madrid, Španělsko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 36.0,
+     "lon": -5.6,
+     "d": 38.58,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Gibraltar",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 32.5,
+     "lon": -7.5,
+     "d": 41.4,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Maroko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 27.2,
+     "lon": -13.2,
+     "d": 46.73,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "pobřeží Atlantiku",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 19.5,
+     "lon": -12.8,
+     "d": 52.39,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "Mauritánie",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 15.4,
+     "lon": -12.3,
+     "d": 55.43,
+     "f": false,
+     "faze": "out",
+     "gap": false,
+     "nazev": "hranice Mali a Mauritánie",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 14.85,
+     "lon": -15.88,
+     "d": 58,
+     "f": false,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "okolí města Touba, Senegal",
+     "datum": "",
+     "a2": "sn"
+    },
+    {
+     "lat": 14.85,
+     "lon": -15.88,
+     "d": 226,
+     "f": false,
+     "faze": "winter",
+     "gap": false,
+     "nazev": "okolí města Touba, Senegal",
+     "datum": "",
+     "a2": "sn"
+    },
+    {
+     "lat": 20.5,
+     "lon": -15.5,
+     "d": 230.83,
+     "f": false,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Mauritánie",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 30.5,
+     "lon": -9.0,
+     "d": 240.72,
+     "f": false,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Maroko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 36.0,
+     "lon": -5.6,
+     "d": 246,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Gibraltar",
+     "datum": "4. 4. 2021",
+     "a2": ""
+    },
+    {
+     "lat": 40.2,
+     "lon": -3.4,
+     "d": 248.09,
+     "f": false,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Španělsko",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 45.8,
+     "lon": 2.6,
+     "d": 251.35,
+     "f": false,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Francie",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 48.7,
+     "lon": 9.3,
+     "d": 253.83,
+     "f": false,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Německo",
+     "datum": "",
+     "a2": ""
+    },
+    {
+     "lat": 49.5,
+     "lon": 13.0,
+     "d": 255,
+     "f": true,
+     "faze": "back",
+     "gap": false,
+     "nazev": "Polžice – zpět doma",
+     "datum": "13. 4. 2021",
+     "a2": ""
+    }
+   ]
+  }
+ ]
+}

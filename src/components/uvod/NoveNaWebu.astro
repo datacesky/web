@@ -1,0 +1,56 @@
+---
+// Upoutávka na úvodní stránce: nejsledovanější videa jako interaktivní mapy.
+// Náhledy v public/nahledy/ jsou snímky přímo z těchto map.
+const karty = [
+  {
+    href: '/mapa/#v=vlaky', obr: '/nahledy/vlaky.webp', stitek: 'Mapa Česka',
+    titul: 'Vlaky za 24 hodin',
+    text: 'Všech 9 143 vlaků jednoho všedního dne. Posuň čas, schovej dopravce a klikni na stanici, uvidíš nejbližší odjezdy.',
+  },
+  {
+    href: '/svet/#capi', obr: '/nahledy/capi.webp', stitek: 'Svět',
+    titul: 'Kam letí čeští čápi na zimu',
+    text: 'Devět čápů se satelitní vysílačkou v jednom kalendáři. Jedni letí přes Gibraltar, druzí přes Izrael až do Etiopie.',
+  },
+];
+---
+
+<section class="obal sekce--mala">
+  <div class="nadpis-sekce">
+    <div class="nadpis">
+      <span class="nadhlavi nadhlavi--zive">Nově na webu</span>
+      <h2>Z videa na mapu, kde si čas posouváš sám</h2>
+    </div>
+  </div>
+  <ul class="nw">
+    {karty.map((k) => (
+      <li>
+        <a class="nw__karta" href={k.href}>
+          <span class="nw__obr"><img src={k.obr} alt="" loading="lazy" decoding="async" width="720" height="440" /></span>
+          <span class="nw__text">
+            <span class="nw__stitek">{k.stitek}</span>
+            <strong>{k.titul}</strong>
+            <span>{k.text}</span>
+            <span class="nw__dal">Otevřít mapu →</span>
+          </span>
+        </a>
+      </li>
+    ))}
+  </ul>
+</section>
+
+<style>
+  .nw { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(0.8rem, 2vw, 1.4rem); list-style: none; margin: 0; padding: 0; }
+  @media (max-width: 760px) { .nw { grid-template-columns: 1fr; } }
+  .nw__karta { display: flex; flex-direction: column; height: 100%; border-radius: 22px; overflow: hidden; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); color: var(--navy); text-decoration: none; transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); -webkit-touch-callout: none; }
+  @media (hover: hover) and (pointer: fine) { .nw__karta:hover { transform: translateY(-4px); box-shadow: var(--stin); color: var(--navy); } .nw__karta:hover img { transform: scale(1.03); } }
+  .nw__karta:active { transform: scale(0.99); }
+  .nw__obr { display: block; aspect-ratio: 720 / 440; overflow: hidden; background: var(--plocha-2); }
+  .nw__obr img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.6s var(--ease-out); }
+  .nw__text { display: flex; flex-direction: column; gap: 0.4rem; padding: 1.1rem 1.25rem 1.25rem; }
+  .nw__stitek { font-size: 0.74rem; font-weight: 800; color: var(--orange-text); text-transform: uppercase; letter-spacing: 0.08em; }
+  .nw__text strong { font-size: 1.2rem; font-weight: 900; line-height: 1.25; }
+  .nw__text > span:not([class]) { font-size: 0.92rem; line-height: 1.55; color: var(--text-2); }
+  .nw__dal { margin-top: 0.2rem; font-size: 0.88rem; font-weight: 800; color: var(--orange-text); }
+  @media (prefers-reduced-motion: reduce) { .nw__karta, .nw__obr img { transition: none; } }
+</style>

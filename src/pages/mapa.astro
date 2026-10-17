@@ -6,6 +6,8 @@ import mestaData from '../data/mesta.json';
 import { vrstvy } from '../data/vrstvy';
 import { hranice, barvaKraje } from '../lib/mapa';
 import Cesko3D from '../components/Cesko3D.astro';
+import Vlaky from '../components/Vlaky.astro';
+import { IKONY } from '../lib/ikony';
 
 const prvni = vrstvy[0];
 const hr = prvni.typ === 'ciselna' ? hranice(Object.values(prvni.hodnoty).map(Number)) : [];
@@ -38,14 +40,17 @@ const data = JSON.stringify({
 <Base
   obrazek="/og/mapa.png"
   titul="Mapa Česka po krajích — data.cesky"
-  popis="Interaktivní mapa Česka: obyvatelé, hustota, věk, plodnost, mzdy, ceny bytů, HDP a 40 největších měst od roku 1971. Nově i 3D model všech 6 254 obcí."
+  popis="Interaktivní mapa Česka: obyvatelé, hustota, věk, plodnost, mzdy, ceny bytů, HDP a 40 největších měst od roku 1971. Nově všech 9 143 vlaků jednoho dne a 3D model všech 6 254 obcí."
 >
   <section class="obal sekce--mala sloupec mapa-stranka" style="gap: 1.25rem; --obal: 1320px;">
     <div class="mapa-hlava">
       <div class="sloupec" style="gap: 0.5rem; max-width: 62ch;">
         <h1 class="mapa-titul">Mapa Česka</h1>
         <p class="perex">Vyber, co chceš vidět. U krajů se mapa přebarví, u měst naskočí bubliny. Přepni na satelit nebo zapni řeky a hory.</p>
-        <a class="mapa-3d-odkaz" href="#cesko-3d"><span>Nově</span>Česko ve 3D: všech 6 254 obcí jako sloupce ↓</a>
+        <div class="mapa-odkazy">
+          <a class="mapa-3d-odkaz" href="#v=vlaky" data-vlaky-odkaz><span>Nově</span>Vlaky za 24 hodin: každá tečka je jeden vlak</a>
+          <a class="mapa-3d-odkaz mapa-3d-odkaz--svetly" href="#cesko-3d">Česko ve 3D: všech 6 254 obcí ↓</a>
+        </div>
       </div>
       <div class="mapa-hlava__nastroje">
         <div class="nastroj">
@@ -84,7 +89,18 @@ const data = JSON.stringify({
               </div>
             </div>
           ))}
+          <div class="mc__skupina">
+            <span class="mc__skupina-nazev">Doprava</span>
+            <div class="mc__dlazdice">
+              <button type="button" class="dlazdice dlazdice--nove" data-vlaky aria-pressed="false">
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d={IKONY.vlak} /></svg>
+                <span class="dlazdice__nazev">Vlaky za 24 hodin</span>
+              </button>
+            </div>
+          </div>
         </div>
+
+        <Vlaky cast="mapa" />
 
         <div class="mc__hlava">
           <div class="sloupec" style="gap: 0.2rem; min-width: 0;">
@@ -219,6 +235,7 @@ const data = JSON.stringify({
       </div>
 
       <aside class="mc__panel">
+        <Vlaky cast="panel" />
         <div class="mapa__detail" aria-live="polite" data-detail></div>
         <div class="mc__poradi-karta">
           <h2 class="mc__poradi-titul" data-poradi-titul>Pořadí krajů</h2>
@@ -253,10 +270,18 @@ const data = JSON.stringify({
 </Base>
 
 <style>
-  .mapa-3d-odkaz { display: inline-flex; align-items: center; gap: 0.55rem; align-self: flex-start; margin-top: 0.3rem; padding: 0.35rem 0.9rem 0.35rem 0.35rem; border-radius: 999px; background: var(--navy); color: var(--cream); font-size: 0.86rem; font-weight: 800; text-decoration: none; transition: transform var(--stisk) var(--ease-out); }
+  /* Vrstva Vlaky za 24 hodin má vlastní mapu a panel (components/Vlaky.astro), ostatní ovládání schováme */
+  .mapa-stranka--vlaky .mc__karta > :not(.mc__vyber), .mapa-stranka--vlaky .mc__panel > *, .mapa-stranka--vlaky .mapa-hlava__nastroje, .mapa-stranka--vlaky > details { display: none !important; }
+  .dlazdice--nove .dlazdice__nazev::after { content: 'nové'; margin-left: 0.4rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: var(--orange); color: var(--navy); font-size: 0.66rem; font-weight: 900; vertical-align: 1px; }
+  .dlazdice--nove[aria-pressed='true'] .dlazdice__nazev::after { background: var(--orange); }
+  .mapa-odkazy { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.3rem; }
+  .mapa-3d-odkaz { display: inline-flex; align-items: center; gap: 0.55rem; align-self: flex-start; padding: 0.35rem 0.9rem 0.35rem 0.35rem; border-radius: 999px; background: var(--navy); color: var(--cream); font-size: 0.86rem; font-weight: 800; text-decoration: none; transition: transform var(--stisk) var(--ease-out); }
   .mapa-3d-odkaz span { padding: 0.12rem 0.55rem; border-radius: 999px; background: var(--orange); color: var(--navy); font-size: 0.74rem; font-weight: 900; }
   .mapa-3d-odkaz:hover { color: #fff; }
   .mapa-3d-odkaz:active { transform: scale(0.97); }
+  .mapa-3d-odkaz--svetly { background: var(--paper); color: var(--navy); box-shadow: 0 0 0 1px var(--line), var(--stin-maly); padding-left: 0.95rem; }
+  .mapa-3d-odkaz--svetly:hover { color: var(--navy); }
+
   .mapa-titul { font-size: clamp(2rem, 3.8vw, 2.8rem); }
   .mapa-hlava { display: flex; flex-wrap: wrap; gap: 1.25rem 2rem; align-items: flex-end; justify-content: space-between; }
   .mapa-hlava__nastroje { display: flex; flex-wrap: nowrap; gap: 0.75rem; align-items: flex-end; }

@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import HlasovaniPozvanka from '../components/HlasovaniPozvanka.astro';
+import CestaCapu from '../components/CestaCapu.astro';
 import { epizody, odkazDilu } from '../data/epizody';
 import { SVET_VRSTVY, SKUPINY, hodnota, poradiZeme, vlajka, vrstvaPodleId, cislo } from '../lib/svet';
 
@@ -32,7 +33,7 @@ const czPoradi = Object.fromEntries(
 <Base
   obrazek="/og/svet.png"
   titul="Svět vedle Česka — data.cesky"
-  popis="Interaktivní glóbus: štěstí, svoboda tisku, korupce, rovnost příjmů, HDP a další. Klikni na stát a porovnej ho s Českem."
+  popis="Interaktivní glóbus: štěstí, svoboda tisku, korupce, rovnost příjmů, HDP a další. Klikni na stát a porovnej ho s Českem. Nově i cesta devíti čápů z Česka do Afriky."
 >
   <section class="obal sekce--mala sloupec" style="gap: 1.25rem; --obal: 1320px;">
     <div class="svet-hlava">
@@ -147,6 +148,8 @@ const czPoradi = Object.fromEntries(
       </aside>
     </div>
   </section>
+
+  <CestaCapu />
 
   <section class="obal sekce sloupec" style="gap: 1.5rem;" id="dily">
     <div class="nadpis">
