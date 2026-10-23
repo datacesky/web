@@ -8,7 +8,7 @@ zdrojUrl: "https://forbes.cz/"
 dataOtevrena: false
 jednotka: "mld. Kč"
 soucet: true
-barvy: { "Energetika": "#9A520E" }
+barvy: { "Energetika": "hneda" }
 instagram: "https://www.instagram.com/reel/DZzNoxdKuM-/"
 porovnej: "mzda-majetek"
 popisGrafu: "Majetek v miliardách Kč podle žebříčku Forbes Česko"

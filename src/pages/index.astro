@@ -54,8 +54,8 @@ const FB = 'https://www.facebook.com/data.cesky';
       </div>
       <div class="uvod__hlasovani"><HlasovaniPozvanka mala /></div>
       <div class="uvod__legenda">
-        <span><i style="background: #F08829;"></i>Česko</span>
-        <span><i style="background: #1B2A4A;"></i>{epizody.length} zemí ze série Česko vs. svět</span>
+        <span><i style="background: var(--orange);"></i>Česko</span>
+        <span><i style="background: var(--navy);"></i>{epizody.length} zemí ze série Česko vs. svět</span>
       </div>
     </div>
     <a href="/svet/" class="uvod__globus" aria-label="Otevřít glóbus">
@@ -184,7 +184,7 @@ const FB = 'https://www.facebook.com/data.cesky';
   .vrstevnice::before {
     content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
     background: url('/vrstevnice.svg') center top / cover no-repeat;
-    opacity: 0.8;
+    opacity: calc(0.8 * var(--vrstevnice-sila));
     -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
     mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
   }
@@ -209,7 +209,7 @@ const FB = 'https://www.facebook.com/data.cesky';
 
   .tydne { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center; text-decoration: none; color: var(--navy); }
   .tydne:hover { color: var(--navy); }
-  @media (hover: hover) and (pointer: fine) { .tydne:hover .tydne__graf { box-shadow: 0 1px 2px rgba(27, 42, 74, 0.05), 0 18px 40px -14px rgba(27, 42, 74, 0.3); } }
+  @media (hover: hover) and (pointer: fine) { .tydne:hover .tydne__graf { box-shadow: var(--stin-velky); } }
   .tydne:active .tydne__graf { transform: scale(0.99); }
   @media (max-width: 880px) { .tydne { grid-template-columns: 1fr; } }
   .tydne__text { display: flex; flex-direction: column; gap: 1rem; align-items: flex-start; }

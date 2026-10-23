@@ -40,12 +40,12 @@ const SIPKA = { nahoru: 'M12 19V5 M6 11l6-6 6 6', dolu: 'M12 5v14 M6 13l6 6 6-6'
 <style>
   .nk { display: flex; flex-direction: column; border-radius: 22px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); overflow: hidden; transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); }
   @media (hover: hover) and (pointer: fine) { .nk:hover { transform: translateY(-3px); box-shadow: var(--stin); } }
-  .nk__vizual { display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 1.1rem 0.85rem; background: var(--plocha-2); border-bottom: 1px solid #EFE8DC; }
+  .nk__vizual { display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 1.1rem 0.85rem; background: var(--plocha-2); border-bottom: 1px solid var(--line-jemna); }
   .nk__hlava { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
   .nk__stitek { flex: 1 1 auto; min-width: 0; font-size: 0.86rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .nk__zmena { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 800; white-space: nowrap; background: #EDE6DA; color: var(--text-2); font-variant-numeric: tabular-nums; }
-  .nk__zmena--nahoru { background: #FDEBD8; color: var(--orange-text); }
-  .nk__zmena--dolu { background: #E3E8F1; color: var(--navy); }
+  .nk__zmena { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 800; white-space: nowrap; background: var(--bezova); color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .nk__zmena--nahoru { background: var(--oranzova-svetla); color: var(--orange-text); }
+  .nk__zmena--dolu { background: var(--modra-svetla); color: var(--navy); }
   .nk__telo { flex-grow: 1; display: flex; flex-direction: column; gap: 0.5rem; padding: 1.05rem 1.25rem 1.1rem; }
   .nk__nadpis { font-size: 1rem; line-height: 1.35; color: var(--text-2); }
   .nk__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.15rem 0.5rem; font-size: clamp(1.9rem, 4vw, 2.35rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; color: var(--navy); font-variant-numeric: tabular-nums; }

@@ -85,17 +85,17 @@ const REZIMY = [
   .c3__lista select { min-height: 40px; border-radius: 999px; padding-left: 1rem; font-size: 0.9rem; }
   .c3__prepinace { display: flex; flex-wrap: wrap; gap: 0.4rem; }
   .c3__scena { position: relative; height: clamp(380px, 62vh, 640px); border-radius: 20px; overflow: hidden; isolation: isolate;
-    background: radial-gradient(120% 90% at 50% 35%, #FBF8F2 0%, #F2EDE3 60%, #E9E1D3 100%); }
-  .c3__scena::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('/vrstevnice.svg') center / cover no-repeat; opacity: 0.45; }
+    background: radial-gradient(120% 90% at 50% 35%, var(--scena-3d-1) 0%, var(--scena-3d-2) 60%, var(--scena-3d-3) 100%); }
+  .c3__scena::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('/vrstevnice.svg') center / cover no-repeat; opacity: calc(0.45 * var(--vrstevnice-sila)); }
   .c3__platno { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }
   .c3__platno:active { cursor: grabbing; }
   .c3__scena.je-zamceno .c3__platno { touch-action: pan-y; pointer-events: none; }
   .c3__popisky { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
-  :global(.c3__mesto) { position: absolute; left: 0; top: 0; padding: 0.15rem 0.45rem; border-radius: 999px; background: rgba(255, 255, 255, 0.88); box-shadow: 0 1px 4px rgba(27, 42, 74, 0.18); font-size: 0.72rem; font-weight: 800; color: var(--navy); white-space: nowrap; transition: opacity 0.2s ease; will-change: transform; }
+  :global(.c3__mesto) { position: absolute; left: 0; top: 0; padding: 0.15rem 0.45rem; border-radius: 999px; background: rgba(255, 255, 255, 0.88); box-shadow: 0 1px 4px rgba(var(--stin-barva), 0.18); font-size: 0.72rem; font-weight: 800; color: #1B2A4A; white-space: nowrap; transition: opacity 0.2s ease; will-change: transform; }
   :global(.c3__mesto--kraj) { display: inline-flex; flex-direction: column; align-items: center; line-height: 1.25; padding: 0.2rem 0.55rem; border-radius: 10px; }
-  :global(.c3__mesto--kraj b) { font-size: 0.8rem; font-weight: 900; color: var(--orange-text); }
-  .c3__rok { position: absolute; left: 1rem; top: 0.6rem; font-size: clamp(2.2rem, 6vw, 3.6rem); font-weight: 900; letter-spacing: -0.04em; color: rgba(27, 42, 74, 0.16); font-variant-numeric: tabular-nums; pointer-events: none; }
-  .c3__tip { position: fixed; z-index: 60; left: 0; top: 0; max-width: 280px; padding: 0.55rem 0.75rem; border-radius: 12px; background: var(--navy); color: var(--cream); font-size: 0.82rem; font-weight: 700; line-height: 1.45; pointer-events: none; box-shadow: 0 10px 26px -10px rgba(27, 42, 74, 0.6); }
+  :global(.c3__mesto--kraj b) { font-size: 0.8rem; font-weight: 900; color: #9A520E; }
+  .c3__rok { position: absolute; left: 1rem; top: 0.6rem; font-size: clamp(2.2rem, 6vw, 3.6rem); font-weight: 900; letter-spacing: -0.04em; color: color-mix(in srgb, var(--navy) 16%, transparent); font-variant-numeric: tabular-nums; pointer-events: none; }
+  .c3__tip { position: fixed; z-index: 60; left: 0; top: 0; max-width: 280px; padding: 0.55rem 0.75rem; border-radius: 12px; background: var(--navy); color: var(--cream); font-size: 0.82rem; font-weight: 700; line-height: 1.45; pointer-events: none; box-shadow: 0 10px 26px -10px rgba(var(--stin-barva), 0.6); }
   :global(.c3__tip b) { display: block; color: var(--orange); font-weight: 900; }
   .c3__nacitani { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.75rem; font-weight: 800; color: var(--muted); transition: opacity 0.4s ease; }
   .c3__nacitani.je-pryc { opacity: 0; pointer-events: none; }

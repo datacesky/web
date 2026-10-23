@@ -1,8 +1,18 @@
-// Sekvenční paleta od světlé po navy. Tmavší = vyšší hodnota.
+// Sekvenční paleta od světlé po navy. Tmavší = vyšší hodnota (v tmavém režimu světlejší = vyšší).
+// Barvy jsou CSS proměnné --k1 až --k5 z global.css. Pro export do PNG se používá světlá verze.
 // Promítání mapy krajů: d3.geoMercator().fitExtent([[10, 10], [990, 567.5]], kraje z Natural Earth 1:10m),
 // parametry jsou v src/data/cesko-mapa.json (projekce).
-export const PALETA = ['#DDE2EA', '#AEB9CB', '#7D8DA8', '#4B5E82', '#1B2A4A'];
-export const BEZ_DAT = '#E4DDCF';
+export const PALETA = ['var(--k1)', 'var(--k2)', 'var(--k3)', 'var(--k4)', 'var(--k5)'];
+export const BEZ_DAT = 'var(--k-bez)';
+export const PALETA_SVETLA = ['#DDE2EA', '#AEB9CB', '#7D8DA8', '#4B5E82', '#1B2A4A'];
+export const BEZ_DAT_SVETLA = '#E4DDCF';
+// Převede barvu z palety na pevnou světlou (pro canvas a stažení PNG)
+export const svetlaBarva = (b: string) => {
+  const i = PALETA.indexOf(b);
+  if (i >= 0) return PALETA_SVETLA[i];
+  if (b === BEZ_DAT) return BEZ_DAT_SVETLA;
+  return b.startsWith('var(--slate') ? '#6E7C96' : b;
+};
 
 // Zaokrouhlí na dvě platné číslice, aby legenda byla čitelná (524 951 → 520 000).
 export function zaokrouhli(v: number): number {
@@ -60,6 +70,6 @@ export type Vrstva = {
 export function barvaKraje(v: Vrstva, id: string, hr: number[]): string {
   const h = v.hodnoty[id];
   if (h === undefined) return BEZ_DAT;
-  if (v.typ === 'kategorie') return v.barvy?.[String(h)] ?? '#6E7C96';
+  if (v.typ === 'kategorie') return v.barvy?.[String(h)] ?? 'var(--slate)';
   return barvaTridy(trida(Number(h), hr), hr.length + 1);
 }

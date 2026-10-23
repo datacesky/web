@@ -1,9 +1,11 @@
+// Barvy jako CSS proměnné, aby se grafy samy přebarvily ve tmavém režimu (hodnoty jsou v global.css)
 export const BRAND: Record<string, string> = {
-  cream: '#F2EDE3',
-  navy: '#1B2A4A',
-  orange: '#F08829',
-  teal: '#1E9E91',
-  slate: '#6E7C96',
+  cream: 'var(--cream)',
+  navy: 'var(--navy)',
+  orange: 'var(--orange)',
+  teal: 'var(--teal)',
+  slate: 'var(--slate)',
+  hneda: 'var(--hneda)',
 };
 
 const VYCHOZI_KATEGORIE: Record<string, string> = {

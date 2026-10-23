@@ -85,21 +85,21 @@ const czPoradi = Object.fromEntries(
                 <feDropShadow dx="0" dy="24" stdDeviation="26" flood-color="#1B2A4A" flood-opacity="0.22" />
               </filter>
             </defs>
-            <circle data-stin-kruh cx="400" cy="390" r="360" fill="#AFCFE6" filter="url(#f-stin-globus)" />
+            <circle data-stin-kruh cx="400" cy="390" r="360" style="fill: var(--globus-2);" filter="url(#f-stin-globus)" />
           </svg>
           <svg class="scena__svg" data-svg role="img" aria-label="Mapa světa">
             <defs>
               <radialGradient id="g-more" cx="40%" cy="34%" r="72%">
-                <stop offset="0%" stop-color="#CFE3F1" />
-                <stop offset="62%" stop-color="#AFCFE6" />
-                <stop offset="100%" stop-color="#8DB6D4" />
+                <stop offset="0%" style="stop-color: var(--globus-1);" />
+                <stop offset="62%" style="stop-color: var(--globus-2);" />
+                <stop offset="100%" style="stop-color: var(--globus-3);" />
               </radialGradient>
               <linearGradient id="g-more-plocha" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="#C9E0EF" />
-                <stop offset="100%" stop-color="#A9CBE3" />
+                <stop offset="0%" style="stop-color: var(--more-plocha-1);" />
+                <stop offset="100%" style="stop-color: var(--more-plocha-2);" />
               </linearGradient>
               <radialGradient id="g-lesk" cx="34%" cy="26%" r="70%">
-                <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.38" />
+                <stop offset="0%" stop-color="#FFFFFF" style="stop-opacity: var(--lesk-sila);" />
                 <stop offset="45%" stop-color="#FFFFFF" stop-opacity="0.06" />
                 <stop offset="100%" stop-color="#1B2A4A" stop-opacity="0.14" />
               </radialGradient>
@@ -107,8 +107,8 @@ const czPoradi = Object.fromEntries(
                 <feDropShadow dx="0" dy="24" stdDeviation="26" flood-color="#1B2A4A" flood-opacity="0.22" />
               </filter>
               <pattern id="p-bez-dat" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
-                <rect width="7" height="7" fill="#EEEAE2" />
-                <line x1="0" y1="0" x2="0" y2="7" stroke="#D7D0C4" stroke-width="2.4" />
+                <rect width="7" height="7" style="fill: var(--bez-dat-1);" />
+                <line x1="0" y1="0" x2="0" y2="7" style="stroke: var(--bez-dat-2);" stroke-width="2.4" />
               </pattern>
             </defs>
             <path class="scena__more" data-more></path>
@@ -224,7 +224,7 @@ const czPoradi = Object.fromEntries(
   .dlazdice__cz:empty { display: none; }
   .dlazdice[aria-pressed='true'] { background: var(--navy); border-color: var(--navy); color: var(--cream); }
   .dlazdice[aria-pressed='true'] svg { color: var(--orange); }
-  .dlazdice[aria-pressed='true'] .dlazdice__cz { color: #F6C08C; }
+  .dlazdice[aria-pressed='true'] .dlazdice__cz { color: var(--akcent-na-inkoustu); }
   @media (max-width: 1180px) {
     .vyber { grid-column: 1 / -1; position: static; flex-direction: row; flex-wrap: wrap; gap: 0.8rem 1.4rem; }
     .vyber__dlazdice { flex-direction: row; flex-wrap: wrap; }
@@ -253,7 +253,7 @@ const czPoradi = Object.fromEntries(
   .scena__hledani { display: flex; justify-content: center; position: relative; z-index: 12; }
   .scena__hledani .hledani { width: min(100%, 400px); }
   .scena__obal { position: relative; display: flex; justify-content: center; border-radius: 28px; transition: box-shadow 0.3s ease; }
-  .scena__obal.je-priblizeno { overflow: hidden; box-shadow: inset 0 0 0 1px var(--line), var(--stin); background: #B9D6EA; }
+  .scena__obal.je-priblizeno { overflow: hidden; box-shadow: inset 0 0 0 1px var(--line), var(--stin); background: var(--more-zoom); }
   .scena__stin { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; will-change: transform; overflow: visible; }
   .scena__obal.je-priblizeno .scena__stin, .scena__obal:has(.scena__svg--mapa) .scena__stin { display: none; }
   .scena__svg { position: relative; }
@@ -265,18 +265,18 @@ const czPoradi = Object.fromEntries(
   .scena__svg:active { cursor: grabbing; }
   .scena__more { fill: url(#g-more); }
   .scena__svg--mapa .scena__more { fill: url(#g-more-plocha); }
-  .scena__sit { fill: none; stroke: #FFFFFF; stroke-opacity: 0.45; stroke-width: 0.7; pointer-events: none; }
+  .scena__sit { fill: none; stroke: var(--sit-globusu); stroke-opacity: 1; stroke-width: 0.7; pointer-events: none; }
   .scena__lesk { pointer-events: none; }
   .scena__svg--mapa .scena__lesk { display: none; }
-  .scena__okraj { fill: none; stroke: rgba(27, 42, 74, 0.18); stroke-width: 1; pointer-events: none; }
-  :global(.zeme) { stroke: #FFFFFF; stroke-width: 0.55; stroke-linejoin: round; cursor: pointer; transition: fill 0.6s ease; }
+  .scena__okraj { fill: none; stroke: color-mix(in srgb, var(--navy) 18%, transparent); stroke-width: 1; pointer-events: none; }
+  :global(.zeme) { stroke: var(--obrys); stroke-width: 0.55; stroke-linejoin: round; cursor: pointer; transition: fill 0.6s ease; }
   :global(.zeme--hover) { stroke: var(--navy); stroke-width: 1.6; }
   @media (hover: hover) and (pointer: fine) { :global(.zeme:hover) { stroke: var(--navy); stroke-width: 1.6; } }
   :global(.zeme--vybrana) { stroke: var(--orange); stroke-width: 2.6; }
   .scena__tooltip {
     position: absolute; pointer-events: none; z-index: 5; transform: translate(-50%, calc(-100% - 14px));
     background: var(--navy); color: var(--cream); padding: 0.5rem 0.8rem; border-radius: 10px;
-    font-size: 0.85rem; font-weight: 700; white-space: nowrap; box-shadow: 0 8px 20px rgba(27, 42, 74, 0.25);
+    font-size: 0.85rem; font-weight: 700; white-space: nowrap; box-shadow: 0 8px 20px rgba(var(--stin-barva), 0.25);
   }
   .scena__pod { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; text-align: center; }
   :global(.scena__pod .legenda) { justify-content: center; }
@@ -291,13 +291,13 @@ const czPoradi = Object.fromEntries(
   .panel__zdroj { font-size: 0.78rem; padding-top: 0.6rem; border-top: 1px solid var(--line); }
   .cz-karta {
     display: grid; grid-template-columns: 36px 1fr auto; gap: 0.75rem; align-items: center; width: 100%; padding: 0.85rem 1rem;
-    border: 0; border-radius: 14px; background: var(--navy); color: var(--cream); font-family: inherit; text-align: left; cursor: pointer;
+    border: 0; border-radius: 14px; background: var(--panel); color: var(--na-panelu); font-family: inherit; text-align: left; cursor: pointer;
     transition: transform var(--stisk) var(--ease-out);
   }
   .cz-karta:active { transform: scale(0.985); }
   :global(.cz-karta img) { width: 36px; height: 27px; border-radius: 4px; }
   :global(.cz-karta .velke) { font-size: 1.35rem; font-weight: 900; color: var(--orange); line-height: 1.2; }
-  :global(.cz-karta .male) { font-size: 0.8rem; font-weight: 600; color: #D9D3C7; line-height: 1.45; }
+  :global(.cz-karta .male) { font-size: 0.8rem; font-weight: 600; color: var(--na-panelu-2); line-height: 1.45; }
   :global(.cz-karta .hodnota) { font-weight: 800; font-size: 0.95rem; text-align: right; }
   .zebricek { list-style: none; margin: 0 -0.4rem; padding: 0 0.4rem; overflow-y: auto; min-height: 0; flex: 1 1 auto; display: flex; flex-direction: column; gap: 2px; scrollbar-width: thin; }
   @media (max-width: 1020px) { .zebricek { max-height: 460px; } }
@@ -316,7 +316,7 @@ const czPoradi = Object.fromEntries(
   :global(.zebricek .draha) { display: block; height: 5px; border-radius: 999px; background: var(--draha); overflow: hidden; }
   :global(.zebricek .pruh) { display: block; height: 100%; border-radius: 999px; background: var(--navy); transform-origin: left; animation: rust 1s cubic-bezier(0.22, 0.8, 0.24, 1) both; }
   :global(.zebricek .hod) { font-variant-numeric: tabular-nums; font-weight: 800; font-size: 0.84rem; }
-  :global(.zebricek .radek--cz) { background: #FDF0E3 !important; }
+  :global(.zebricek .radek--cz) { background: var(--radek-cz) !important; }
   :global(.zebricek .radek--cz .jm), :global(.zebricek .radek--cz .hod), :global(.zebricek .radek--cz .poz) { color: var(--orange-text); font-weight: 900; }
   :global(.zebricek .radek--cz .pruh) { background: var(--orange); }
   :global(.zebricek .radek--vybrany) { box-shadow: inset 0 0 0 2px var(--orange); }
@@ -329,11 +329,11 @@ const czPoradi = Object.fromEntries(
   :global(.panel__stat .zpet:active) { transform: scale(0.97); }
   :global(.panel__stat .zpet) { transition: transform var(--stisk) var(--ease-out), border-color 0.2s ease; }
   :global(.panel__stat .hlava) { display: flex; align-items: center; gap: 0.9rem; }
-  :global(.panel__stat .hlava img) { width: 58px; height: 43.5px; border-radius: 6px; box-shadow: 0 0 0 1px rgba(27, 42, 74, 0.15); }
+  :global(.panel__stat .hlava img) { width: 58px; height: 43.5px; border-radius: 6px; box-shadow: 0 0 0 1px color-mix(in srgb, var(--navy) 15%, transparent); }
   :global(.panel__stat .jmeno) { font-size: 1.5rem; font-weight: 900; line-height: 1.2; }
-  :global(.panel__stat .hlavni) { padding: 0.9rem 1rem; border-radius: 14px; background: var(--navy); color: var(--cream); display: flex; flex-direction: column; gap: 0.15rem; }
+  :global(.panel__stat .hlavni) { padding: 0.9rem 1rem; border-radius: 14px; background: var(--panel); color: var(--na-panelu); display: flex; flex-direction: column; gap: 0.15rem; }
   :global(.panel__stat .hlavni strong) { font-size: 1.35rem; font-weight: 900; color: var(--orange); line-height: 1.25; }
-  :global(.panel__stat .hlavni span) { font-size: 0.85rem; font-weight: 600; color: #D9D3C7; }
+  :global(.panel__stat .hlavni span) { font-size: 0.85rem; font-weight: 600; color: var(--na-panelu-2); }
   :global(.panel__stat .podnadpis) { font-size: 0.9rem; font-weight: 800; color: var(--muted); }
   :global(.panel__stat .srovnani) { list-style: none; margin: 0; padding: 0 0.2rem 0 0; display: flex; flex-direction: column; gap: 0.8rem; overflow-y: auto; min-height: 0; scrollbar-width: thin; }
   :global(.panel__stat .srovnani li) { display: flex; flex-direction: column; gap: 0.3rem; }
@@ -344,7 +344,7 @@ const czPoradi = Object.fromEntries(
   :global(.panel__stat .s-radek .draha) { height: 10px; border-radius: 999px; background: var(--draha); overflow: hidden; }
   :global(.panel__stat .s-radek .pruh) { display: block; height: 100%; border-radius: 999px; transform-origin: left; animation: rust 1s cubic-bezier(0.22, 0.8, 0.24, 1) both; }
   :global(.panel__stat .s-radek .hod) { font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }
-  :global(.panel__stat .video) { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border-radius: 14px; border: 1.5px solid var(--orange); background: #FFF8F0; }
+  :global(.panel__stat .video) { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border-radius: 14px; border: 1.5px solid var(--orange); background: var(--oranzova-podklad); }
   :global(.panel__stat .video p) { font-size: 0.9rem; line-height: 1.6; color: var(--text-2); }
 
   /* Díly série */
@@ -352,7 +352,7 @@ const czPoradi = Object.fromEntries(
   .dil { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin-maly); padding: 1.35rem; display: flex; flex-direction: column; gap: 0.75rem; }
   .dil__hlava { display: flex; justify-content: space-between; align-items: center; }
   .dil__vlajky { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 800; color: var(--muted); }
-  .dil__vlajky img { border-radius: 5px; box-shadow: 0 0 0 1px rgba(27, 42, 74, 0.14); }
+  .dil__vlajky img { border-radius: 5px; box-shadow: 0 0 0 1px color-mix(in srgb, var(--navy) 14%, transparent); }
   .dil h3 { font-size: 1.25rem; font-weight: 900; }
   .dil__popis { min-height: 3em; }
   .dil__srovnani { list-style: none; margin: 0.2rem 0 0; padding: 0.9rem 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 0.8rem; }
@@ -389,8 +389,9 @@ const czPoradi = Object.fromEntries(
   type Zeme ={ type: 'Feature'; id?: string; properties: { n: string; a2?: string }; geometry: any };
   const zeme = (feature(svet.topo as any, (svet.topo as any).objects.countries) as any).features as Zeme[];
   const epMapa = new Map(epizody.map((e) => [e.a3, e]));
-  const PALETA = ['#E8E1D1', '#B9BCC3', '#8792AA', '#4E5F84', '#1B2A4A'];
-  const ORANZ = '#F08829', NAVY = '#1B2A4A', PEVNINA = '#EFE8DA', BEZ_DAT = 'url(#p-bez-dat)';
+  // Barvy jsou CSS proměnné (global.css), takže se mapa sama přebarví v tmavém režimu
+  const PALETA = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)', 'var(--s5)'];
+  const ORANZ = 'var(--orange)', NAVY = 'var(--navy)', PEVNINA = 'var(--zeme)', BEZ_DAT = 'url(#p-bez-dat)';
   const klidne = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const $ = <T extends Element>(s: string) => document.querySelector<T>(s)!;
@@ -616,8 +617,8 @@ const czPoradi = Object.fromEntries(
       const tecka = el('span', 'legenda__tecka');
       tecka.style.borderRadius = '4px';
       tecka.style.width = '20px';
-      tecka.style.boxShadow = 'inset 0 0 0 1px rgba(27,42,74,0.12)';
-      tecka.style.background = b === 'bez' ? 'repeating-linear-gradient(45deg, #EEEAE2 0 3px, #D7D0C4 3px 5px)' : b;
+      tecka.style.boxShadow = 'inset 0 0 0 1px color-mix(in srgb, var(--navy) 12%, transparent)';
+      tecka.style.background = b === 'bez' ? 'repeating-linear-gradient(45deg, var(--bez-dat-1) 0 3px, var(--bez-dat-2) 3px 5px)' : b;
       li.append(tecka, t);
       return li;
     }));

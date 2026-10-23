@@ -70,13 +70,13 @@ const nastaveni = JSON.stringify({ ...hlasovani, zapnute: hlasovaniZapnute, mozn
   :global(.hl__chip) { transition: transform var(--stisk) var(--ease-out), border-color 0.2s ease; touch-action: manipulation; -webkit-user-select: none; user-select: none; }
   :global(.hl__chip:active) { transform: scale(0.96); }
   :global(.hl__chip .vlajka) { width: 24px; height: 18px; border-radius: 3px; }
-  .hl__karta { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: 1rem 1.1rem; border-radius: 20px; background: var(--navy); color: var(--cream); box-shadow: var(--stin); animation: hl-vjezd 0.4s var(--ease-out) both; }
+  .hl__karta { display: grid; grid-template-columns: 64px minmax(0, 1fr) auto; gap: 1rem; align-items: center; padding: 1rem 1.1rem; border-radius: 20px; background: var(--panel); color: var(--na-panelum); box-shadow: var(--stin); animation: hl-vjezd 0.4s var(--ease-out) both; }
   .hl__vlajka { width: 64px; height: 48px; border-radius: 8px; object-fit: cover; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.25); }
   .hl__karta-text { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-  .hl__karta-stitek { font-size: 0.85rem; font-weight: 800; color: #F6C08C; }
+  .hl__karta-stitek { font-size: 0.85rem; font-weight: 800; color: var(--na-panelu-akcent); }
   .hl__karta-jmeno { font-size: 1.45rem; font-weight: 900; line-height: 1.2; }
-  .hl__karta-fakta { font-size: 0.86rem; font-weight: 600; color: #D9D3C7; line-height: 1.45; }
-  .hl__zrusit { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid rgba(242, 237, 227, 0.4); background: transparent; color: var(--cream); font-size: 1.3rem; line-height: 1; cursor: pointer; transition: transform var(--stisk) var(--ease-out); }
+  .hl__karta-fakta { font-size: 0.86rem; font-weight: 600; color: var(--na-panelu-2); line-height: 1.45; }
+  .hl__zrusit { width: 36px; height: 36px; border-radius: 50%; border: 1.5px solid rgba(242, 237, 227, 0.4); background: transparent; color: var(--na-panelu); font-size: 1.3rem; line-height: 1; cursor: pointer; transition: transform var(--stisk) var(--ease-out); }
   .hl__zrusit:active { transform: scale(0.92); }
   .hl__odeslat { width: 100%; min-height: 56px; font-size: 1.05rem; }
   .hl__stav { margin: 0; font-size: 0.95rem; font-weight: 700; color: var(--navy); min-height: 1.4em; }

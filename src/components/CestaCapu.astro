@@ -21,7 +21,7 @@ const zeme = ((feature(svet.topo as any, (svet.topo as any).objects.countries) a
   .filter((z) => z.d && z.d.length > 10);
 const p = (lat: number, lon: number) => proj([lon, lat])!.map((v) => Math.round(v * 10) / 10);
 const ptaci = capi.ptaci.map((b) => ({ ...b, body: b.body.map((x) => ({ ...x, xy: p(x.lat, x.lon) })) }));
-const BARVA: Record<string, string> = { zapad: '#F08829', vychod: '#1B2A4A', odhad: '#1E9E91' };
+const BARVA: Record<string, string> = { zapad: 'var(--orange)', vychod: 'var(--navy)', odhad: 'var(--teal)' };
 const MESICE = ['srp', 'zář', 'říj', 'lis', 'pro', 'led', 'úno', 'bře', 'dub', 'kvě'];
 const ZACATKY = [0, 31, 61, 92, 122, 153, 184, 212, 243, 273];
 // úseky pro kalendář: mezi sousedními body, barva podle fáze
@@ -60,8 +60,8 @@ const data = JSON.stringify({ ptaci: ptaci.map((b) => ({ k: b.klic, j: b.jmeno, 
         </svg>
         <div class="cc__datum" aria-live="off"><span data-cc-datum>1. srpna</span><small data-cc-pocet>Všichni jsou zatím doma</small></div>
         <ul class="cc__legenda" aria-label="Legenda">
-          <li><i style="background: #F08829;"></i>Západní trasa přes Gibraltar</li>
-          <li><i style="background: #1B2A4A;"></i>Východní trasa přes Izrael</li>
+          <li><i style="background: var(--orange);"></i>Západní trasa přes Gibraltar</li>
+          <li><i style="background: var(--navy);"></i>Východní trasa přes Izrael</li>
           <li><i class="cc__leg-odhad"></i>Trasa je odhad</li>
           <li><i class="cc__leg-signal"></i>Bez signálu</li>
         </ul>
@@ -113,9 +113,9 @@ const data = JSON.stringify({ ptaci: ptaci.map((b) => ({ k: b.klic, j: b.jmeno, 
   </div>
   <div class="cc__pata">
     <ul class="cc__kal-legenda" aria-hidden="true">
-      <li><i class="cc__usek cc__usek--cesta" style="--b: #1B2A4A;"></i>let</li>
-      <li><i class="cc__usek cc__usek--zima" style="--b: #1B2A4A;"></i>zimoviště</li>
-      <li><i class="cc__usek cc__usek--gap" style="--b: #1B2A4A;"></i>bez signálu</li>
+      <li><i class="cc__usek cc__usek--cesta" style="--b: var(--navy);"></i>let</li>
+      <li><i class="cc__usek cc__usek--zima" style="--b: var(--navy);"></i>zimoviště</li>
+      <li><i class="cc__usek cc__usek--gap" style="--b: var(--navy);"></i>bez signálu</li>
       <li><i class="cc__nezname"></i>bez přesných dat</li>
       <li><i class="cc__konec cc__konec--domov"></i>doma</li>
       <li><i class="cc__konec cc__konec--ztracen"></i>konec signálu</li>
@@ -153,9 +153,9 @@ const data = JSON.stringify({ ptaci: ptaci.map((b) => ({ k: b.klic, j: b.jmeno, 
   .cc__mapa { position: relative; border-radius: 16px; overflow: hidden; background: var(--more-svetle); }
   .cc-svg { width: 100%; height: auto; display: block; }
   .cc-more { fill: var(--more-svetle); }
-  .cc-zeme path { fill: var(--pevnina); stroke: #FFFFFF; stroke-width: 0.6; transition: fill 0.5s ease; }
-  .cc-zeme path.je-cesko { fill: #FBD3AE; stroke: var(--navy); stroke-width: 0.8; }
-  .cc-zeme path.je-zimoviste { fill: #F6E1C6; }
+  .cc-zeme path { fill: var(--pevnina); stroke: var(--obrys); stroke-width: 0.6; transition: fill 0.5s ease; }
+  .cc-zeme path.je-cesko { fill: var(--cesko-plocha); stroke: var(--navy); stroke-width: 0.8; }
+  .cc-zeme path.je-zimoviste { fill: var(--zimoviste); }
   .cc-trasa { fill: none; stroke: var(--b); stroke-width: 1.2; stroke-opacity: 0.18; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 2 4; }
   .cc-svg.ma-vyber .cc-trasa { stroke-opacity: 0.06; }
   .cc-svg :global(.cc-trasa.je-vybrana) { stroke-opacity: 0.5; stroke-width: 1.6; }
@@ -164,21 +164,21 @@ const data = JSON.stringify({ ptaci: ptaci.map((b) => ({ k: b.klic, j: b.jmeno, 
   .cc-svg :global(.cc-let--odhad) { stroke-dasharray: 6 5; }
   .cc-svg.ma-vyber :global(.cc-let:not(.je-vybrana)) { stroke-opacity: 0.2; }
   .cc-svg :global(.cc-ptak) { cursor: pointer; }
-  .cc-svg :global(.cc-ptak circle) { stroke: #FFFFFF; stroke-width: 2; }
+  .cc-svg :global(.cc-ptak circle) { stroke: var(--obrys); stroke-width: 2; }
   .cc-svg { --k: 1; }
   .cc-svg :global(.cc-ptak circle) { transform: scale(var(--k)); }
-  .cc-svg :global(.cc-ptak text) { font-size: calc(12px * var(--k)); stroke-width: calc(3.5px * var(--k)) !important; font-weight: 800; fill: var(--navy); paint-order: stroke; stroke: rgba(255, 255, 255, 0.92); stroke-width: 3.5px; stroke-linejoin: round; }
+  .cc-svg :global(.cc-ptak text) { font-size: calc(12px * var(--k)); stroke-width: calc(3.5px * var(--k)) !important; font-weight: 800; fill: var(--navy); paint-order: stroke; stroke: var(--halo); stroke-width: 3.5px; stroke-linejoin: round; }
   .cc-svg :global(.cc-ptak.je-vybrana text) { font-size: calc(14px * var(--k)); font-weight: 900; }
   .cc-svg.ma-vyber :global(.cc-ptak:not(.je-vybrana)) { opacity: 0.35; }
   .cc-svg :global(.cc-ptak--konec circle) { stroke-dasharray: 2 2; }
   .cc__datum { position: absolute; left: 0.9rem; top: 0.7rem; display: flex; flex-direction: column; gap: 0.2rem; pointer-events: none; }
   @media (max-width: 600px) { .cc__mapa { display: flex; flex-direction: column; } .cc__datum { position: static; order: -1; flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 0.2rem 0.6rem; padding: 0.7rem 0.8rem 0.3rem; } .cc__mesice span:nth-child(even), .cc__kal-osa > div span:nth-child(even) { display: none; } }
-  .cc__datum span { font-size: clamp(1.5rem, 3.6vw, 2.3rem); font-weight: 900; color: var(--navy); line-height: 1; paint-order: stroke; -webkit-text-stroke: 0; text-shadow: 0 0 10px rgba(213, 231, 243, 0.95); }
-  .cc__datum small { font-size: 0.8rem; font-weight: 800; color: var(--orange-text); text-shadow: 0 0 8px rgba(213, 231, 243, 0.95); }
-  .cc__legenda { position: absolute; left: 0.8rem; bottom: 0.7rem; display: flex; flex-direction: column; gap: 0.25rem; margin: 0; padding: 0.55rem 0.7rem; list-style: none; border-radius: 12px; background: rgba(255, 255, 255, 0.82); font-size: 0.74rem; font-weight: 700; color: var(--navy); }
+  .cc__datum span { font-size: clamp(1.5rem, 3.6vw, 2.3rem); font-weight: 900; color: var(--navy); line-height: 1; paint-order: stroke; -webkit-text-stroke: 0; text-shadow: 0 0 10px var(--more-svetle); }
+  .cc__datum small { font-size: 0.8rem; font-weight: 800; color: var(--orange-text); text-shadow: 0 0 8px var(--more-svetle); }
+  .cc__legenda { position: absolute; left: 0.8rem; bottom: 0.7rem; display: flex; flex-direction: column; gap: 0.25rem; margin: 0; padding: 0.55rem 0.7rem; list-style: none; border-radius: 12px; background: var(--sklo); font-size: 0.74rem; font-weight: 700; color: var(--navy); }
   .cc__legenda li { display: flex; align-items: center; gap: 0.45rem; }
   .cc__legenda i { width: 18px; height: 4px; border-radius: 2px; }
-  .cc__leg-odhad { background: repeating-linear-gradient(90deg, #1E9E91 0 5px, transparent 5px 8px); }
+  .cc__leg-odhad { background: repeating-linear-gradient(90deg, var(--teal) 0 5px, transparent 5px 8px); }
   .cc__leg-signal { background: repeating-linear-gradient(90deg, var(--slate) 0 2px, transparent 2px 6px); }
   @media (max-width: 560px) { .cc__legenda { position: static; flex-direction: row; flex-wrap: wrap; gap: 0.3rem 0.8rem; background: transparent; padding: 0.5rem 0.2rem 0; } }
 
@@ -197,17 +197,17 @@ const data = JSON.stringify({ ptaci: ptaci.map((b) => ({ k: b.klic, j: b.jmeno, 
   .cc__cisla li { display: flex; flex-direction: column; padding: 0.7rem 0.9rem; border-radius: 16px; background: var(--paper); border: 1px solid var(--line); }
   .cc__cisla strong { font-size: 1.7rem; font-weight: 900; color: var(--navy); line-height: 1.1; font-variant-numeric: tabular-nums; }
   .cc__cisla span { font-size: 0.78rem; font-weight: 800; color: var(--muted); }
-  .cc__detail { background: var(--navy); color: var(--cream); border-radius: 20px; padding: 1.3rem 1.4rem; display: flex; flex-direction: column; gap: 0.45rem; min-height: 180px; }
-  .cc__detail :global(.cc__maly) { font-size: 0.78rem; font-weight: 700; color: #D9D3C7; }
+  .cc__detail { background: var(--panel); color: var(--na-panelu); border-radius: 20px; padding: 1.3rem 1.4rem; display: flex; flex-direction: column; gap: 0.45rem; min-height: 180px; }
+  .cc__detail :global(.cc__maly) { font-size: 0.78rem; font-weight: 700; color: var(--na-panelu-2); }
   .cc__detail :global(.cc__jmeno) { font-size: 1.45rem; font-weight: 900; line-height: 1.2; }
-  .cc__detail :global(p) { margin: 0; font-size: 0.9rem; font-weight: 600; color: #E4DED2; line-height: 1.55; }
+  .cc__detail :global(p) { margin: 0; font-size: 0.9rem; font-weight: 600; color: var(--na-panelu-2); line-height: 1.55; }
   .cc__detail :global(.cc__body) { list-style: none; margin: 0.2rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.25rem; max-height: 260px; overflow-y: auto; }
-  .cc__detail :global(.cc__body li) { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); gap: 0.5rem; font-size: 0.82rem; font-weight: 700; color: #B9B3A7; transition: color 0.2s ease; }
+  .cc__detail :global(.cc__body li) { display: grid; grid-template-columns: 4.2rem minmax(0, 1fr); gap: 0.5rem; font-size: 0.82rem; font-weight: 700; color: var(--na-panelu-3); transition: color 0.2s ease; }
   .cc__detail :global(.cc__body li b) { font-variant-numeric: tabular-nums; font-weight: 800; }
-  .cc__detail :global(.cc__body li.je-hotovo) { color: var(--cream); }
+  .cc__detail :global(.cc__body li.je-hotovo) { color: var(--na-panelu); }
   .cc__detail :global(.cc__body li.je-hotovo b) { color: var(--orange); }
   .cc__detail :global(.cc__vysledek) { margin-top: 0.3rem; padding: 0.6rem 0.8rem; border-radius: 12px; background: var(--navy-2); font-weight: 700; }
-  .cc__detail :global(button) { align-self: flex-start; margin-top: 0.4rem; min-height: 36px; padding: 0 0.9rem; border: 1.5px solid var(--cream); border-radius: 999px; background: transparent; color: var(--cream); font-family: inherit; font-weight: 700; cursor: pointer; }
+  .cc__detail :global(button) { align-self: flex-start; margin-top: 0.4rem; min-height: 36px; padding: 0 0.9rem; border: 1.5px solid var(--na-panelu); border-radius: 999px; background: transparent; color: var(--na-panelu); font-family: inherit; font-weight: 700; cursor: pointer; }
 
   .cc__kalendar { position: relative; display: flex; flex-direction: column; gap: 0.2rem; padding: 0.9rem clamp(0.7rem, 1.8vw, 1.2rem); background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin-maly); }
   .cc__kal-osa, .cc__radek { display: grid; grid-template-columns: minmax(7.5rem, 11rem) minmax(0, 1fr); gap: 0.8rem; align-items: center; }
@@ -217,11 +217,11 @@ const data = JSON.stringify({ ptaci: ptaci.map((b) => ({ k: b.klic, j: b.jmeno, 
   .cc__radek-jmeno { display: flex; flex-direction: column; line-height: 1.2; }
   .cc__radek-jmeno b { font-size: 0.9rem; font-weight: 900; }
   .cc__radek-jmeno small { font-size: 0.7rem; font-weight: 700; color: var(--muted); }
-  .cc__radek-osa { position: relative; height: 16px; border-radius: 4px; background: linear-gradient(90deg, rgba(27, 42, 74, 0.05), rgba(27, 42, 74, 0.05)) center / 100% 2px no-repeat; }
+  .cc__radek-osa { position: relative; height: 16px; border-radius: 4px; background: linear-gradient(90deg, color-mix(in srgb, var(--navy) 5%, transparent), color-mix(in srgb, var(--navy) 5%, transparent)) center / 100% 2px no-repeat; }
   .cc__usek { position: absolute; top: 3px; height: 10px; background: var(--b); opacity: 0.45; }
   .cc__usek--zima { opacity: 1; top: 1px; height: 14px; border-radius: 3px; }
   .cc__usek--gap { background: transparent; opacity: 1; border-top: 2px dotted var(--b); top: 7px; height: 0; }
-  .cc__usek--odhad { background: repeating-linear-gradient(135deg, #1E9E91 0 3px, rgba(30, 158, 145, 0.25) 3px 6px); opacity: 1; }
+  .cc__usek--odhad { background: repeating-linear-gradient(135deg, var(--teal) 0 3px, color-mix(in srgb, var(--teal) 25%, transparent) 3px 6px); opacity: 1; }
   .cc__nezname { position: absolute; top: -2px; bottom: -2px; border-radius: 4px; background: repeating-linear-gradient(135deg, rgba(30, 158, 145, 0.35) 0 3px, transparent 3px 6px); }
   .cc__konec { position: absolute; top: 50%; width: 10px; height: 10px; margin: -5px 0 0 -2px; border-radius: 50%; }
   .cc__konec--domov { background: var(--paper); border: 2.5px solid var(--b, var(--navy)); }
@@ -253,14 +253,15 @@ const data = JSON.stringify({ ptaci: ptaci.map((b) => ({ k: b.klic, j: b.jmeno, 
     const sablona = $<HTMLTemplateElement>('[data-cc-sablona]');
     const kurzor = $<HTMLElement>('[data-cc-kurzor]');
     const zemeEl = new Map<string, SVGPathElement>(Array.from(svg.querySelectorAll<SVGPathElement>('.cc-zeme path')).map((p) => [p.dataset.a2!, p]));
-    const BARVA: Record<string, string> = { zapad: '#F08829', vychod: '#1B2A4A', odhad: '#1E9E91' };
+    const BARVA: Record<string, string> = { zapad: 'var(--orange)', vychod: 'var(--navy)', odhad: 'var(--teal)' };
     const DNU = 302;
     const klidne = matchMedia('(prefers-reduced-motion: reduce)').matches;
     const IKONA_PLAY = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>';
     const IKONA_PAUZA = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7z M13.5 5H17v14h-3.5z" fill="currentColor"/></svg>';
     const MESIC = ['ledna', 'února', 'března', 'dubna', 'května', 'června', 'července', 'srpna', 'září', 'října', 'listopadu', 'prosince'];
     const NS = 'http://www.w3.org/2000/svg';
-    const el = (tag: string, a: Record<string, string | number> = {}) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v)); return e; };
+    // Barvy přes style, aby fungovaly CSS proměnné (tmavý režim) ve všech prohlížečích
+    const el = (tag: string, a: Record<string, string | number> = {}) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(a)) { if ((k === 'fill' || k === 'stroke') && String(v).startsWith('var(')) e.style.setProperty(k, String(v)); else e.setAttribute(k, String(v)); } return e; };
 
     let t = 0, hraje = false, vybrany: string | null = null, posledni = 0, snimek = 0;
     const datum = (d: number) => { const x = new Date(Date.UTC(2001, 7, 1) + Math.floor(d) * 86400000); return `${x.getUTCDate()}. ${MESIC[x.getUTCMonth()]}`; };

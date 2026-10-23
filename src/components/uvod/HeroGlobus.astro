@@ -14,7 +14,7 @@ const sit = cesta(geoGraticule10()) ?? '';
 const ep = new Set(epizody.map((e) => e.a3));
 const pole = zeme.map((f: any) => ({
   d: cesta(f) ?? '',
-  fill: f.id === 'CZE' ? '#F08829' : ep.has(f.id) ? '#1B2A4A' : '#EFE8DA',
+  fill: f.id === 'CZE' ? 'var(--orange)' : ep.has(f.id) ? 'var(--navy)' : 'var(--zeme)',
   cz: f.id === 'CZE',
 }));
 const PRAHA: [number, number] = [14.42, 50.08];
@@ -34,38 +34,38 @@ const [px, py] = proj(PRAHA)!;
 <svg class="hg" viewBox="0 0 600 640" role="img" aria-label="Glóbus: Česko a země ze série Česko vs. svět">
   <defs>
     <radialGradient id="hg-more" cx="40%" cy="34%" r="72%">
-      <stop offset="0%" stop-color="#CFE3F1" />
-      <stop offset="62%" stop-color="#A7C9E2" />
-      <stop offset="100%" stop-color="#8DB6D4" />
+      <stop offset="0%" style="stop-color: var(--globus-1);" />
+      <stop offset="62%" style="stop-color: var(--globus-2);" />
+      <stop offset="100%" style="stop-color: var(--globus-3);" />
     </radialGradient>
     <radialGradient id="hg-lesk" cx="34%" cy="26%" r="70%">
-      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.4" />
+      <stop offset="0%" stop-color="#FFFFFF" style="stop-opacity: var(--lesk-sila);" />
       <stop offset="45%" stop-color="#FFFFFF" stop-opacity="0.05" />
       <stop offset="100%" stop-color="#1B2A4A" stop-opacity="0.16" />
     </radialGradient>
     <radialGradient id="hg-stin" cx="50%" cy="50%" r="50%">
-      <stop offset="0%" stop-color="#1B2A4A" stop-opacity="0.22" />
-      <stop offset="100%" stop-color="#1B2A4A" stop-opacity="0" />
+      <stop offset="0%" style="stop-color: rgb(var(--stin-barva)); stop-opacity: 0.22;" />
+      <stop offset="100%" style="stop-color: rgb(var(--stin-barva)); stop-opacity: 0;" />
     </radialGradient>
   </defs>
   <ellipse cx="300" cy="612" rx="210" ry="20" fill="url(#hg-stin)" />
   <g class="hg__koule">
     <path d={sfera} fill="url(#hg-more)" />
-    <path d={sit} fill="none" stroke="#FFFFFF" stroke-opacity="0.45" stroke-width="0.7" />
-    {pole.map((p: any) => <path d={p.d} fill={p.fill} stroke="#FFFFFF" stroke-width={p.cz ? 1 : 0.5} stroke-linejoin="round" />)}
+    <path d={sit} fill="none" style="stroke: var(--sit-globusu);" stroke-width="0.7" />
+    {pole.map((p: any) => <path d={p.d} style={`fill: ${p.fill}; stroke: var(--obrys);`} stroke-width={p.cz ? 1 : 0.5} stroke-linejoin="round" />)}
     {oblouky.map((d, i) => <path class="hg__oblouk" d={d} style={`--i: ${i};`} />)}
     <circle class="hg__puls" cx={px} cy={py} r="7" />
-    <circle cx={px} cy={py} r="4.5" fill="#F08829" stroke="#FFFFFF" stroke-width="1.6" />
+    <circle cx={px} cy={py} r="4.5" style="fill: var(--orange); stroke: var(--obrys);" stroke-width="1.6" />
     <path d={sfera} fill="url(#hg-lesk)" />
-    <path d={sfera} fill="none" stroke="rgba(27,42,74,0.18)" />
+    <path d={sfera} fill="none" style="stroke: color-mix(in srgb, var(--navy) 18%, transparent);" />
   </g>
 </svg>
 
 <style>
   .hg { width: 100%; height: auto; display: block; overflow: visible; }
-  .hg__oblouk { fill: none; stroke: #F08829; stroke-width: 2; stroke-linecap: round; stroke-dasharray: 600; stroke-dashoffset: 600; animation: hg-car 2.4s cubic-bezier(0.22, 0.8, 0.24, 1) forwards; animation-delay: calc(0.6s + var(--i) * 0.25s); }
+  .hg__oblouk { fill: none; stroke: var(--orange); stroke-width: 2; stroke-linecap: round; stroke-dasharray: 600; stroke-dashoffset: 600; animation: hg-car 2.4s cubic-bezier(0.22, 0.8, 0.24, 1) forwards; animation-delay: calc(0.6s + var(--i) * 0.25s); }
   /* Jeden orchestrovaný moment: oblouky se vykreslí a Praha třikrát zapulzuje, pak je klid */
-  .hg__puls { fill: #F08829; opacity: 0; transform-box: fill-box; transform-origin: center; animation: hg-puls 2.4s ease-out 1.2s 3; }
+  .hg__puls { fill: var(--orange); opacity: 0; transform-box: fill-box; transform-origin: center; animation: hg-puls 2.4s ease-out 1.2s 3; }
   @keyframes hg-car { to { stroke-dashoffset: 0; } }
   @keyframes hg-puls { from { transform: scale(1); opacity: 0.5; } to { transform: scale(3.4); opacity: 0; } }
   @media (prefers-reduced-motion: reduce) {

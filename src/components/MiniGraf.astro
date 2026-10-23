@@ -29,7 +29,8 @@ const j = g.jednotka;
 const sJednotkou = (v: number, kr = false) => `${kr ? kratce(v, d, g.znamenko) : hodnota(v, d, g.znamenko)}${j === '%' ? ' %' : ` ${j}`}`;
 const f1 = (v: number) => Math.round(v * 10) / 10;
 
-const ORANZOVA = '#F08829', NAVY = '#1B2A4A', SEDA = '#AEB8CB';
+// Barvy jako CSS proměnné, aby se graf přebarvil i v tmavém režimu
+const ORANZOVA = 'var(--orange)', NAVY = 'var(--navy)', SEDA = 'var(--sloupec-seda)';
 
 // pěkné kroky os
 function kroky(lo: number, hi: number, n = 3) {
@@ -163,13 +164,13 @@ const legenda = g.typ === 'cara' && (g.rady?.length ?? 0) > 1 ? obsah.cesty.map(
         )}
         {[...obsah.cesty].reverse().map((c: any, ri: number) => (
           <g>
-            {ri === obsah.cesty.length - 1 && <path class="mg__zare" d={c.d} stroke={c.barva} />}
-            <path class="mg__cara" d={c.d} stroke={c.barva} stroke-width={ri === obsah.cesty.length - 1 ? 3 : 2} pathLength="1" />
+            {ri === obsah.cesty.length - 1 && <path class="mg__zare" d={c.d} style={`stroke: ${c.barva};`} />}
+            <path class="mg__cara" d={c.d} style={`stroke: ${c.barva};`} stroke-width={ri === obsah.cesty.length - 1 ? 3 : 2} pathLength="1" />
           </g>
         ))}
         {obsah.cesty.map((c: any, ri: number) => (
           <g class="mg__konec">
-            <circle cx={c.konec.x} cy={c.konec.y} r={ri === 0 ? 4.5 : 3.5} fill={c.barva} />
+            <circle cx={c.konec.x} cy={c.konec.y} r={ri === 0 ? 4.5 : 3.5} style={`fill: ${c.barva};`} />
             <text x={c.konec.x - 7} y={c.konec.y + (c.konec.dy ?? -8)} text-anchor="end" class:list={['mg__hodnota', { 'mg__hodnota--hlavni': ri === 0 }]}>{c.konec.t}</text>
           </g>
         ))}
@@ -185,7 +186,7 @@ const legenda = g.typ === 'cara' && (g.rady?.length ?? 0) > 1 ? obsah.cesty.map(
           </g>
         )}
         {obsah.sloupce.map((s: any) => (
-          <rect class:list={['mg__sloupec', { 'mg__sloupec--zap': s.zap }]} x={s.x} y={s.y} width={s.w} height={s.h} rx={Math.min(3, s.w / 2)} fill={s.barva} style={`--i: ${s.i};`} />
+          <rect class:list={['mg__sloupec', { 'mg__sloupec--zap': s.zap }]} x={s.x} y={s.y} width={s.w} height={s.h} rx={Math.min(3, s.w / 2)} style={`--i: ${s.i}; fill: ${s.barva};`} />
         ))}
         <line class="mg__nula" x1={L} x2={R} y1={obsah.nula} y2={obsah.nula} />
         {obsah.popisky.filter((p: any) => p.vodic).map((p: any) => (
@@ -213,18 +214,18 @@ const legenda = g.typ === 'cara' && (g.rady?.length ?? 0) > 1 ? obsah.cesty.map(
   .mg { position: relative; margin: 0; display: flex; flex-direction: column; gap: 0.35rem; }
   .mg__svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
   .mg__svg text { font-family: inherit; font-size: 10px; font-weight: 700; fill: var(--muted); paint-order: stroke; stroke: var(--plocha-2); stroke-width: 3px; stroke-linejoin: round; }
-  .mg__mrizka line { stroke: #E7E0D3; stroke-width: 1; }
-  .mg__mrizka text { font-size: 9px; font-weight: 600; fill: #7D879A; }
+  .mg__mrizka line { stroke: var(--mrizka-grafu); stroke-width: 1; }
+  .mg__mrizka text { font-size: 9px; font-weight: 600; fill: var(--osa-grafu); }
   .mg__ref line { stroke: var(--slate); stroke-width: 1.2; stroke-dasharray: 3 3; }
   .mg__ref text { font-size: 9.5px; fill: var(--slate); }
   .mg__cara { fill: none; stroke-linecap: round; stroke-linejoin: round; }
   .mg__zare { fill: none; stroke-width: 9; stroke-opacity: 0.14; stroke-linecap: round; stroke-linejoin: round; }
-  .mg__konec circle { stroke: #fff; stroke-width: 2; }
+  .mg__konec circle { stroke: var(--paper); stroke-width: 2; }
   .mg__hodnota { font-size: 11px !important; font-weight: 800 !important; fill: var(--navy) !important; }
   .mg__hodnota--hlavni { font-size: 12.5px !important; font-weight: 900 !important; fill: var(--orange-text) !important; }
   .mg__nula { stroke: var(--line-2); stroke-width: 1; }
   .mg__vodic { stroke: var(--orange); stroke-width: 1.2; }
-  .mg__osa { font-size: 9.5px !important; font-weight: 600 !important; fill: #7D879A !important; }
+  .mg__osa { font-size: 9.5px !important; font-weight: 600 !important; fill: var(--osa-grafu) !important; }
   .mg__hit { fill: transparent; cursor: crosshair; }
   .mg__kriz { stroke: var(--navy); stroke-width: 1; stroke-dasharray: 2 2; opacity: 0; transition: opacity 0.15s ease; pointer-events: none; }
   .mg.ukazuje .mg__kriz { opacity: 0.45; }
@@ -233,8 +234,8 @@ const legenda = g.typ === 'cara' && (g.rady?.length ?? 0) > 1 ? obsah.cesty.map(
   .mg__legenda { display: flex; gap: 0.9rem; list-style: none; margin: 0; padding: 0; font-size: 0.74rem; font-weight: 700; color: var(--muted); }
   .mg__legenda li { display: inline-flex; align-items: center; gap: 0.35rem; }
   .mg__legenda i { width: 14px; height: 3px; border-radius: 3px; }
-  .mg__popis { font-size: 0.74rem; font-weight: 600; line-height: 1.45; color: #6F7990; }
-  .mg__tip { position: absolute; z-index: 3; top: 0; left: 0; padding: 0.4rem 0.6rem; border-radius: 10px; background: var(--navy); color: var(--cream); font-size: 0.76rem; font-weight: 700; line-height: 1.4; white-space: nowrap; pointer-events: none; box-shadow: 0 6px 18px -6px rgba(27, 42, 74, 0.5); transform: translate(var(--tx, 0), var(--ty, 0)); }
+  .mg__popis { font-size: 0.74rem; font-weight: 600; line-height: 1.45; color: var(--muted); }
+  .mg__tip { position: absolute; z-index: 3; top: 0; left: 0; padding: 0.4rem 0.6rem; border-radius: 10px; background: var(--navy); color: var(--cream); font-size: 0.76rem; font-weight: 700; line-height: 1.4; white-space: nowrap; pointer-events: none; box-shadow: 0 6px 18px -6px rgba(var(--stin-barva), 0.5); transform: translate(var(--tx, 0), var(--ty, 0)); }
   :global(.mg__tip b) { display: block; font-weight: 900; color: var(--orange); }
 
   /* Animace při vjetí do obrazu: čára se nakreslí, sloupce vyrostou, popisky naskočí na konci */

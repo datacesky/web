@@ -4,6 +4,8 @@
   --plocha-2: #F8F5EF;
   --stin: 0 1px 2px rgba(27, 42, 74, 0.05), 0 12px 32px -14px rgba(27, 42, 74, 0.22);
   --stin-maly: 0 1px 2px rgba(27, 42, 74, 0.06), 0 6px 16px -8px rgba(27, 42, 74, 0.2);
+  --stin-velky: 0 1px 2px rgba(27, 42, 74, 0.05), 0 18px 40px -14px rgba(27, 42, 74, 0.3);
+  --stin-barva: 27, 42, 74;
   --more: #A9CBE3;
   --more-svetle: #D5E7F3;
   --pevnina: #F6F2EA;
@@ -11,19 +13,160 @@
   --navy: #1B2A4A;
   --navy-2: #26375C;
   --orange: #F08829;
+  --orange-hover: #F39A45;
   --teal: #1E9E91;
   --slate: #6E7C96;
   --muted: #56627A;
   --text-2: #3A4763;
+  --text-clanku: #2E3B58;
   --orange-text: #9A520E;
   --line: #E2D9C9;
   --line-2: #B9AE9B;
+  --line-jemna: #EFE8DC;
+  /* Tmavé panely (detail kraje, pás se sítěmi, hlasování): tmavé v obou režimech */
+  --panel: #1B2A4A;
+  --panel-2: #26375C;
+  --na-panelu: #F2EDE3;
+  --na-panelu-2: #D9D3C7;
+  --na-panelu-3: #B9B3A7;
+  --na-panelu-akcent: #F6C08C;
+  /* Text na oranžové ploše (tlačítko Hlasuj, štítek Česka) */
+  --na-oranzove: #1B2A4A;
+  /* Jemné plochy a stavy */
+  --hover: rgba(27, 42, 74, 0.06);
+  --hover-silny: rgba(27, 42, 74, 0.1);
+  --sklo: rgba(255, 255, 255, 0.72);
+  --hlavicka-pozadi: rgba(242, 237, 227, 0.86);
+  --dok-pozadi: rgba(27, 42, 74, 0.94);
+  --zavoj: rgba(27, 42, 74, 0.38);
+  --oranzova-svetla: #FDEBD8;
+  --oranzova-podklad: #FFF8F0;
+  --modra-svetla: #E3E8F1;
+  --bezova: #EDE6DA;
+  /* Mapy: hranice mezi územími, světlé obtažení popisků, voda */
+  --obrys: #FFFFFF;
+  --halo: rgba(255, 255, 255, 0.9);
+  --voda: #3F7FBF;
+  --vrstevnice-sila: 1;
+  /* Kartogramy: světlá = málo, tmavá = hodně. V tmavém režimu naopak, aby víc vždy víc vystupovalo. */
+  --k1: #DDE2EA; --k2: #AEB9CB; --k3: #7D8DA8; --k4: #4B5E82; --k5: #1B2A4A; --k-bez: #E4DDCF;
+  --s1: #E8E1D1; --s2: #B9BCC3; --s3: #8792AA; --s4: #4E5F84; --s5: #1B2A4A;
+  --hneda: #9A520E;
+  --mrizka-grafu: #E7E0D3;
+  --osa-grafu: #7D879A;
+  --sloupec-seda: #AEB8CB;
+  --placeholder: #8A93A6;
+  --zeme: #EFE8DA;
+  --text-mapy-slaby: #A79F8F;
+  --hory: #6B5E45;
+  --popisek-na-silne: #FFFFFF;
+  --popisek-na-silne-halo: rgba(27, 42, 74, 0.7);
+  /* Glóbus a moře */
+  --globus-1: #CFE3F1; --globus-2: #AFCFE6; --globus-3: #8DB6D4;
+  --more-plocha-1: #C9E0EF; --more-plocha-2: #A9CBE3; --more-zoom: #B9D6EA;
+  --lesk-sila: 0.38;
+  --sit-globusu: rgba(255, 255, 255, 0.45);
+  --bez-dat-1: #EEEAE2; --bez-dat-2: #D7D0C4;
+  --radek-cz: #FDF0E3;
+  /* Text na plném „inkoustovém“ tlačítku (tmavé ve světlém režimu, světlé v tmavém) */
+  --akcent-na-inkoustu: #F6C08C;
+  --na-inkoustu-2: #B9C0CF;
+  --sit-0: #CFC7B8; --sit-1: #B8AE9D; --sit-2: #9C9282;
+  --teal-text: #146F66;
+  --cesko-plocha: #FBD3AE;
+  --zimoviste: #F6E1C6;
+  /* 3D model Česka: světlá deska na podložce (v tmavém režimu na tmavém stole) */
+  --scena-3d-1: #FBF8F2; --scena-3d-2: #F2EDE3; --scena-3d-3: #E9E1D3;
   --obal: 1200px;
   --radius: 20px;
   /* Pohyb: ease-out pro vše, co reaguje na uživatele; stisk je krátký a okamžitý */
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --stisk: 110ms;
+  color-scheme: light;
+}
+
+/* Tmavý režim: zapíná ho skript v hlavičce podle nastavení zařízení nebo podle volby v patičce.
+   --navy je v tmavém režimu „inkoust“ (světlý text, sloupce, plná tlačítka) a --cream „podklad“,
+   takže většina webu se přepne sama. Tmavé panely (--panel) zůstávají tmavé. */
+:root[data-tema='tmavy'] {
+  --cream: #0E1628;
+  --paper: #162139;
+  --plocha-2: #1B2742;
+  --stin: 0 1px 2px rgba(0, 0, 0, 0.3), 0 14px 34px -14px rgba(0, 0, 0, 0.7);
+  --stin-maly: 0 1px 2px rgba(0, 0, 0, 0.28), 0 8px 18px -8px rgba(0, 0, 0, 0.6);
+  --stin-velky: 0 1px 2px rgba(0, 0, 0, 0.3), 0 20px 44px -14px rgba(0, 0, 0, 0.8);
+  --stin-barva: 0, 0, 0;
+  --more: #172B4B;
+  --more-svetle: #1B3154;
+  --pevnina: #2A3755;
+  --draha: #25314C;
+  --navy: #ECE5D7;
+  --navy-2: #D6CEBE;
+  --orange: #F5973F;
+  --orange-hover: #F8A95E;
+  --teal: #3BB9AC;
+  --slate: #93A0B9;
+  --muted: #A5B0C5;
+  --text-2: #CCC6B9;
+  --text-clanku: #DCD6C9;
+  --orange-text: #F6AA68;
+  --line: #27344F;
+  --line-2: #3E4C6E;
+  --line-jemna: #222E48;
+  --panel: #1F2E52;
+  --panel-2: #2A3C65;
+  --na-panelu: #F2EDE3;
+  --na-panelu-2: #CFC9BC;
+  --na-panelu-3: #ADA79B;
+  --na-panelu-akcent: #F6C08C;
+  --na-oranzove: #13203A;
+  --hover: rgba(236, 229, 215, 0.07);
+  --hover-silny: rgba(236, 229, 215, 0.12);
+  --sklo: rgba(22, 33, 57, 0.8);
+  --hlavicka-pozadi: rgba(14, 22, 40, 0.84);
+  --dok-pozadi: rgba(31, 46, 82, 0.95);
+  --zavoj: rgba(4, 8, 18, 0.6);
+  --oranzova-svetla: #3B2A1A;
+  --oranzova-podklad: #2B2119;
+  --modra-svetla: #22304F;
+  --bezova: #263250;
+  --obrys: #162139;
+  --halo: rgba(14, 22, 40, 0.88);
+  --voda: #5E9BD6;
+  --vrstevnice-sila: 0.17;
+  --k1: #2B3858; --k2: #46597D; --k3: #6E84AA; --k4: #A6B5D0; --k5: #E8EDF5; --k-bez: #2A3245;
+  --s1: #2E3953; --s2: #4A5A7C; --s3: #7386A8; --s4: #A9B8D2; --s5: #E8EDF5;
+  --hneda: #C98B54;
+  --mrizka-grafu: #2A3651;
+  --osa-grafu: #8D99B1;
+  --sloupec-seda: #4E5D7E;
+  --placeholder: #7C88A2;
+  --zeme: #2A3653;
+  --text-mapy-slaby: #66738F;
+  --hory: #CDB98F;
+  --popisek-na-silne: #13203A;
+  --popisek-na-silne-halo: rgba(236, 229, 215, 0.75);
+  --globus-1: #284A75; --globus-2: #1C365C; --globus-3: #132744;
+  --more-plocha-1: #1E3A60; --more-plocha-2: #172E50; --more-zoom: #183054;
+  --lesk-sila: 0.1;
+  --sit-globusu: rgba(255, 255, 255, 0.1);
+  --bez-dat-1: #253049; --bez-dat-2: #313D58;
+  --radek-cz: #33261A;
+  --akcent-na-inkoustu: #9A520E;
+  --na-inkoustu-2: #56627A;
+  --sit-0: #36425E; --sit-1: #46536F; --sit-2: #5C6A88;
+  --teal-text: #63CFC3;
+  --cesko-plocha: #6A4728;
+  --zimoviste: #463626;
+  --scena-3d-1: #24314F; --scena-3d-2: #172239; --scena-3d-3: #0E1628;
+  color-scheme: dark;
+}
+/* Prvky, které mají vždy vypadat jako grafika ze sítí (obálky dílů): světlé i v tmavém režimu */
+.vzdy-svetle {
+  --cream: #F2EDE3; --paper: #FFFFFF; --plocha-2: #F8F5EF; --navy: #1B2A4A; --navy-2: #26375C; --orange: #F08829;
+  --teal: #1E9E91; --slate: #6E7C96; --muted: #56627A; --text-2: #3A4763; --orange-text: #9A520E; --line: #E2D9C9;
+  --line-2: #B9AE9B; --na-oranzove: #1B2A4A; --vrstevnice-sila: 1; --stin-barva: 27, 42, 74; color-scheme: light;
 }
 
 *, *::before, *::after { box-sizing: border-box; }
@@ -96,7 +239,7 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
 .stitek { font-size: 0.85rem; font-weight: 700; color: var(--orange-text); }
 .drobne { font-size: 0.9rem; font-weight: 500; color: var(--muted); }
 .nadpis-grafu { font-size: clamp(1.2rem, 2.2vw, 1.55rem); font-weight: 900; text-transform: uppercase; letter-spacing: 0.01em; line-height: 1.25; }
-.text-clanku { display: flex; flex-direction: column; gap: 1.1rem; font-size: 1.05rem; line-height: 1.85; color: #2E3B58; max-width: 68ch; }
+.text-clanku { display: flex; flex-direction: column; gap: 1.1rem; font-size: 1.05rem; line-height: 1.85; color: var(--text-clanku); max-width: 68ch; }
 /* Nadpisy uvnitř textu: o stupeň menší než nadpisy sekcí a s větším odstupem nad sebou než pod sebou,
    ať je jasné, ke kterému odstavci patří */
 .text-clanku h2 { font-size: clamp(1.35rem, 2.4vw, 1.7rem); letter-spacing: -0.015em; line-height: 1.25; color: var(--navy); margin-top: 1.9rem; }
@@ -125,16 +268,17 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
   transition: transform var(--stisk) var(--ease-out), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 .tlacitko--plny { background: var(--navy); color: var(--cream); }
-.tlacitko--oranzovy { background: var(--orange); border-color: var(--orange); color: var(--navy); }
-.tlacitko--svetly { border-color: var(--cream); color: var(--cream); }
+.tlacitko--oranzovy { background: var(--orange); border-color: var(--orange); color: var(--na-oranzove); }
+.tlacitko--svetly { border-color: var(--na-panelu); color: var(--na-panelu); }
 @media (hover: hover) and (pointer: fine) {
-  .tlacitko:hover { color: var(--navy); background: rgba(27, 42, 74, 0.06); }
+  .tlacitko:hover { color: var(--navy); background: var(--hover); }
   .tlacitko--plny:hover { background: var(--navy-2); color: var(--cream); }
-  .tlacitko--oranzovy:hover { background: #F39A45; }
-  .tlacitko--svetly:hover { background: rgba(242, 237, 227, 0.1); color: var(--cream); }
+  .tlacitko--oranzovy:hover { background: var(--orange-hover); border-color: var(--orange-hover); color: var(--na-oranzove); }
+  .tlacitko--svetly:hover { background: rgba(242, 237, 227, 0.1); color: var(--na-panelu); }
 }
 .tlacitko--plna-sirka { width: 100%; }
 .tlacitko[disabled] { opacity: 0.6; cursor: not-allowed; border-style: dashed; border-color: var(--line-2); color: var(--muted); }
+.tlacitko--oranzovy[disabled] { opacity: 1; border-style: solid; border-color: transparent; background: color-mix(in srgb, var(--orange) 24%, var(--paper)); color: var(--muted); }
 
 .chip {
   display: inline-flex;
@@ -174,8 +318,8 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
   align-items: center;
   padding: 0.5rem 1rem;
   border-radius: 999px;
-  background: var(--navy);
-  color: var(--cream);
+  background: var(--panel);
+  color: var(--na-panelu);
   font-size: 0.9rem;
   font-weight: 800;
   white-space: nowrap;
@@ -193,13 +337,13 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
 /* Hlavička */
 .hlavicka {
   position: sticky; top: 0; z-index: 50;
-  background: rgba(242, 237, 227, 0.86);
+  background: var(--hlavicka-pozadi);
   backdrop-filter: saturate(1.6) blur(20px); -webkit-backdrop-filter: saturate(1.6) blur(20px);
   /* Místo tvrdé linky jemný stín, a jen když pod hlavičkou jede obsah */
-  box-shadow: 0 1px 0 rgba(27, 42, 74, 0), 0 10px 24px -18px rgba(27, 42, 74, 0);
+  box-shadow: 0 1px 0 rgba(var(--stin-barva), 0), 0 10px 24px -18px rgba(var(--stin-barva), 0);
   transition: box-shadow 0.25s ease, background-color 0.25s ease;
 }
-.hlavicka.je-pod { box-shadow: 0 1px 0 rgba(27, 42, 74, 0.07), 0 10px 24px -18px rgba(27, 42, 74, 0.45); }
+.hlavicka.je-pod { box-shadow: 0 1px 0 var(--line-jemna), 0 10px 24px -18px rgba(var(--stin-barva), 0.45); }
 @media (prefers-reduced-transparency: reduce) { .hlavicka { background: var(--cream); backdrop-filter: none; -webkit-backdrop-filter: none; } }
 @media (prefers-contrast: more) { .hlavicka { background: var(--cream); box-shadow: 0 1px 0 var(--line-2); } }
 .hlavicka__obsah { display: flex; align-items: center; justify-content: space-between; gap: 1rem 1.5rem; padding-block: 0.75rem; }
@@ -213,14 +357,14 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
   position: relative; display: inline-flex; align-items: center; min-height: 38px; padding: 0 0.8rem; border-radius: 999px;
   text-decoration: none; white-space: nowrap; transition: background-color 0.2s ease, color 0.2s ease, transform var(--stisk) var(--ease-out);
 }
-@media (hover: hover) and (pointer: fine) { .navigace a:hover { background: rgba(27, 42, 74, 0.06); color: var(--navy); } }
+@media (hover: hover) and (pointer: fine) { .navigace a:hover { background: var(--hover); color: var(--navy); } }
 .navigace a:active { transform: scale(0.97); }
-.navigace a[aria-current='page'] { background: var(--paper); color: var(--navy); box-shadow: 0 0 0 1px var(--line), 0 2px 6px -3px rgba(27, 42, 74, 0.25); }
+.navigace a[aria-current='page'] { background: var(--paper); color: var(--navy); box-shadow: 0 0 0 1px var(--line), 0 2px 6px -3px rgba(var(--stin-barva), 0.25); }
 .navigace a[aria-current='page']::after { content: ''; position: absolute; left: 50%; bottom: 5px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--orange); }
 .hlavicka__akce { display: flex; align-items: center; gap: 0.6rem; }
 .hlavicka__hledat {
   display: inline-flex; align-items: center; gap: 0.5rem; min-height: 38px; padding: 0 0.45rem 0 0.8rem; border: 1px solid var(--line); border-radius: 999px;
-  background: rgba(255, 255, 255, 0.7); color: var(--muted); font-family: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer;
+  background: var(--sklo); color: var(--muted); font-family: inherit; font-size: 0.88rem; font-weight: 700; cursor: pointer;
   transition: border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease, transform var(--stisk) var(--ease-out);
 }
 @media (hover: hover) and (pointer: fine) { .hlavicka__hledat:hover { border-color: var(--line-2); background: var(--paper); color: var(--navy); } }
@@ -231,16 +375,36 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
   font-family: inherit; font-size: 0.7rem; font-weight: 800; color: var(--muted); white-space: nowrap;
 }
 .hlavicka__hlasuj {
-  display: inline-flex; align-items: center; min-height: 38px; padding: 0 1rem; border-radius: 999px; background: var(--orange); color: var(--navy);
+  display: inline-flex; align-items: center; min-height: 38px; padding: 0 1rem; border-radius: 999px; background: var(--orange); color: var(--na-oranzove);
   font-size: 0.92rem; font-weight: 800; text-decoration: none; white-space: nowrap;
   touch-action: manipulation; -webkit-user-select: none; user-select: none; transition: transform var(--stisk) var(--ease-out), background-color 0.2s ease;
 }
-@media (hover: hover) and (pointer: fine) { .hlavicka__hlasuj:hover { background: #F39A45; color: var(--navy); } }
+@media (hover: hover) and (pointer: fine) { .hlavicka__hlasuj:hover { background: var(--orange-hover); color: var(--na-oranzove); } }
 .hlavicka__hlasuj:active { transform: scale(0.96); }
-.hlavicka__hlasuj[aria-current='page'] { box-shadow: inset 0 0 0 2px var(--navy); }
+.hlavicka__hlasuj[aria-current='page'] { box-shadow: inset 0 0 0 2px var(--na-oranzove); }
+/* Přepínač vzhledu: měsíc ve světlém, slunce v tmavém režimu */
+.hlavicka__tema {
+  display: grid; place-items: center; width: 38px; height: 38px; padding: 0; border: 1px solid var(--line); border-radius: 50%;
+  background: var(--sklo); color: var(--navy); cursor: pointer; touch-action: manipulation;
+  transition: border-color 0.2s ease, background-color 0.2s ease, transform var(--stisk) var(--ease-out);
+}
+.hlavicka__tema svg { grid-area: 1 / 1; transition: transform 0.45s var(--ease-out), opacity 0.25s ease; }
+.hlavicka__slunce { opacity: 0; transform: rotate(-90deg) scale(0.6); }
+[data-tema='tmavy'] .hlavicka__mesic { opacity: 0; transform: rotate(90deg) scale(0.6); }
+[data-tema='tmavy'] .hlavicka__slunce { opacity: 1; transform: none; }
+@media (hover: hover) and (pointer: fine) { .hlavicka__tema:hover { border-color: var(--line-2); background: var(--paper); } }
+.hlavicka__tema:active { transform: scale(0.94); }
+@media (max-width: 760px) { .hlavicka__tema { width: 40px; height: 40px; background: var(--paper); } }
+@media (prefers-reduced-motion: reduce) { .hlavicka__tema svg { transition: none; } }
+/* Při přepnutí vzhledu se stránka jen prolne (View Transitions), bez dojíždění jednotlivých barev */
+.meni-tema *, .meni-tema *::before, .meni-tema *::after { transition: none !important; }
+::view-transition-old(root), ::view-transition-new(root) { animation-duration: 0.35s; }
+.patka__vzhled { display: inline-flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.segment--male { box-shadow: none; }
+.segment--male button { min-height: 32px; padding: 0 0.75rem; font-size: 0.78rem; }
 .hlavicka__site { display: flex; gap: 0.1rem; margin-left: 0.15rem; }
 .hlavicka__site a { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: var(--muted); transition: background-color 0.2s ease, color 0.2s ease; }
-@media (hover: hover) and (pointer: fine) { .hlavicka__site a:hover { background: rgba(27, 42, 74, 0.06); color: var(--navy); } }
+@media (hover: hover) and (pointer: fine) { .hlavicka__site a:hover { background: var(--hover); color: var(--navy); } }
 /* Užší počítač: sítě jsou v patičce, hledání zůstane jako lupa */
 @media (max-width: 1180px) { .hlavicka__site { display: none; } }
 @media (max-width: 1020px) {
@@ -263,9 +427,9 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
   .dok {
     position: fixed; z-index: 55; left: 10px; right: 10px; bottom: calc(10px + env(safe-area-inset-bottom));
     display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 6px;
-    border-radius: 24px; background: rgba(27, 42, 74, 0.94);
+    border-radius: 24px; background: var(--dok-pozadi);
     backdrop-filter: saturate(1.4) blur(18px); -webkit-backdrop-filter: saturate(1.4) blur(18px);
-    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 14px 34px -12px rgba(27, 42, 74, 0.6);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08) inset, 0 0 0 1px rgba(255, 255, 255, 0.04), 0 14px 34px -12px rgba(var(--stin-barva), 0.6);
     transition: transform 0.35s var(--ease-out), opacity 0.25s ease;
     view-transition-name: dok;
   }
@@ -279,11 +443,11 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
   .dok a:active { transform: scale(0.94); }
   .dok__ikona { display: grid; place-items: center; width: 46px; height: 30px; border-radius: 999px; transition: background-color 0.25s var(--ease-out), color 0.25s ease; }
   .dok__nazev { font-size: 0.7rem; font-weight: 700; line-height: 1; letter-spacing: 0.01em; }
-  .dok a[aria-current='page'] { color: var(--cream); }
-  .dok a[aria-current='page'] .dok__ikona { background: var(--orange); color: var(--navy); }
+  .dok a[aria-current='page'] { color: var(--na-panelu); }
+  .dok a[aria-current='page'] .dok__ikona { background: var(--orange); color: var(--na-oranzove); }
 }
 @media (max-width: 760px) and (prefers-reduced-motion: reduce) { .dok { transition: none; } }
-@media (prefers-reduced-transparency: reduce) { .dok { background: var(--navy); backdrop-filter: none; -webkit-backdrop-filter: none; } }
+@media (prefers-reduced-transparency: reduce) { .dok { background: var(--panel); backdrop-filter: none; -webkit-backdrop-filter: none; } }
 .hlavicka { view-transition-name: hlavicka; }
 
 /* Hero */
@@ -302,9 +466,9 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
 .mrizka--3 { grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); }
 
 /* Navy pás */
-.pas { background: var(--navy); color: var(--cream); border-radius: 24px; padding: clamp(1.75rem, 5vw, 3.5rem); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2rem; align-items: center; }
-.pas h2 { color: var(--cream); }
-.pas p { color: #D9D3C7; }
+.pas { background: var(--panel); color: var(--na-panelu); border-radius: 24px; padding: clamp(1.75rem, 5vw, 3.5rem); display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2rem; align-items: center; }
+.pas h2 { color: var(--na-panelu); }
+.pas p { color: var(--na-panelu-2); }
 @media (max-width: 760px) { .pas { grid-template-columns: 1fr; } }
 
 /* Detail grafu */
@@ -336,7 +500,7 @@ input[type='search'], input[type='text'] {
 label { font-size: 0.9rem; font-weight: 700; }
 
 /* Patička */
-.patka { border-top: 1px solid var(--line); margin-top: clamp(2rem, 6vw, 4rem); background: linear-gradient(to bottom, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0)); }
+.patka { border-top: 1px solid var(--line); margin-top: clamp(2rem, 6vw, 4rem); background: linear-gradient(to bottom, color-mix(in srgb, var(--paper) 35%, transparent), transparent); }
 .patka__mrizka { display: grid; grid-template-columns: 1.6fr repeat(3, 1fr); gap: 2rem; padding-block: clamp(2.5rem, 6vw, 4rem) 2rem; }
 .patka__mrizka h2 { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
 .patka__odkazy { display: flex; flex-direction: column; gap: 0.55rem; list-style: none; margin: 0; padding: 0; font-weight: 600; }
@@ -352,7 +516,7 @@ label { font-size: 0.9rem; font-weight: 700; }
 .patka__hledat { background: var(--paper); border-width: 1.5px; border-color: var(--line-2); white-space: nowrap; }
 .patka__spodek { display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: space-between; padding-block: 1.5rem 2.5rem; border-top: 1px solid var(--line); }
 .patka__nahoru { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 38px; padding: 0 0.9rem; border-radius: 999px; font-size: 0.88rem; font-weight: 800; text-decoration: none; }
-@media (hover: hover) and (pointer: fine) { .patka__nahoru:hover { background: rgba(27, 42, 74, 0.06); color: var(--navy); } }
+@media (hover: hover) and (pointer: fine) { .patka__nahoru:hover { background: var(--hover); color: var(--navy); } }
 @media (max-width: 900px) { .patka__mrizka { grid-template-columns: 1fr 1fr; } .patka__znacka { grid-column: 1 / -1; } }
 @media (max-width: 760px) { .patka__spodek { padding-bottom: 1.25rem; } }
 
@@ -374,7 +538,7 @@ select {
 .nadpis { display: flex; flex-direction: column; gap: 0.45rem; }
 /* Štítek nad nadpisem jen tam, kde nese informaci (série, číslo dílu); psaný normálně, ne verzálkami */
 .nadpis__stitek { font-size: 0.92rem; font-weight: 800; color: var(--orange-text); }
-.vlajka { display: inline-block; width: 28px; height: 21px; border-radius: 4px; object-fit: cover; box-shadow: 0 0 0 1px rgba(27, 42, 74, 0.14); flex-shrink: 0; }
+.vlajka { display: inline-block; width: 28px; height: 21px; border-radius: 4px; object-fit: cover; box-shadow: 0 0 0 1px color-mix(in srgb, var(--navy) 14%, transparent); flex-shrink: 0; }
 
 /* Vyhledávání s našeptávačem */
 .hledani { position: relative; width: min(100%, 380px); }
@@ -383,13 +547,13 @@ select {
   background: var(--paper); border: 1.5px solid var(--line); border-radius: 999px; box-shadow: var(--stin-maly);
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
-.hledani__pole:focus-within { border-color: var(--navy); box-shadow: 0 0 0 4px rgba(27, 42, 74, 0.08), var(--stin-maly); }
+.hledani__pole:focus-within { border-color: var(--navy); box-shadow: 0 0 0 4px var(--hover-silny), var(--stin-maly); }
 .hledani__pole svg { color: var(--slate); flex-shrink: 0; }
 .hledani__pole input[type='search'], .hledani__pole input[type='text'] {
   flex: 1 1 auto; width: auto; min-width: 0; min-height: 46px; padding: 0; border: 0; border-radius: 0;
   background: transparent; outline: none; font-weight: 700; color: var(--navy);
 }
-.hledani__pole input::placeholder { color: #8A93A6; font-weight: 600; }
+.hledani__pole input::placeholder { color: var(--placeholder); font-weight: 600; }
 .hledani__pole input::-webkit-search-cancel-button { display: none; }
 .naseptavac {
   position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 40; list-style: none; margin: 0; padding: 0.35rem;
@@ -433,14 +597,14 @@ select {
 /* Tlačítka přiblížení na mapách */
 .zoom-ovladani {
   position: absolute; right: 0.75rem; bottom: 0.75rem; z-index: 6; display: flex; flex-direction: column; gap: 4px; padding: 4px; border-radius: 14px;
-  background: rgba(255, 255, 255, 0.72); backdrop-filter: blur(14px) saturate(1.5); -webkit-backdrop-filter: blur(14px) saturate(1.5);
-  border: 1px solid rgba(226, 217, 201, 0.8); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), var(--stin-maly);
+  background: var(--sklo); backdrop-filter: blur(14px) saturate(1.5); -webkit-backdrop-filter: blur(14px) saturate(1.5);
+  border: 1px solid var(--line); box-shadow: inset 0 1px 0 color-mix(in srgb, var(--paper) 70%, transparent), var(--stin-maly);
 }
 @media (prefers-reduced-transparency: reduce) { .zoom-ovladani { background: var(--paper); backdrop-filter: none; -webkit-backdrop-filter: none; } }
 .zoom-ovladani button { width: 38px; height: 38px; border: 0; border-radius: 10px; background: transparent; color: var(--navy); font-family: inherit; font-size: 1.25rem; font-weight: 800; line-height: 1; cursor: pointer; display: grid; place-items: center; transition: transform var(--stisk) var(--ease-out), background-color 0.15s ease, opacity 0.2s ease; }
-@media (hover: hover) and (pointer: fine) { .zoom-ovladani button:hover { background: rgba(27, 42, 74, 0.06); } }
+@media (hover: hover) and (pointer: fine) { .zoom-ovladani button:hover { background: var(--hover); } }
 .zoom-ovladani button[disabled] { opacity: 0.35; cursor: default; }
-.zoom-napoveda { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 7; pointer-events: none; padding: 0.6rem 1rem; border-radius: 12px; background: rgba(27, 42, 74, 0.86); color: var(--cream); font-size: 0.88rem; font-weight: 700; white-space: nowrap; }
+.zoom-napoveda { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 7; pointer-events: none; padding: 0.6rem 1rem; border-radius: 12px; background: color-mix(in srgb, var(--panel) 90%, transparent); color: var(--na-panelu); font-size: 0.88rem; font-weight: 700; white-space: nowrap; }
 
 @media (max-width: 700px) {
   .zoom-ovladani { flex-direction: row; right: 0.5rem; bottom: 0.5rem; padding: 3px; gap: 2px; border-radius: 12px; }

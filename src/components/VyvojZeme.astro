@@ -63,12 +63,12 @@ const id = `vz-${typ}`;
   .vz__ovladani { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1rem; }
   .vz__otazka { font-size: 1rem; font-weight: 800; }
   .vz__ovladani select { min-width: 220px; border-radius: 999px; border-color: var(--line); box-shadow: var(--stin-maly); padding-left: 1.1rem; }
-  .vz__shrnuti { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 0.9rem; align-items: start; padding: 1rem 1.1rem; border-radius: 16px; background: var(--navy); color: var(--cream); }
+  .vz__shrnuti { display: grid; grid-template-columns: 44px minmax(0, 1fr); gap: 0.9rem; align-items: start; padding: 1rem 1.1rem; border-radius: 16px; background: var(--panel); color: var(--na-panelu); }
   .vz__vlajka { width: 44px; height: 33px; border-radius: 6px; box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2); }
   .vz__veta { display: flex; flex-direction: column; gap: 0.35rem; }
   .vz__hlavni { font-size: 1.05rem; font-weight: 700; line-height: 1.55; }
   .vz__hlavni strong { color: var(--orange); font-weight: 900; }
-  .vz__vedlejsi { font-size: 0.92rem; font-weight: 600; color: #D9D3C7; line-height: 1.55; }
+  .vz__vedlejsi { font-size: 0.92rem; font-weight: 600; color: var(--na-panelu-2); line-height: 1.55; }
   .vz__vedlejsi:empty { display: none; }
   .vz__legenda { gap: 0.4rem 1.2rem; }
   :global(.vz__klic) { display: inline-block; width: 18px; height: 3px; border-radius: 2px; }
@@ -77,12 +77,12 @@ const id = `vz-${typ}`;
   .vz__svg:focus-visible { outline: 3px solid var(--orange); outline-offset: 4px; border-radius: 6px; }
   :global(.vz__mrizka) { stroke: var(--line); stroke-width: 1; shape-rendering: crispEdges; }
   :global(.vz__osa-text) { font-size: 11px; font-weight: 700; fill: var(--muted); font-family: inherit; }
-  :global(.vz__covid) { fill: rgba(27, 42, 74, 0.05); }
+  :global(.vz__covid) { fill: color-mix(in srgb, var(--navy) 5%, transparent); }
   :global(.vz__covid-text) { font-size: 11px; font-weight: 800; fill: var(--muted); }
   :global(.vz__cara) { fill: none; stroke-width: 2.25; stroke-linejoin: round; stroke-linecap: round; }
   :global(.vz__cara--ref) { stroke-width: 1.75; }
-  :global(.vz__bod) { stroke: #FFFFFF; stroke-width: 2; }
-  :global(.vz__stitek) { font-size: 12px; font-weight: 800; fill: var(--navy); font-family: inherit; paint-order: stroke; stroke: #FFFFFF; stroke-width: 3px; stroke-linejoin: round; }
+  :global(.vz__bod) { stroke: var(--paper); stroke-width: 2; }
+  :global(.vz__stitek) { font-size: 12px; font-weight: 800; fill: var(--navy); font-family: inherit; paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
   :global(.vz__stitek-hodnota) { font-weight: 700; fill: var(--text-2); }
   :global(.vz__vodic) { stroke: var(--line-2); stroke-width: 1; }
   :global(.vz__zamerovac) { stroke: var(--navy); stroke-width: 1; stroke-opacity: 0.35; }
@@ -113,7 +113,7 @@ const id = `vz-${typ}`;
   };
   type Serie = { nazev: string; barva: string; hodnoty: Record<string, number>; ref?: boolean };
   const NS = 'http://www.w3.org/2000/svg';
-  const ORANZ = '#F08829', NAVY = '#1B2A4A', SLATE = '#6E7C96';
+  const ORANZ = 'var(--orange)', NAVY = 'var(--navy)', SLATE = 'var(--slate)';
 
   for (const koren of document.querySelectorAll<HTMLElement>('[data-vz]')) {
     const R = JSON.parse(koren.dataset.rada!) as Rada;
@@ -132,7 +132,11 @@ const id = `vz-${typ}`;
     const kratce = (v: number) => (proc ? `${f0.format(v)} %` : v >= 1e6 ? `${new Intl.NumberFormat('cs-CZ', { maximumFractionDigits: 1 }).format(v / 1e6)} mil.` : v >= 1e3 ? `${f0.format(v / 1e3)} tis.` : f0.format(v));
     const el = (tag: string, a: Record<string, string | number> = {}, trida?: string) => {
       const e = document.createElementNS(NS, tag);
-      for (const [k, v] of Object.entries(a)) e.setAttribute(k, String(v));
+      // Barvy přes style, aby fungovaly CSS proměnné (tmavý režim) ve všech prohlížečích
+      for (const [k, v] of Object.entries(a)) {
+        if ((k === 'fill' || k === 'stroke') && String(v).startsWith('var(')) e.style.setProperty(k, String(v));
+        else e.setAttribute(k, String(v));
+      }
       if (trida) e.setAttribute('class', trida);
       return e;
     };

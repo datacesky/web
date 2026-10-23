@@ -47,6 +47,8 @@ const karty = [
   .nw__karta:active { transform: scale(0.99); }
   .nw__obr { display: block; aspect-ratio: 720 / 440; overflow: hidden; background: var(--plocha-2); }
   .nw__obr img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.6s var(--ease-out); }
+  /* Náhledy jsou světlé snímky map: v tmavém režimu je jemně ztlumíme, ať nesvítí */
+  :global([data-tema='tmavy']) .nw__obr img { filter: brightness(0.86) contrast(1.04); }
   .nw__text { display: flex; flex-direction: column; gap: 0.4rem; padding: 1.1rem 1.25rem 1.25rem; }
   .nw__stitek { font-size: 0.74rem; font-weight: 800; color: var(--orange-text); text-transform: uppercase; letter-spacing: 0.08em; }
   .nw__text strong { font-size: 1.2rem; font-weight: 900; line-height: 1.25; }

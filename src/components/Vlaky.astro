@@ -131,7 +131,7 @@ const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'
   .vl__titul { font-size: clamp(1.25rem, 2.4vw, 1.6rem); }
   .vl__legenda { display: flex; gap: 0.9rem; list-style: none; margin: 0; padding: 0.35rem 0 0; font-size: 0.82rem; font-weight: 800; color: var(--navy); }
   .vl__legenda li { display: inline-flex; align-items: center; gap: 0.4rem; }
-  .vl__bod { width: 11px; height: 11px; border-radius: 50%; background: var(--navy); box-shadow: 0 0 0 2px rgba(27, 42, 74, 0.15); }
+  .vl__bod { width: 11px; height: 11px; border-radius: 50%; background: var(--navy); box-shadow: 0 0 0 2px rgba(var(--stin-barva), 0.15); }
   .vl__bod--dalkovy { background: var(--orange); box-shadow: 0 0 0 2px rgba(240, 136, 41, 0.25); }
 
   .vl__platno { position: relative; border-radius: 16px; background: var(--plocha-2); }
@@ -140,15 +140,15 @@ const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'
   .vl-svg:global(.je-priblizeno) { touch-action: none; cursor: grab; }
   .vl-svg:global(.se-taha) { cursor: grabbing; }
   .vl-platno { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
-  .vl-podstin { fill: #EFE8DA; }
-  .vl-kraje path { fill: #F7F3EB; stroke: #FFFFFF; stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+  .vl-podstin { fill: var(--zeme); }
+  .vl-kraje path { fill: var(--pevnina); stroke: var(--obrys); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
   .vl-obrys { fill: none; stroke: var(--navy); stroke-width: 1.4; stroke-opacity: 0.35; vector-effect: non-scaling-stroke; }
   .vl-sit path { fill: none; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
-  .vl-sit0 { stroke: #CFC7B8; stroke-width: 0.8; }
-  .vl-sit1 { stroke: #B8AE9D; stroke-width: 1.1; }
-  .vl-sit2 { stroke: #9C9282; stroke-width: 1.6; }
+  .vl-sit0 { stroke: var(--sit-0); stroke-width: 0.8; }
+  .vl-sit1 { stroke: var(--sit-1); stroke-width: 1.1; }
+  .vl-sit2 { stroke: var(--sit-2); stroke-width: 1.6; }
   .vl-skaluj { transform: scale(var(--s)); }
-  .vl-mesta text { font-size: 10.5px; font-weight: 800; fill: var(--navy); fill-opacity: 0.75; paint-order: stroke; stroke: rgba(247, 243, 235, 0.9); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+  .vl-mesta text { font-size: 10.5px; font-weight: 800; fill: var(--navy); fill-opacity: 0.75; paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
   @media (max-width: 640px) { .vl-mesta text { font-size: 9px; } }
 
   .vl__hodiny { position: absolute; left: 0.9rem; top: 0.7rem; display: flex; flex-direction: column; line-height: 1; pointer-events: none; }
@@ -160,9 +160,9 @@ const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'
   .vl__tip {
     position: absolute; pointer-events: none; z-index: 8; transform: translate(-50%, calc(-100% - 12px));
     background: var(--navy); color: var(--cream); padding: 0.45rem 0.75rem; border-radius: 10px;
-    font-size: 0.82rem; font-weight: 700; white-space: nowrap; box-shadow: 0 8px 20px rgba(27, 42, 74, 0.25);
+    font-size: 0.82rem; font-weight: 700; white-space: nowrap; box-shadow: 0 8px 20px rgba(var(--stin-barva), 0.25);
   }
-  .vl__tip small { display: block; font-weight: 600; color: #D9D3C7; font-size: 0.74rem; }
+  .vl__tip small { display: block; font-weight: 600; color: var(--na-panelu-2); font-size: 0.74rem; }
   @media (max-width: 700px) { .vl__platno .zoom-ovladani { position: static; width: max-content; margin: 0.45rem 0 0 auto; flex-direction: row; } .vl__platno { background: transparent; } }
 
   .vl__cas { display: flex; align-items: center; gap: 1rem; padding: 0.7rem 1rem; border-radius: 16px; background: var(--plocha-2); border: 1px solid var(--line); }
@@ -170,7 +170,7 @@ const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'
   .vl__prehrat:active { transform: scale(0.94); }
   .vl__osa { flex-grow: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.1rem; }
   .vl__graf { width: 100%; height: 38px; display: block; }
-  .vl__graf-plocha { fill: rgba(27, 42, 74, 0.13); }
+  .vl__graf-plocha { fill: color-mix(in srgb, var(--navy) 13%, transparent); }
   .vl__graf-hotovo { fill: rgba(240, 136, 41, 0.55); }
   .vl__graf-kurzor { stroke: var(--navy); stroke-width: 2; vector-effect: non-scaling-stroke; }
   .vl__osa input { width: 100%; margin: 0; accent-color: var(--orange); }
@@ -184,7 +184,7 @@ const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'
   .vl__cislo strong { font-size: clamp(1.25rem, 2.6vw, 1.75rem); font-weight: 900; color: var(--navy); font-variant-numeric: tabular-nums; line-height: 1.15; }
   .vl__cislo small { font-size: 0.74rem; font-weight: 700; color: var(--muted); }
   .vl__cislo--odhad strong { color: var(--teal); }
-  .vl__cislo--odhad em { font-style: normal; margin-left: 0.25rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: rgba(30, 158, 145, 0.12); color: #146F66; font-size: 0.68rem; }
+  .vl__cislo--odhad em { font-style: normal; margin-left: 0.25rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: color-mix(in srgb, var(--teal) 14%, transparent); color: var(--teal-text); font-size: 0.68rem; }
   @media (max-width: 520px) { .vl__cisla { gap: 0.4rem; } .vl__cislo { padding: 0.55rem 0.6rem; } .vl__cislo span { font-size: 0.68rem; line-height: 1.25; } .vl__cislo strong { font-size: 1.12rem; } .vl__cislo small { font-size: 0.66rem; } .vl__cislo--odhad em { display: inline-block; margin: 0.15rem 0 0; } }
 
   .vl__dopravci { display: flex; flex-direction: column; gap: 0.5rem; }
@@ -204,18 +204,18 @@ const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'
   .vl__zdroj { font-size: 0.78rem; padding-top: 0.8rem; border-top: 1px solid var(--line); }
 
   .vl-panel { display: flex; flex-direction: column; gap: 1rem; min-height: 0; }
-  .vl-detail { background: var(--navy); color: var(--cream); border-radius: 20px; padding: 1.3rem 1.4rem; min-height: 150px; display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
+  .vl-detail { background: var(--panel); color: var(--na-panelu); border-radius: 20px; padding: 1.3rem 1.4rem; min-height: 150px; display: flex; flex-direction: column; gap: 0.4rem; flex-shrink: 0; }
   .vl-poradi { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin-maly); padding: 1.1rem 0.9rem 0.9rem; display: flex; flex-direction: column; gap: 0.35rem; min-height: 0; }
   .vl-poradi h2 { font-size: 1.05rem; padding-left: 0.4rem; }
   .vl-poradi ol { list-style: none; margin: 0.3rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.1rem; overflow-y: auto; min-height: 0; }
   .vl-detail :global(.vl-hodiny) { display: flex; align-items: flex-end; gap: 2px; height: 54px; margin-top: 0.35rem; }
   .vl-detail :global(.vl-hodiny i) { flex: 1 1 0; border-radius: 2px 2px 0 0; background: rgba(242, 237, 227, 0.32); min-height: 2px; }
   .vl-detail :global(.vl-hodiny i.je-ted) { background: var(--orange); }
-  .vl-detail :global(.vl-hodiny-osa) { display: flex; justify-content: space-between; font-size: 0.68rem; font-weight: 700; color: #B9B3A7; }
+  .vl-detail :global(.vl-hodiny-osa) { display: flex; justify-content: space-between; font-size: 0.68rem; font-weight: 700; color: var(--na-panelu-3); }
   .vl-detail :global(.vl-odjezdy) { list-style: none; margin: 0.3rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.3rem; }
   .vl-detail :global(.vl-odjezdy li) { display: grid; grid-template-columns: 3.1rem 4.6rem minmax(0, 1fr); gap: 0.4rem; align-items: baseline; font-size: 0.84rem; font-weight: 700; }
   .vl-detail :global(.vl-odjezdy b) { font-variant-numeric: tabular-nums; color: var(--orange); font-weight: 900; }
-  .vl-detail :global(.vl-odjezdy .vl-vlak) { color: #D9D3C7; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vl-detail :global(.vl-odjezdy .vl-vlak) { color: var(--na-panelu-2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .vl-detail :global(.vl-odjezdy .vl-smer) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .vl-poradi { flex: 1 1 auto; }
   @media (max-width: 1060px) { .vl-panel { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } .vl-panel .hledani { grid-column: 1 / -1; } }
@@ -225,6 +225,7 @@ const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'
 <script>
   import { zoomSkupiny, type Zoom } from '../lib/zoom';
   import { naseptavac } from '../lib/naseptavac';
+  import { jeTmavy, priZmeneTematu } from '../lib/tema';
 
   type Data = {
     den: string; zdroj: string; skupiny: string[]; uzly: [number, number][]; jmena: string[]; cile: string[]; sit: string[];
@@ -252,6 +253,11 @@ const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'
     const elDetail = $<HTMLElement>('[data-vl-detail]', panel);
     const elPoradi = $<HTMLElement>('[data-vl-poradi]', panel);
     const klidne = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    // Barvy pro canvas (canvas neumí CSS proměnné): podle vzhledu, po přepnutí se mapa překreslí
+    const barvyVlaku = () => jeTmavy()
+      ? { stopa: 'rgba(236, 229, 215, 0.2)', tecka: '#ECE5D7', obrys: 'rgba(14, 22, 40, 0.85)', najeto: 'rgba(236, 229, 215, 0.6)', kruh: '#162139' }
+      : { stopa: 'rgba(27, 42, 74, 0.22)', tecka: '#1B2A4A', obrys: 'rgba(255, 255, 255, 0.85)', najeto: 'rgba(27, 42, 74, 0.55)', kruh: '#FFFFFF' };
+    let BV = barvyVlaku();
     const IKONA_PLAY = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>';
     const IKONA_PAUZA = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="M7 5h3.5v14H7z M13.5 5H17v14h-3.5z" fill="currentColor"/></svg>';
     const cislo = (v: number) => new Intl.NumberFormat('cs-CZ').format(Math.round(v));
@@ -401,17 +407,17 @@ const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'
       }
       ctx.lineCap = 'round';
       ctx.lineWidth = r * 1.5;
-      ctx.strokeStyle = 'rgba(27, 42, 74, 0.22)'; ctx.stroke(stopy[0]);
+      ctx.strokeStyle = BV.stopa; ctx.stroke(stopy[0]);
       ctx.strokeStyle = 'rgba(240, 136, 41, 0.35)'; ctx.lineWidth = rd * 1.5; ctx.stroke(stopy[1]);
-      ctx.fillStyle = '#1B2A4A'; ctx.fill(tecky[0]);
+      ctx.fillStyle = BV.tecka; ctx.fill(tecky[0]);
       ctx.fillStyle = '#F08829'; ctx.fill(tecky[1]);
-      ctx.lineWidth = 0.9 * dpr; ctx.strokeStyle = 'rgba(255, 255, 255, 0.85)'; ctx.stroke(tecky[1]);
+      ctx.lineWidth = 0.9 * dpr; ctx.strokeStyle = BV.obrys; ctx.stroke(tecky[1]);
       // vybraná a najetá stanice
-      for (const [i, barva] of [[najeto, 'rgba(27, 42, 74, 0.55)'], [vybrana, '#F08829']] as [number | null, string][]) {
+      for (const [i, barva] of [[najeto, BV.najeto], [vybrana, '#F08829']] as [number | null, string][]) {
         if (i === null) continue;
         const x = X[i] * sx + ox, y = Y[i] * sx + oy;
         ctx.beginPath(); ctx.arc(x, y, 8 * dpr, 0, Math.PI * 2);
-        ctx.lineWidth = 3 * dpr; ctx.strokeStyle = '#FFFFFF'; ctx.stroke();
+        ctx.lineWidth = 3 * dpr; ctx.strokeStyle = BV.kruh; ctx.stroke();
         ctx.lineWidth = 2 * dpr; ctx.strokeStyle = barva; ctx.stroke();
       }
       ukazatele();
@@ -492,6 +498,7 @@ const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'
     });
     let ceka = 0;
     function prekresli() { if (hraje) return; cancelAnimationFrame(ceka); ceka = requestAnimationFrame(kresli); }
+    priZmeneTematu(() => { BV = barvyVlaku(); if (aktivni) prekresli(); });
 
     // --- dopravci
     function stavChipy() {
@@ -608,7 +615,7 @@ const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'
         b.type = 'button'; b.dataset.uzel = String(i); b.setAttribute('aria-pressed', 'false');
         const jm = document.createElement('span'); jm.className = 'p-jmeno';
         const n = document.createElement('span'); n.textContent = D!.jmena[i];
-        const pruh = document.createElement('span'); pruh.className = 'p-pruh'; pruh.style.width = `${(odjezdu[i] / max) * 100}%`; pruh.style.background = k === 0 ? '#F08829' : '#1B2A4A';
+        const pruh = document.createElement('span'); pruh.className = 'p-pruh'; pruh.style.width = `${(odjezdu[i] / max) * 100}%`; pruh.style.background = k === 0 ? 'var(--orange)' : 'var(--navy)';
         jm.append(n, pruh);
         const poz = document.createElement('span'); poz.className = 'p-poz'; poz.textContent = `${k + 1}.`;
         const hodn = document.createElement('span'); hodn.className = 'p-hodnota'; hodn.textContent = cislo(odjezdu[i]);

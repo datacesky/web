@@ -50,15 +50,15 @@ const data = JSON.stringify({ typ, polozky, coJeHodnota });
   .pm__pole { display: flex; flex-direction: column; gap: 0.35rem; flex: 1 1 220px; min-width: 0; }
   .pm__popisek { font-size: 0.92rem; font-weight: 800; }
   .pm__vstup { display: flex; align-items: center; gap: 0.5rem; min-height: 50px; padding: 0 1.1rem; border: 1.5px solid var(--line); border-radius: 999px; background: var(--paper); box-shadow: var(--stin-maly); font-weight: 800; transition: border-color 0.2s ease, box-shadow 0.2s ease; }
-  .pm__vstup:focus-within { border-color: var(--navy); box-shadow: 0 0 0 4px rgba(27, 42, 74, 0.08), var(--stin-maly); }
+  .pm__vstup:focus-within { border-color: var(--navy); box-shadow: 0 0 0 4px var(--hover-silny), var(--stin-maly); }
   .pm__vstup input { flex: 1 1 auto; min-width: 0; width: 100%; min-height: 46px; padding: 0; border: 0; background: transparent; outline: none; font-family: inherit; font-size: 1.1rem; font-weight: 800; color: var(--navy); font-variant-numeric: tabular-nums; }
   .pm__pole select { width: 100%; min-height: 50px; border-radius: 999px; border-color: var(--line); box-shadow: var(--stin-maly); padding-left: 1.1rem; }
-  .pm__vysledek { display: flex; flex-direction: column; gap: 0.3rem; padding: clamp(1.2rem, 3vw, 1.8rem); border-radius: 18px; background: var(--navy); color: var(--cream); text-align: center; align-items: center; }
-  .pm__kdo { font-size: 1rem; color: #D9D3C7; }
-  .pm__kdo strong { color: var(--cream); font-weight: 900; }
+  .pm__vysledek { display: flex; flex-direction: column; gap: 0.3rem; padding: clamp(1.2rem, 3vw, 1.8rem); border-radius: 18px; background: var(--panel); color: var(--na-panelu); text-align: center; align-items: center; }
+  .pm__kdo { font-size: 1rem; color: var(--na-panelu-2); }
+  .pm__kdo strong { color: var(--na-panelu); font-weight: 900; }
   .pm__otazka { font-size: 1.02rem; font-weight: 700; margin-top: 0.4rem; }
   .pm__cislo { font-size: clamp(2.3rem, 6vw, 3.1rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; color: var(--orange); }
-  .pm__kontext { max-width: 46ch; font-size: 0.92rem; font-weight: 600; color: #D9D3C7; line-height: 1.55; }
+  .pm__kontext { max-width: 46ch; font-size: 0.92rem; font-weight: 600; color: var(--na-panelu-2); line-height: 1.55; }
   .pm__pocitadlo { margin-top: 0.6rem; padding: 0.5rem 0.9rem; border-radius: 999px; background: rgba(255, 255, 255, 0.08); font-size: 0.9rem; font-weight: 700; }
   :global(.pm__pocitadlo b) { color: var(--orange); font-variant-numeric: tabular-nums; }
 </style>

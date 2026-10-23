@@ -47,6 +47,14 @@ const DOK = [
   { href: '/serie/', nazev: 'Série', aktivni: aktivni('/serie'), d: 'M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M10 9.5v5l4.5-2.5z' },
 ];
 const LUPA = 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6';
+const MESIC = 'M12 3c.13 0 .26 0 .39 0a7.5 7.5 0 0 0 7.92 12.45A9 9 0 1 1 12 3z';
+const SLUNCE = 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8 M3 12h1 M20 12h1 M12 3v1 M12 20v1 M5.6 5.6l.7.7 M17.7 17.7l.7.7 M5.6 18.4l.7-.7 M17.7 6.3l.7-.7';
+// Volba vzhledu v patičce
+const VZHLED = [
+  { v: 'auto', nazev: 'Podle zařízení' },
+  { v: 'svetly', nazev: 'Světlý' },
+  { v: 'tmavy', nazev: 'Tmavý' },
+];
 ---
 
 <!doctype html>
@@ -60,7 +68,17 @@ const LUPA = 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6';
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <script is:inline>document.documentElement.classList.add('js');</script>
+    <script is:inline>
+      // Vzhled se nastaví ještě před vykreslením, ať stránka neprobliká: volba z patičky, jinak podle zařízení
+      (function () {
+        var d = document.documentElement, v = 'auto';
+        d.classList.add('js');
+        try { v = localStorage.getItem('tema') || 'auto'; } catch (e) {}
+        if (v !== 'svetly' && v !== 'tmavy') v = 'auto';
+        var t = v === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'tmavy' : 'svetly') : v;
+        d.dataset.tema = t; d.dataset.temaVolba = v;
+      })();
+    </script>
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="data.cesky" />
     <meta property="og:locale" content="cs_CZ" />
@@ -69,7 +87,8 @@ const LUPA = 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6';
     <meta property="og:url" content={kanonicka} />
     <meta property="og:image" content={ogObrazek} />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="theme-color" content="#F2EDE3" />
+    <meta name="theme-color" content="#F2EDE3" data-barva-listy />
+    <meta name="color-scheme" content="light dark" />
     {web.google && <meta name="google-site-verification" content={web.google} />}
     {web.seznam && <meta name="seznam-wmt" content={web.seznam} />}
     {cesta === '/' && (
@@ -94,6 +113,10 @@ const LUPA = 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6';
             <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d={LUPA} /></svg>
             <span class="hlavicka__hledat-text">Hledat</span>
             <kbd class="hlavicka__zkratka" data-zkratka>⌘K</kbd>
+          </button>
+          <button type="button" class="hlavicka__tema" data-tema-prepni aria-label="Přepnout vzhled" title="Přepnout světlý a tmavý vzhled">
+            <svg class="hlavicka__mesic" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={MESIC} /></svg>
+            <svg class="hlavicka__slunce" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={SLUNCE} /></svg>
           </button>
           {hlasovaniZapnute && <a href="/hlasovani/" class="hlavicka__hlasuj" aria-current={aktivni('/hlasovani')}>Hlasuj</a>}
           <div class="hlavicka__site">
@@ -162,6 +185,12 @@ const LUPA = 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6';
             Kontakt: <a href="mailto:data.cesky@gmail.com">data.cesky@gmail.com</a>
           </p>
           <div class="rada">
+            <div class="patka__vzhled">
+              <span class="drobne" id="vzhled-nadpis">Vzhled</span>
+              <div class="segment segment--male" role="group" aria-labelledby="vzhled-nadpis" data-vzhled-volba>
+                {VZHLED.map((x) => <button type="button" data-v={x.v} aria-pressed={x.v === 'auto' ? 'true' : 'false'}>{x.nazev}</button>)}
+              </div>
+            </div>
             <a class="patka__nahoru" href="#" data-nahoru>Nahoru<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5 M6 11l6-6 6 6" /></svg></a>
             <span class="znacka">@data<span>.cesky</span></span>
           </div>
@@ -181,6 +210,37 @@ const LUPA = 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6';
     <Hledani />
 
     <script>
+      // Vzhled (světlý / tmavý). Mapy a grafy kreslené skriptem poslouchají událost „tema“ a překreslí se.
+      {
+        const koren = document.documentElement;
+        const system = matchMedia('(prefers-color-scheme: dark)');
+        const lista = document.querySelector<HTMLMetaElement>('[data-barva-listy]');
+        const prepni = document.querySelector<HTMLButtonElement>('[data-tema-prepni]');
+        const volby = document.querySelectorAll<HTMLButtonElement>('[data-vzhled-volba] button');
+        const vyres = (v: string) => (v === 'auto' ? (system.matches ? 'tmavy' : 'svetly') : v);
+        const ukaz = () => {
+          const t = koren.dataset.tema, v = koren.dataset.temaVolba || 'auto';
+          lista?.setAttribute('content', t === 'tmavy' ? '#0E1628' : '#F2EDE3');
+          prepni?.setAttribute('aria-label', t === 'tmavy' ? 'Přepnout na světlý vzhled' : 'Přepnout na tmavý vzhled');
+          volby.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.v === v)));
+        };
+        const nastav = (v: string, animuj: boolean) => {
+          const t = vyres(v);
+          const zmena = t !== koren.dataset.tema;
+          const proved = () => { koren.dataset.tema = t; koren.dataset.temaVolba = v; ukaz(); if (zmena) document.dispatchEvent(new CustomEvent('tema', { detail: { tema: t } })); };
+          try { if (v === 'auto') localStorage.removeItem('tema'); else localStorage.setItem('tema', v); } catch {}
+          const vt = (document as any).startViewTransition;
+          if (animuj && zmena && vt && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+            koren.classList.add('meni-tema');
+            vt.call(document, proved).finished.finally(() => koren.classList.remove('meni-tema'));
+          } else proved();
+        };
+        ukaz();
+        prepni?.addEventListener('click', () => nastav(koren.dataset.tema === 'tmavy' ? 'svetly' : 'tmavy', true));
+        volby.forEach((b) => b.addEventListener('click', () => nastav(b.dataset.v || 'auto', true)));
+        system.addEventListener('change', () => { if ((koren.dataset.temaVolba || 'auto') === 'auto') nastav('auto', false); });
+      }
+
       // Hlavička: stín jen ve chvíli, kdy pod ní jede obsah
       const hlavicka = document.querySelector('.hlavicka');
       if (hlavicka) {

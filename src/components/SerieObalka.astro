@@ -23,7 +23,7 @@ const vlastni = ['webp', 'jpg', 'jpeg', 'png'].map((p) => `${slug}.${p}`).find((
 const lide = Array.from({ length: 100 }, (_, i) => i);
 ---
 
-<div class:list={['so', `so--${typ}`, { 'so--velka': velka, 'so--foto': vlastni }]}>
+<div class:list={['so', 'vzdy-svetle', `so--${typ}`, { 'so--velka': velka, 'so--foto': vlastni }]}>
   {vlastni ? (
     <img src={`/serie/${vlastni}`} alt="" loading="lazy" decoding="async" />
   ) : (

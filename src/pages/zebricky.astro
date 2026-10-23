@@ -50,7 +50,7 @@ const grafy = (await getCollection('grafy')).sort((a, b) => b.data.datum.valueOf
   .vrstevnice-pas { position: relative; isolation: isolate; }
   .vrstevnice-pas::before {
     content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background: url('/vrstevnice.svg') center top / cover no-repeat; opacity: 0.7;
+    background: url('/vrstevnice.svg') center top / cover no-repeat; opacity: calc(0.7 * var(--vrstevnice-sila));
     -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
     mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
   }

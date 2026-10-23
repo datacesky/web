@@ -21,7 +21,7 @@ import Base from '../layouts/Base.astro';
   .ztraceno { position: relative; isolation: isolate; min-height: 60vh; display: grid; align-items: center; }
   .ztraceno::before {
     content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background: url('/vrstevnice.svg') center / cover no-repeat;
+    background: url('/vrstevnice.svg') center / cover no-repeat; opacity: var(--vrstevnice-sila);
     -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
     mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
   }

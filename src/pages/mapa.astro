@@ -136,7 +136,7 @@ const data = JSON.stringify({
                     <path
                       class="kraj"
                       d={k.d}
-                      fill={barvaKraje(prvni, k.id, hr)}
+                      style={`fill: ${barvaKraje(prvni, k.id, hr)};`}
                       fill-rule="evenodd"
                       data-kraj={k.id}
                       tabindex="0"
@@ -272,12 +272,12 @@ const data = JSON.stringify({
 <style>
   /* Vrstva Vlaky za 24 hodin má vlastní mapu a panel (components/Vlaky.astro), ostatní ovládání schováme */
   .mapa-stranka--vlaky .mc__karta > :not(.mc__vyber), .mapa-stranka--vlaky .mc__panel > *, .mapa-stranka--vlaky .mapa-hlava__nastroje, .mapa-stranka--vlaky > details { display: none !important; }
-  .dlazdice--nove .dlazdice__nazev::after { content: 'nové'; margin-left: 0.4rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: var(--orange); color: var(--navy); font-size: 0.66rem; font-weight: 900; vertical-align: 1px; }
+  .dlazdice--nove .dlazdice__nazev::after { content: 'nové'; margin-left: 0.4rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: var(--orange); color: var(--na-oranzove); font-size: 0.66rem; font-weight: 900; vertical-align: 1px; }
   .dlazdice--nove[aria-pressed='true'] .dlazdice__nazev::after { background: var(--orange); }
   .mapa-odkazy { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.3rem; }
   .mapa-3d-odkaz { display: inline-flex; align-items: center; gap: 0.55rem; align-self: flex-start; padding: 0.35rem 0.9rem 0.35rem 0.35rem; border-radius: 999px; background: var(--navy); color: var(--cream); font-size: 0.86rem; font-weight: 800; text-decoration: none; transition: transform var(--stisk) var(--ease-out); }
-  .mapa-3d-odkaz span { padding: 0.12rem 0.55rem; border-radius: 999px; background: var(--orange); color: var(--navy); font-size: 0.74rem; font-weight: 900; }
-  .mapa-3d-odkaz:hover { color: #fff; }
+  .mapa-3d-odkaz span { padding: 0.12rem 0.55rem; border-radius: 999px; background: var(--orange); color: var(--na-oranzove); font-size: 0.74rem; font-weight: 900; }
+  .mapa-3d-odkaz:hover { color: var(--paper); }
   .mapa-3d-odkaz:active { transform: scale(0.97); }
   .mapa-3d-odkaz--svetly { background: var(--paper); color: var(--navy); box-shadow: 0 0 0 1px var(--line), var(--stin-maly); padding-left: 0.95rem; }
   .mapa-3d-odkaz--svetly:hover { color: var(--navy); }
@@ -335,17 +335,17 @@ const data = JSON.stringify({
   .mc-svg.se-taha { cursor: grabbing; }
   .mc-satelit { display: none; }
   .mc-svg[data-podklad='satelit'] .mc-satelit { display: inline; }
-  .mc-satelit__zaclona { fill: #F2EDE3; fill-opacity: 0.78; }
-  .mc-sousede text { font-size: calc(11px * var(--s)); font-weight: 800; letter-spacing: 0.18em; fill: #A79F8F; text-anchor: middle; }
-  .mc-svg[data-podklad='satelit'] .mc-sousede text { fill: #8D8578; }
+  .mc-satelit__zaclona { fill: var(--cream); fill-opacity: 0.78; }
+  .mc-sousede text { font-size: calc(11px * var(--s)); font-weight: 800; letter-spacing: 0.18em; fill: var(--text-mapy-slaby); text-anchor: middle; }
+  .mc-svg[data-podklad='satelit'] .mc-sousede text { fill: var(--text-mapy-slaby); }
   @media (max-width: 640px) { .mc-sousede { display: none; } }
   @media (max-width: 700px) { .mc__platno :global(.zoom-ovladani) { position: static; width: max-content; margin: 0.45rem 0 0 auto; } .mc__platno { background: transparent; } }
-  .mc-podstin { fill: #EFE8DA; }
+  .mc-podstin { fill: var(--zeme); }
   .mc-svg[data-podklad='satelit'] .mc-podstin { display: none; }
 
-  :global(.kraj) { stroke: #FFFFFF; stroke-width: 1.4; vector-effect: non-scaling-stroke; stroke-linejoin: round; cursor: pointer; transition: fill 0.5s ease, fill-opacity 0.4s ease, opacity 0.2s ease; }
+  :global(.kraj) { stroke: var(--obrys); stroke-width: 1.4; vector-effect: non-scaling-stroke; stroke-linejoin: round; cursor: pointer; transition: fill 0.5s ease, fill-opacity 0.4s ease, opacity 0.2s ease; }
   .mc-svg[data-podklad='satelit'] :global(.kraj) { fill-opacity: 0.58; stroke: rgba(255, 255, 255, 0.9); }
-  .mc-svg.rezim-mesta :global(.kraj) { fill: #EFE8DA !important; cursor: default; }
+  .mc-svg.rezim-mesta :global(.kraj) { fill: var(--zeme) !important; cursor: default; }
   .mc-svg.rezim-mesta[data-podklad='satelit'] :global(.kraj) { fill-opacity: 0; stroke: rgba(255, 255, 255, 0.85); }
   :global(.kraj:focus-visible) { outline: none; stroke: var(--orange); stroke-width: 3.5; }
   :global(.kraj--hover) { opacity: 0.8; }
@@ -356,26 +356,26 @@ const data = JSON.stringify({
   .mc-obrys { fill: none; stroke: var(--navy); stroke-width: 1.6; stroke-opacity: 0.5; vector-effect: non-scaling-stroke; pointer-events: none; }
   .mc-reky, .mc-hory { display: none; pointer-events: none; }
   .mc-svg.ukaz-reky .mc-reky, .mc-svg.ukaz-reky .mc-hory { display: inline; }
-  .mc-reka { fill: none; stroke: #3F7FBF; stroke-width: calc(var(--w) * 1px); stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; opacity: 0.9; }
-  .mc-jezero { fill: #3F7FBF; opacity: 0.9; }
+  .mc-reka { fill: none; stroke: var(--voda); stroke-width: calc(var(--w) * 1px); stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; opacity: 0.9; }
+  .mc-jezero { fill: var(--voda); opacity: 0.9; }
   .mc-svg[data-podklad='satelit'] .mc-reka { stroke: #8EC3F0; }
   .mc-svg[data-podklad='satelit'] .mc-jezero { fill: #8EC3F0; }
-  .mc-pohori { font-size: calc(11px * var(--s)); font-style: italic; font-weight: 700; letter-spacing: 0.12em; fill: #6B5E45; text-anchor: middle; paint-order: stroke; stroke: rgba(255, 255, 255, 0.7); stroke-width: calc(2.5px * var(--s)); }
+  .mc-pohori { font-size: calc(11px * var(--s)); font-style: italic; font-weight: 700; letter-spacing: 0.12em; fill: var(--hory); text-anchor: middle; paint-order: stroke; stroke: var(--halo); stroke-width: calc(2.5px * var(--s)); }
   .mc-skaluj { transform: scale(var(--s)); }
-  .mc-vrchol path { fill: #6B5E45; stroke: #FFFFFF; stroke-width: 1; }
-  .mc-vrchol--nizko path { fill: #3F7FBF; }
-  .mc-vrchol text { font-size: 10.5px; font-weight: 700; fill: var(--navy); paint-order: stroke; stroke: rgba(255, 255, 255, 0.88); stroke-width: 3px; stroke-linejoin: round; }
+  .mc-vrchol path { fill: var(--hory); stroke: var(--obrys); stroke-width: 1; }
+  .mc-vrchol--nizko path { fill: var(--voda); }
+  .mc-vrchol text { font-size: 10.5px; font-weight: 700; fill: var(--navy); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; }
   .mc-vrchol text .n { font-weight: 800; }
 
   /* Města */
   .mc-mesta :global(.mesto) { display: none; cursor: pointer; }
   .mc-svg.ukaz-mesta .mc-mesta :global(.mesto--krajske) { display: inline; }
   .mc-svg.rezim-mesta .mc-mesta :global(.mesto) { display: inline; }
-  .mesto__bublina { display: none; fill: var(--navy); fill-opacity: 0.82; stroke: #FFFFFF; stroke-width: 1.2; vector-effect: non-scaling-stroke; transition: transform 0.35s ease, fill 0.25s ease; }
+  .mesto__bublina { display: none; fill: var(--navy); fill-opacity: 0.82; stroke: var(--obrys); stroke-width: 1.2; vector-effect: non-scaling-stroke; transition: transform 0.35s ease, fill 0.25s ease; }
   .mc-svg.rezim-mesta .mesto__bublina { display: inline; }
   .mc-svg.rezim-mesta .mesto__tecka { display: none; }
-  .mesto__tecka { fill: var(--navy); stroke: #FFFFFF; stroke-width: 1.4; }
-  .mesto__jmeno { font-size: 10.5px; font-weight: 800; fill: var(--navy); paint-order: stroke; stroke: rgba(255, 255, 255, 0.92); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
+  .mesto__tecka { fill: var(--navy); stroke: var(--obrys); stroke-width: 1.4; }
+  .mesto__jmeno { font-size: 10.5px; font-weight: 800; fill: var(--navy); paint-order: stroke; stroke: var(--halo); stroke-width: 3px; stroke-linejoin: round; pointer-events: none; }
   .mc-svg.rezim-mesta .mesto__jmeno { display: none; }
   .mc-svg.ukaz-popisky:not(.rezim-mesta) :global(.mesto--praha) .mesto__jmeno { display: none; }
   .mc-svg.rezim-mesta :global(.mesto--popis) .mesto__jmeno { display: inline; }
@@ -386,8 +386,8 @@ const data = JSON.stringify({
   .mc-popisky { pointer-events: none; display: none; }
   .mc-svg.ukaz-popisky .mc-popisky { display: inline; }
   .mc-svg.rezim-mesta .mc-popisky { display: none; }
-  .kraj-popisek { font-size: calc(11.5px * var(--s)); font-weight: 800; text-anchor: middle; paint-order: stroke; stroke-width: calc(3px * var(--s)); stroke-linejoin: round; fill: var(--navy); stroke: rgba(255, 255, 255, 0.85); }
-  .mc-popisky :global(.kraj-popisek--tmave) { fill: #FFFFFF; stroke: rgba(27, 42, 74, 0.7); }
+  .kraj-popisek { font-size: calc(11.5px * var(--s)); font-weight: 800; text-anchor: middle; paint-order: stroke; stroke-width: calc(3px * var(--s)); stroke-linejoin: round; fill: var(--navy); stroke: var(--halo); }
+  .mc-popisky :global(.kraj-popisek--tmave) { fill: var(--popisek-na-silne); stroke: var(--popisek-na-silne-halo); }
   .kp-hodnota { font-size: 0.92em; font-weight: 700; }
   .kp-zkratka { display: none; }
   @media (max-width: 640px) {
@@ -402,7 +402,7 @@ const data = JSON.stringify({
   .mapa__tooltip {
     position: absolute; pointer-events: none; z-index: 8; transform: translate(-50%, calc(-100% - 14px));
     background: var(--navy); color: var(--cream); padding: 0.5rem 0.8rem; border-radius: 10px;
-    font-size: 0.85rem; font-weight: 700; white-space: nowrap; box-shadow: 0 8px 20px rgba(27, 42, 74, 0.25);
+    font-size: 0.85rem; font-weight: 700; white-space: nowrap; box-shadow: 0 8px 20px rgba(var(--stin-barva), 0.25);
   }
 
   .mc__ovladani { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: center; justify-content: space-between; }
@@ -420,21 +420,21 @@ const data = JSON.stringify({
   .mc__panel { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: 84px; max-height: calc(100vh - 100px); }
   @media (max-width: 1060px) { .mc__panel { position: static; max-height: none; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; } }
   @media (max-width: 700px) { .mc__panel { grid-template-columns: 1fr; } }
-  .mapa__detail { background: var(--navy); color: var(--cream); border-radius: 20px; padding: 1.4rem; min-height: 170px; display: flex; flex-direction: column; gap: 0.45rem; flex-shrink: 0; }
+  .mapa__detail { background: var(--panel); color: var(--na-panelu); border-radius: 20px; padding: 1.4rem; min-height: 170px; display: flex; flex-direction: column; gap: 0.45rem; flex-shrink: 0; }
   .mc__poradi-karta { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin-maly); padding: 1.1rem 0.9rem 0.9rem; display: flex; flex-direction: column; gap: 0.6rem; min-height: 0; flex: 1 1 auto; }
   .mc__poradi-titul { font-size: 1.05rem; padding-left: 0.4rem; }
   .poradi { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.1rem; overflow-y: auto; min-height: 0; }
   @media (max-width: 1060px) { .poradi { max-height: 460px; } }
 
-  :global(.mapa__detail .maly) { font-size: 0.8rem; font-weight: 700; color: #D9D3C7; }
+  :global(.mapa__detail .maly) { font-size: 0.8rem; font-weight: 700; color: var(--na-panelu-2); }
   :global(.mapa__detail .jmeno) { font-size: 1.35rem; font-weight: 900; line-height: 1.25; }
   :global(.mapa__detail .velky) { font-size: 1.75rem; font-weight: 900; color: var(--orange); line-height: 1.2; }
-  :global(.mapa__detail .radek) { font-size: 0.9rem; font-weight: 600; color: #D9D3C7; }
-  :global(.mapa__detail .srovnani) { margin-top: 0.4rem; padding: 0.7rem 0.9rem; border-radius: 12px; background: var(--navy-2); font-size: 0.9rem; font-weight: 700; }
-  :global(.mapa__detail button) { align-self: flex-start; margin-top: 0.5rem; min-height: 38px; padding: 0 1rem; border: 1.5px solid var(--cream); border-radius: 999px; background: transparent; color: var(--cream); font-family: inherit; font-weight: 700; cursor: pointer; transition: transform var(--stisk) var(--ease-out); }
+  :global(.mapa__detail .radek) { font-size: 0.9rem; font-weight: 600; color: var(--na-panelu-2); }
+  :global(.mapa__detail .srovnani) { margin-top: 0.4rem; padding: 0.7rem 0.9rem; border-radius: 12px; background: var(--panel-2); font-size: 0.9rem; font-weight: 700; }
+  :global(.mapa__detail button) { align-self: flex-start; margin-top: 0.5rem; min-height: 38px; padding: 0 1rem; border: 1.5px solid var(--na-panelu); border-radius: 999px; background: transparent; color: var(--na-panelu); font-family: inherit; font-weight: 700; cursor: pointer; transition: transform var(--stisk) var(--ease-out); }
   :global(.mapa__detail button:active) { transform: scale(0.97); }
   :global(.mapa__detail .krivka) { width: 100%; height: 70px; margin-top: 0.3rem; overflow: visible; }
-  :global(.mapa__detail .krivka-osa) { display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: #B9B3A7; }
+  :global(.mapa__detail .krivka-osa) { display: flex; justify-content: space-between; font-size: 0.72rem; font-weight: 700; color: var(--na-panelu-3); }
   :global(.poradi button) {
     display: grid; grid-template-columns: 1.7rem minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; width: 100%;
     padding: 0.35rem 0.5rem; border: 0; border-radius: 10px; background: transparent; color: var(--navy);
@@ -447,13 +447,13 @@ const data = JSON.stringify({
   :global(.poradi .p-poz) { color: var(--muted); font-size: 0.78rem; text-align: right; }
   :global(.poradi .p-jmeno) { display: flex; flex-direction: column; gap: 0.2rem; min-width: 0; }
   :global(.poradi .p-jmeno > span:first-child) { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  :global(.poradi .p-pruh) { display: block; height: 6px; border-radius: 999px; box-shadow: inset 0 0 0 1px rgba(27, 42, 74, 0.18); transition: width 0.45s ease, background 0.45s ease; }
+  :global(.poradi .p-pruh) { display: block; height: 6px; border-radius: 999px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--navy) 18%, transparent); transition: width 0.45s ease, background 0.45s ease; }
   :global(.poradi .p-hodnota) { font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }
   @media (prefers-reduced-motion: reduce) { :global(.kraj), :global(.poradi .p-pruh), .mesto__bublina { transition: none; } }
 </style>
 
 <script>
-  import { hranice, barvaKraje, barvaTridy, trida, type Vrstva } from '../lib/mapa';
+  import { hranice, barvaKraje, barvaTridy, trida, svetlaBarva, BEZ_DAT, type Vrstva } from '../lib/mapa';
   import { zoomSkupiny } from '../lib/zoom';
   import { naseptavac, type Polozka } from '../lib/naseptavac';
 
@@ -622,7 +622,7 @@ const data = JSON.stringify({
     p.setAttribute('vector-effect', 'non-scaling-stroke'); p.setAttribute('stroke-linejoin', 'round');
     const b = document.createElementNS(ns, 'circle');
     b.setAttribute('cx', String(x(aktivni))); b.setAttribute('cy', String(y(hod[aktivni]))); b.setAttribute('r', '4.5');
-    b.setAttribute('fill', '#F2EDE3'); b.setAttribute('stroke', '#F08829'); b.setAttribute('stroke-width', '2');
+    b.style.fill = 'var(--panel)'; b.setAttribute('stroke', '#F08829'); b.setAttribute('stroke-width', '2');
     s.append(p, b);
     const osa = el('div', 'krivka-osa');
     osa.append(el('span', undefined, popisy[0]), el('span', undefined, popisy.at(-1)));
@@ -698,7 +698,7 @@ const data = JSON.stringify({
       const jmeno = el('span', 'p-jmeno');
       const pruh = el('span', 'p-pruh');
       pruh.style.width = `${Math.max(2, (m.h[i] / max) * 100)}%`;
-      pruh.style.background = k === vybraneMesto ? '#F08829' : '#1B2A4A';
+      pruh.style.background = k === vybraneMesto ? 'var(--orange)' : 'var(--navy)';
       jmeno.append(el('span', undefined, m.n), pruh);
       b.append(el('span', 'p-poz', `${p + 1}.`), jmeno, el('span', 'p-hodnota', kratceCislo(m.h[i])));
       li.append(b);
@@ -710,7 +710,7 @@ const data = JSON.stringify({
     const ul = $<HTMLElement>('[data-legenda]');
     legendaPolozky = [];
     if (jeMesta(v)) {
-      for (const [val, t] of [[1000000, '1 mil.'], [300000, '300 tis.'], [50000, '50 tis.']] as [number, string][]) legendaPolozky.push({ barva: '#1B2A4A', text: t, kruh: polomer(val) });
+      for (const [val, t] of [[1000000, '1 mil.'], [300000, '300 tis.'], [50000, '50 tis.']] as [number, string][]) legendaPolozky.push({ barva: 'var(--navy)', text: t, kruh: polomer(val) });
     } else if (v.typ === 'ciselna') {
       const n = hr.length + 1;
       const d = v.desetinna ?? 0;
@@ -731,7 +731,7 @@ const data = JSON.stringify({
         const d = Math.max(6, p.kruh * 0.9);
         t.style.width = `${d}px`; t.style.height = `${d}px`; t.style.borderRadius = '50%'; t.style.opacity = '0.85';
       } else {
-        t.style.borderRadius = '4px'; t.style.width = '22px'; t.style.boxShadow = 'inset 0 0 0 1px rgba(27,42,74,0.12)';
+        t.style.borderRadius = '4px'; t.style.width = '22px'; t.style.boxShadow = 'inset 0 0 0 1px color-mix(in srgb, var(--navy) 12%, transparent)';
       }
       li.append(t, p.text);
       return li;
@@ -1019,7 +1019,7 @@ const data = JSON.stringify({
     const mestaRezim = jeMesta(vrstva);
     for (const p of Array.from(svg.querySelectorAll<SVGPathElement>('.kraj'))) {
       const cesta = new Path2D(p.getAttribute('d')!);
-      x.fillStyle = mestaRezim ? '#E6DDCB' : p.style.fill || p.getAttribute('fill')!;
+      x.fillStyle = mestaRezim ? '#E6DDCB' : svetlaBarva(p.style.fill || p.getAttribute('fill') || BEZ_DAT);
       x.fill(cesta, 'evenodd');
       x.strokeStyle = '#F2EDE3'; x.lineWidth = 2.5 / s * 1.4; x.lineJoin = 'round';
       x.stroke(cesta);
@@ -1047,7 +1047,7 @@ const data = JSON.stringify({
     const sirky = legendaPolozky.map((p) => 40 + x.measureText(p.text).width + 36);
     let lx = (W - sirky.reduce((a, b) => a + b, 0)) / 2;
     legendaPolozky.forEach((p, i) => {
-      x.fillStyle = p.barva; x.beginPath();
+      x.fillStyle = svetlaBarva(p.barva === 'var(--navy)' ? '#1B2A4A' : p.barva); x.beginPath();
       if (p.kruh) x.arc(lx + 12, 1062, Math.max(5, p.kruh * 0.6), 0, Math.PI * 2); else x.roundRect(lx, 1052, 30, 20, 5);
       x.fill();
       x.fillStyle = '#1B2A4A'; x.fillText(p.text, lx + 40, 1070);

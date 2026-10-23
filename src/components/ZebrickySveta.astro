@@ -132,16 +132,16 @@ const zebricky = IDS.map((id) => {
   .zs__dlazdice-1 { display: flex; flex-direction: column; align-items: flex-start; gap: 0.5rem; padding: 0.8rem 0.85rem 0.75rem; border: 1px solid var(--line); border-radius: 18px; background: var(--paper); color: var(--navy); font-family: inherit; text-align: left; cursor: pointer; box-shadow: var(--stin-maly); transition: transform var(--stisk) var(--ease-out), background-color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease, color 0.25s ease; }
   @media (hover: hover) and (pointer: fine) { .zs__dlazdice-1:hover { border-color: var(--line-2); box-shadow: var(--stin); } }
   .zs__dlazdice-1:active { transform: scale(0.97); transition-duration: 60ms; }
-  .zs__dlazdice-1[aria-pressed='true'] { background: var(--navy); border-color: var(--navy); color: var(--cream); box-shadow: 0 12px 26px -14px rgba(27, 42, 74, 0.7); }
+  .zs__dlazdice-1[aria-pressed='true'] { background: var(--navy); border-color: var(--navy); color: var(--cream); box-shadow: 0 12px 26px -14px rgba(var(--stin-barva), 0.7); }
   .zs__d-hlava { display: flex; align-items: center; gap: 0.5rem; min-width: 0; width: 100%; }
   .zs__d-nazev { font-size: 0.8rem; font-weight: 800; line-height: 1.25; }
   .zs__d-misto { display: flex; align-items: baseline; gap: 0.3rem; }
   .zs__d-misto strong { font-size: 1.6rem; font-weight: 900; line-height: 1; letter-spacing: -0.03em; color: var(--orange-text); }
   .zs__dlazdice-1[aria-pressed='true'] .zs__d-misto strong { color: var(--orange); }
   .zs__d-misto small { font-size: 0.78rem; font-weight: 700; color: var(--muted); }
-  .zs__dlazdice-1[aria-pressed='true'] .zs__d-misto small { color: #B9C0CF; }
+  .zs__dlazdice-1[aria-pressed='true'] .zs__d-misto small { color: var(--na-inkoustu-2); }
   .zs__d-osa { position: relative; width: 100%; height: 4px; border-radius: 4px; background: var(--draha); }
-  .zs__dlazdice-1[aria-pressed='true'] .zs__d-osa { background: rgba(242, 237, 227, 0.18); }
+  .zs__dlazdice-1[aria-pressed='true'] .zs__d-osa { background: color-mix(in srgb, var(--cream) 18%, transparent); }
   .zs__d-osa i { position: absolute; top: 50%; left: var(--x); width: 9px; height: 9px; margin: -4.5px 0 0 -4.5px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 3px rgba(240, 136, 41, 0.25); }
 
   .zs__panel { display: flex; flex-direction: column; gap: 1.5rem; padding: clamp(1.25rem, 3vw, 2rem); border-radius: 24px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin); }
@@ -158,11 +158,11 @@ const zebricky = IDS.map((id) => {
 
   /* Osa pořadí: dráha od 1. místa po poslední, nad ní vlajky sousedů, pod ní Česko */
   .zs__osa { position: relative; height: calc(96px + var(--rady) * 34px); margin-inline: 0.4rem; }
-  .zs__draha { position: absolute; left: 0; right: 0; top: calc(44px + var(--rady) * 34px); height: 10px; border-radius: 999px; background: linear-gradient(90deg, #1B2A4A, #6E7C96 45%, #E2D9C9); }
+  .zs__draha { position: absolute; left: 0; right: 0; top: calc(44px + var(--rady) * 34px); height: 10px; border-radius: 999px; background: linear-gradient(90deg, var(--navy), var(--slate) 45%, var(--line)); }
   .zs__pin { position: absolute; left: var(--px); bottom: 54px; display: flex; flex-direction: column; align-items: center; gap: 1px; transform: translateX(-50%); font-size: 0.7rem; font-weight: 800; color: var(--text-2); line-height: 1.2; }
   .zs__pin::after { content: ''; width: 2px; height: calc(6px + var(--radek) * 34px); background: var(--line-2); border-radius: 2px; }
   .zs__pin .vlajka { width: 22px; height: 16px; border-radius: 3px; }
-  .zs__cz { position: absolute; left: var(--x); top: calc(49px + var(--rady) * 34px); width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: var(--orange); border: 3px solid #fff; box-shadow: 0 0 0 5px rgba(240, 136, 41, 0.25), 0 3px 8px rgba(27, 42, 74, 0.3); }
+  .zs__cz { position: absolute; left: var(--x); top: calc(49px + var(--rady) * 34px); width: 22px; height: 22px; margin: -11px 0 0 -11px; border-radius: 50%; background: var(--orange); border: 3px solid var(--paper); box-shadow: 0 0 0 5px rgba(240, 136, 41, 0.25), 0 3px 8px rgba(var(--stin-barva), 0.3); }
   .zs__cz-stitek { position: absolute; top: 24px; left: 50%; transform: translateX(-50%); display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.2rem 0.55rem 0.2rem 0.3rem; border-radius: 999px; background: var(--navy); color: var(--cream); font-size: 0.76rem; font-weight: 900; white-space: nowrap; }
   .zs__cz--l .zs__cz-stitek { left: -6px; transform: none; }
   .zs__cz--p .zs__cz-stitek { left: auto; right: -6px; transform: none; }
@@ -185,7 +185,7 @@ const zebricky = IDS.map((id) => {
   .zs__pruhy .p { text-align: right; font-size: 0.78rem; color: var(--muted); }
   .zs__pruhy .vlajka, .zs__sousede .vlajka { width: 22px; height: 16px; border-radius: 3px; }
   .zs__pruhy .j, .zs__sousede .j { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .zs__pruhy .d { height: 10px; border-radius: 999px; background: #ECE5D8; overflow: hidden; }
+  .zs__pruhy .d { height: 10px; border-radius: 999px; background: var(--draha); overflow: hidden; }
   .zs__pruhy .b { display: block; height: 100%; width: var(--w); border-radius: 999px; background: var(--navy); }
   .zs__pruhy .h, .zs__sousede .h { font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }
   .zs__pruhy li.je-cz { background: var(--paper); box-shadow: 0 0 0 1.5px var(--orange); }

@@ -138,7 +138,7 @@ const nejdelsiKratke = Math.max(...vse.map((v) => kratke(v).length));
   .zvc__rok { font-size: 1.45rem; font-weight: 900; min-width: 3.4ch; text-align: right; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
 
   .zvc__plocha { position: relative; }
-  .zvc__vodoznak { position: absolute; right: 0.25rem; bottom: 0.1rem; font-size: clamp(3.5rem, 9vw, 6.5rem); font-weight: 900; line-height: 1; letter-spacing: -0.04em; color: rgba(27, 42, 74, 0.07); pointer-events: none; font-variant-numeric: tabular-nums; }
+  .zvc__vodoznak { position: absolute; right: 0.25rem; bottom: 0.1rem; font-size: clamp(3.5rem, 9vw, 6.5rem); font-weight: 900; line-height: 1; letter-spacing: -0.04em; color: color-mix(in srgb, var(--navy) 7%, transparent); pointer-events: none; font-variant-numeric: tabular-nums; }
   .zvc__radky { position: relative; list-style: none; margin: 0; padding: 0; height: calc(var(--radku) * var(--vyska-radku)); overflow: hidden; }
   .zvc__radek { position: absolute; left: 0; right: 0; top: 0; height: var(--vyska-radku); transform: translateY(calc(var(--y) * var(--vyska-radku))); transition: transform 0.8s var(--ease-out), opacity 0.5s ease; }
   .zvc__tlacitko {

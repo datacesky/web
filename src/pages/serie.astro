@@ -85,7 +85,7 @@ const den = (d: string) => datum(new Date(d));
   .se-uvod { position: relative; isolation: isolate; }
   .se-uvod::before {
     content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background: url('/vrstevnice.svg') center top / cover no-repeat; opacity: 0.7;
+    background: url('/vrstevnice.svg') center top / cover no-repeat; opacity: calc(0.7 * var(--vrstevnice-sila));
     -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
     mask-image: linear-gradient(to bottom, #000 40%, transparent 100%);
   }
@@ -104,10 +104,10 @@ const den = (d: string) => datum(new Date(d));
   @media (hover: hover) and (pointer: fine) { .se-nove__obalka:hover { transform: translateY(-4px) rotate(-1deg); } }
   .se-nove__obalka:active { transform: scale(0.98); }
   .se-nove__text { display: flex; flex-direction: column; gap: 1rem; align-items: flex-start; }
-  .se-nove__hlasuj { display: flex; flex-direction: column; gap: 0.1rem; margin-top: 0.4rem; padding: 0.8rem 1.1rem; border-radius: 16px; background: var(--navy); color: var(--cream); text-decoration: none; transition: transform var(--stisk) var(--ease-out); }
-  .se-nove__hlasuj span { font-size: 0.8rem; font-weight: 800; color: #F6C08C; }
+  .se-nove__hlasuj { display: flex; flex-direction: column; gap: 0.1rem; margin-top: 0.4rem; padding: 0.8rem 1.1rem; border-radius: 16px; background: var(--panel); color: var(--na-panelu); text-decoration: none; transition: transform var(--stisk) var(--ease-out); }
+  .se-nove__hlasuj span { font-size: 0.8rem; font-weight: 800; color: var(--na-panelu-akcent); }
   .se-nove__hlasuj strong { font-size: 1rem; font-weight: 900; }
-  .se-nove__hlasuj:hover { color: var(--cream); }
+  .se-nove__hlasuj:hover { color: var(--na-panelu); }
   .se-nove__hlasuj:active { transform: scale(0.98); }
 
   .se-mrizka { display: grid; grid-template-columns: repeat(auto-fill, minmax(176px, 1fr)); gap: 1.4rem 1.1rem; list-style: none; margin: 0; padding: 0; }
@@ -115,7 +115,7 @@ const den = (d: string) => datum(new Date(d));
   .se-mrizka > li { transition-delay: calc(var(--i) * 45ms) !important; }
   .se-dil { display: flex; flex-direction: column; gap: 0.3rem; color: var(--navy); text-decoration: none; -webkit-touch-callout: none; }
   .se-dil :global(.so) { margin-bottom: 0.45rem; transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); }
-  @media (hover: hover) and (pointer: fine) { .se-dil:hover :global(.so) { transform: translateY(-4px); box-shadow: 0 0 0 1px var(--line-2), 0 18px 34px -16px rgba(27, 42, 74, 0.55); } .se-dil:hover { color: var(--navy); } }
+  @media (hover: hover) and (pointer: fine) { .se-dil:hover :global(.so) { transform: translateY(-4px); box-shadow: 0 0 0 1px var(--line-2), 0 18px 34px -16px rgba(var(--stin-barva), 0.55); } .se-dil:hover { color: var(--navy); } }
   .se-dil:active :global(.so) { transform: scale(0.98); transition-duration: 80ms; }
   .se-dil__meta { font-size: 0.76rem; font-weight: 700; color: var(--orange-text); }
   .se-dil__nazev { font-size: 1rem; font-weight: 900; line-height: 1.3; }
