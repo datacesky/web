@@ -42,7 +42,7 @@ const data = JSON.stringify({ vrstvy: ciselne, kraje: Object.fromEntries(geo.kra
 
 <style>
   .mm { display: flex; flex-direction: column; gap: 1.1rem; }
-  .mm__chipy { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+  .mm__chipy { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-start; }
   .mm__telo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 1.25rem; align-items: stretch; }
   @media (max-width: 880px) { .mm__telo { grid-template-columns: 1fr; } }
   .mm__mapa { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin); padding: clamp(1.1rem, 3vw, 1.75rem); display: flex; flex-direction: column; gap: 1rem; text-align: center; }

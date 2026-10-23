@@ -139,14 +139,15 @@ const FB = 'https://www.facebook.com/data.cesky';
   )}
 
   <section class="obal sekce--mala">
-    <div class="nadpis-sekce" style="justify-content: center; text-align: center;">
-      <h2>Porovnej kraje na jedné mapě</h2>
+    <div class="nadpis-sekce">
+      <div class="nadpis">
+        <span class="nadhlavi">Mapa Česka</span>
+        <h2>Porovnej kraje na jedné mapě</h2>
+        <p class="drobne">Na celé mapě jsou i města, satelit, vlaky a vývoj v čase.</p>
+      </div>
+      <a class="tlacitko tlacitko--male" href="/mapa/">Otevřít celou mapu</a>
     </div>
     <MapaMini />
-    <div class="mapa-odkaz">
-      <a class="tlacitko tlacitko--plny" href="/mapa/">Otevřít celou mapu</a>
-      <span class="drobne">Na celé mapě jsou i města, satelit a vývoj v čase.</span>
-    </div>
   </section>
 
   <section class="obal sekce--mala">
@@ -158,9 +159,9 @@ const FB = 'https://www.facebook.com/data.cesky';
         </p>
       </div>
       <div class="rada pas__site">
-        <a class="tlacitko tlacitko--oranzovy" href={IG}>Instagram</a>
-        <a class="tlacitko tlacitko--svetly" href={TT}>TikTok</a>
-        <a class="tlacitko tlacitko--svetly" href={FB}>Facebook</a>
+        <a class="tlacitko tlacitko--oranzovy" href={IG}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z M9 12a3 3 0 1 0 6 0a3 3 0 0 0-6 0 M16.5 7.5v.01" /></svg>Instagram</a>
+        <a class="tlacitko tlacitko--svetly" href={TT}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.9v4a10 10 0 0 1-5-1.9v4.5a6.5 6.5 0 1 1-8-6.3v4.3a2.5 2.5 0 1 0 4 2V3h4.1A6 6 0 0 0 21 7.9z" /></svg>TikTok</a>
+        <a class="tlacitko tlacitko--svetly" href={FB}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v4h3v7h4v-7h3l1-4h-4V8a1 1 0 0 1 1-1h3V3h-3a5 5 0 0 0-5 5v2z" /></svg>Facebook</a>
       </div>
     </div>
   </section>
@@ -226,7 +227,6 @@ const FB = 'https://www.facebook.com/data.cesky';
   @media (hover: hover) and (pointer: fine) { .dily-uvod__dil:hover :global(.so) { transform: translateY(-4px); } .dily-uvod__dil:hover { color: var(--navy); } }
   .dily-uvod__dil:active :global(.so) { transform: scale(0.98); }
   .dily-uvod__nazev { font-size: 0.92rem; font-weight: 800; line-height: 1.3; }
-  .mapa-odkaz { display: flex; flex-direction: column; align-items: center; gap: 0.6rem; margin-top: 1.4rem; text-align: center; }
   @media (max-width: 560px) {
     .pas__site { display: grid; grid-template-columns: 1fr; width: 100%; }
   }

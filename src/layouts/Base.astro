@@ -7,6 +7,7 @@ import '@fontsource/montserrat/900.css';
 import '../styles/global.css';
 import { web } from '../data/web';
 import { hlasovaniZapnute } from '../data/hlasovani';
+import Hledani from '../components/Hledani.astro';
 
 interface Props {
   titul: string;
@@ -29,13 +30,30 @@ const rok = new Date().getFullYear();
 const IG = 'https://www.instagram.com/data.cesky/';
 const TT = 'https://www.tiktok.com/@data.cesky';
 const FB = 'https://www.facebook.com/data.cesky';
+
+// Ikony sítí (Tabler, obrys 24×24)
+const SITE = [
+  { nazev: 'Instagram', url: IG, d: 'M4 8a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z M9 12a3 3 0 1 0 6 0a3 3 0 0 0-6 0 M16.5 7.5v.01' },
+  { nazev: 'TikTok', url: TT, d: 'M21 7.9v4a10 10 0 0 1-5-1.9v4.5a6.5 6.5 0 1 1-8-6.3v4.3a2.5 2.5 0 1 0 4 2V3h4.1A6 6 0 0 0 21 7.9z' },
+  { nazev: 'Facebook', url: FB, d: 'M7 10v4h3v7h4v-7h3l1-4h-4V8a1 1 0 0 1 1-1h3V3h-3a5 5 0 0 0-5 5v2z' },
+];
+
+// Spodní lišta na telefonu: pět hlavních míst webu
+const DOK = [
+  { href: '/novinky/', nazev: 'Novinky', aktivni: aktivni('/novinky'), d: 'M13 3L4 14h7l-1 7 9-11h-7z' },
+  { href: '/zebricky/', nazev: 'Žebříčky', aktivni: aktivni('/zebricky') ?? aktivni('/grafy'), d: 'M4 5h10 M4 10h16 M4 15h13 M4 20h7' },
+  { href: '/mapa/', nazev: 'Mapa', aktivni: aktivni('/mapa'), d: 'M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z M9 4v13 M15 7v13' },
+  { href: '/svet/', nazev: 'Svět', aktivni: aktivni('/svet'), d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M3.6 9h16.8 M3.6 15h16.8 M11.5 3a17 17 0 0 0 0 18 M12.5 3a17 17 0 0 1 0 18' },
+  { href: '/serie/', nazev: 'Série', aktivni: aktivni('/serie'), d: 'M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M10 9.5v5l4.5-2.5z' },
+];
+const LUPA = 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6';
 ---
 
 <!doctype html>
 <html lang="cs">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <title>{titul}</title>
     <meta name="description" content={popis} />
     <link rel="canonical" href={kanonicka} />
@@ -63,7 +81,6 @@ const FB = 'https://www.facebook.com/data.cesky';
     <header class="hlavicka">
       <div class="obal hlavicka__obsah">
         <a class="logo" href="/" aria-label="data.cesky, úvodní stránka">data<span class="logo__cesky">.cesky</span></a>
-        {hlasovaniZapnute && <a href="/hlasovani/" class="hlavicka__hlasuj" aria-current={aktivni('/hlasovani')}>Hlasuj</a>}
         <nav class="navigace" aria-label="Hlavní navigace">
           <a href="/novinky/" aria-current={aktivni('/novinky')}>Novinky</a>
           <a href="/zebricky/" aria-current={aktivni('/zebricky') ?? aktivni('/grafy')}>Žebříčky</a>
@@ -71,12 +88,21 @@ const FB = 'https://www.facebook.com/data.cesky';
           <a href="/svet/" aria-current={aktivni('/svet')}>Svět</a>
           <a href="/serie/" aria-current={aktivni('/serie')}>Série</a>
           <a href="/metodika/" aria-current={aktivni('/metodika')}>Metodika</a>
-          {hlasovaniZapnute && <a href="/hlasovani/" class="navigace__hlasuj" aria-current={aktivni('/hlasovani')}>Hlasuj</a>}
         </nav>
-        <div class="hlavicka__site">
-          <a href={IG}>Instagram</a>
-          <a href={TT}>TikTok</a>
-          <a href={FB}>Facebook</a>
+        <div class="hlavicka__akce">
+          <button type="button" class="hlavicka__hledat" data-hledat aria-label="Hledat na webu" aria-keyshortcuts="Control+K Meta+K">
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d={LUPA} /></svg>
+            <span class="hlavicka__hledat-text">Hledat</span>
+            <kbd class="hlavicka__zkratka" data-zkratka>⌘K</kbd>
+          </button>
+          {hlasovaniZapnute && <a href="/hlasovani/" class="hlavicka__hlasuj" aria-current={aktivni('/hlasovani')}>Hlasuj</a>}
+          <div class="hlavicka__site">
+            {SITE.map((x) => (
+              <a href={x.url} aria-label={x.nazev} title={x.nazev}>
+                <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d={x.d} /></svg>
+              </a>
+            ))}
+          </div>
         </div>
       </div>
     </header>
@@ -93,6 +119,13 @@ const FB = 'https://www.facebook.com/data.cesky';
             <p class="drobne" style="max-width: 40ch;">
               Česko v mapách, grafech a číslech. Zdroj je vždy uvedený u každého grafu.
             </p>
+            <div class="patka__site">
+              {SITE.map((x) => (
+                <a href={x.url} aria-label={x.nazev} title={x.nazev}>
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d={x.d} /></svg>
+                </a>
+              ))}
+            </div>
           </div>
           <div class="sloupec">
             <h2>Obsah</h2>
@@ -114,13 +147,13 @@ const FB = 'https://www.facebook.com/data.cesky';
               <li><a href="mailto:data.cesky@gmail.com">Kontakt</a></li>
             </ul>
           </div>
-          <div class="sloupec">
-            <h2>Sleduj</h2>
-            <ul class="patka__odkazy">
-              <li><a href={IG}>Instagram</a></li>
-              <li><a href={TT}>TikTok</a></li>
-              <li><a href={FB}>Facebook</a></li>
-            </ul>
+          <div class="sloupec patka__hledani">
+            <h2>Nenašel jsi to?</h2>
+            <button type="button" class="tlacitko tlacitko--male patka__hledat" data-hledat>
+              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d={LUPA} /></svg>
+              Hledat na webu
+            </button>
+            <p class="drobne">Země, kraje, města, žebříčky i díly sérií.</p>
           </div>
         </div>
         <div class="patka__spodek">
@@ -128,10 +161,25 @@ const FB = 'https://www.facebook.com/data.cesky';
             © {rok} data.cesky. Grafy jsou pod licencí <a href="https://creativecommons.org/licenses/by/4.0/deed.cs">CC BY 4.0</a>.
             Kontakt: <a href="mailto:data.cesky@gmail.com">data.cesky@gmail.com</a>
           </p>
-          <span class="znacka">@data<span>.cesky</span></span>
+          <div class="rada">
+            <a class="patka__nahoru" href="#" data-nahoru>Nahoru<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5 M6 11l6-6 6 6" /></svg></a>
+            <span class="znacka">@data<span>.cesky</span></span>
+          </div>
         </div>
       </div>
     </footer>
+
+    <nav class="dok" aria-label="Hlavní navigace" data-dok>
+      {DOK.map((x) => (
+        <a href={x.href} aria-current={x.aktivni}>
+          <span class="dok__ikona"><svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={x.d} /></svg></span>
+          <span class="dok__nazev">{x.nazev}</span>
+        </a>
+      ))}
+    </nav>
+
+    <Hledani />
+
     <script>
       // Hlavička: stín jen ve chvíli, kdy pod ní jede obsah
       const hlavicka = document.querySelector('.hlavicka');
@@ -171,18 +219,26 @@ const FB = 'https://www.facebook.com/data.cesky';
         }).observe(seg);
       }
 
-      // Menu na mobilu: když se nevejde, okraj se ztratí do ztracena, ať je vidět, že jde posunout
-      const menu = document.querySelector<HTMLElement>('.navigace');
-      if (menu) {
-        const zkontrolujMenu = () => {
-          const preteka = menu.scrollWidth > menu.clientWidth + 2;
-          menu.classList.toggle('navigace--preteka', preteka && menu.scrollLeft + menu.clientWidth < menu.scrollWidth - 4);
-        };
-        new ResizeObserver(zkontrolujMenu).observe(menu);
-        menu.addEventListener('scroll', zkontrolujMenu, { passive: true });
-        // aktivní položka v záběru
-        menu.querySelector<HTMLElement>('[aria-current="page"]')?.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+      // Spodní lišta na telefonu: při čtení dolů ustoupí, při posunu nahoru (nebo na konci stránky) se vrátí.
+      // Když se píše do pole, schová se, ať nepřekáží klávesnici.
+      const dok = document.querySelector<HTMLElement>('[data-dok]');
+      if (dok) {
+        let posledni = scrollY, schovany = false;
+        const nastav = (s: boolean) => { if (s !== schovany) { schovany = s; dok.classList.toggle('dok--schovany', s); } };
+        addEventListener('scroll', () => {
+          const y = scrollY, dy = y - posledni;
+          const naKonci = innerHeight + y >= document.documentElement.scrollHeight - 40;
+          if (naKonci || y < 80) nastav(false);
+          else if (dy > 6) nastav(true);
+          else if (dy < -6) nastav(false);
+          if (Math.abs(dy) > 6) posledni = y;
+        }, { passive: true });
+        addEventListener('focusin', (e) => { if ((e.target as HTMLElement).matches('input, textarea, select')) dok.classList.add('dok--pise'); });
+        addEventListener('focusout', () => dok.classList.remove('dok--pise'));
       }
+
+      // Nahoru: plynule, bez # v adrese
+      document.querySelector('[data-nahoru]')?.addEventListener('click', (e) => { e.preventDefault(); scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' }); });
 
       // Karty posouvané do strany (mobil): tečky pod nimi ukazují, kde jsi
       for (const pas of document.querySelectorAll<HTMLElement>('[data-posuvnik]')) {
