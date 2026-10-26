@@ -2,20 +2,26 @@
 // Jedna novinka z dat: nahoře ikonka a malý animovaný graf, pod ním velké číslo, nadpis, text a zdroj.
 import MiniGraf from './MiniGraf.astro';
 import IkonaZare from './IkonaZare.astro';
+import { nezalomit } from '../lib/format';
 
 interface Props {
   p: {
     id: string; nadpis: string; cislo: string; popisCisla?: string; text: string; zdroj: string; sada: string; url: string;
     stitek?: string; zmena?: string; smer?: 'nahoru' | 'dolu' | 'stejne'; ikona?: string; graf?: any;
+    oblast?: 'cesko' | 'evropa' | 'svet';
   };
   // kotva pro přímé odkazy na novinku (jen na stránce novinek)
   kotva?: boolean;
+  // štítek „Hlavní novinka“ (úvodní stránka)
+  hlavni?: boolean;
 }
-const { p, kotva = false } = Astro.props;
+const { p, kotva = false, hlavni = false } = Astro.props;
 const SIPKA = { nahoru: 'M12 19V5 M6 11l6-6 6 6', dolu: 'M12 5v14 M6 13l6 6 6-6', stejne: 'M5 12h14' };
+const OBLAST = { cesko: 'Česko', evropa: 'Evropa', svet: 'Svět' };
+const oblast = p.oblast ?? 'cesko';
 ---
 
-<li class="nk" id={kotva ? `n-${p.id}` : undefined}>
+<li class:list={['nk', { 'nk--hlavni': hlavni }]} id={kotva ? `n-${p.id}` : undefined} data-oblast={oblast}>
   <div class="nk__vizual">
     <div class="nk__hlava">
       <IkonaZare id={p.ikona} velikost={34} />
@@ -30,9 +36,13 @@ const SIPKA = { nahoru: 'M12 19V5 M6 11l6-6 6 6', dolu: 'M12 5v14 M6 13l6 6 6-6'
     {p.graf && <MiniGraf graf={p.graf} />}
   </div>
   <div class="nk__telo">
+    <p class="nk__oblast">
+      <span class:list={['oblast-tecka', `oblast-tecka--${oblast}`]}></span>{OBLAST[oblast]}
+      {hlavni && <span class="nk__hlavni">Hlavní novinka</span>}
+    </p>
     <h3 class="nk__nadpis">{p.nadpis}</h3>
     <p class="nk__cislo"><span data-pocitej>{p.cislo}</span>{p.popisCisla && <small>{p.popisCisla}</small>}</p>
-    <p class="nk__text">{p.text}</p>
+    <p class="nk__text">{nezalomit(p.text)}</p>
     <p class="nk__zdroj">Zdroj: <a href={p.url}>{p.zdroj} ({p.sada})</a></p>
   </div>
 </li>
@@ -47,6 +57,9 @@ const SIPKA = { nahoru: 'M12 19V5 M6 11l6-6 6 6', dolu: 'M12 5v14 M6 13l6 6 6-6'
   .nk__zmena--nahoru { background: var(--oranzova-svetla); color: var(--orange-text); }
   .nk__zmena--dolu { background: var(--modra-svetla); color: var(--navy); }
   .nk__telo { flex-grow: 1; display: flex; flex-direction: column; gap: 0.5rem; padding: 1.05rem 1.25rem 1.1rem; }
+  .nk__oblast { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .nk__hlavni { margin-left: auto; padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--oranzova-svetla); color: var(--orange-text); letter-spacing: 0.04em; }
+  .nk--hlavni { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--orange) 55%, transparent), var(--stin-maly); }
   .nk__nadpis { font-size: 1rem; line-height: 1.35; color: var(--text-2); }
   .nk__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.15rem 0.5rem; font-size: clamp(1.9rem, 4vw, 2.35rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; color: var(--navy); font-variant-numeric: tabular-nums; }
   .nk__cislo small { font-size: 0.88rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }

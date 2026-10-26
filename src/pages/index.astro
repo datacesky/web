@@ -72,12 +72,12 @@ const FB = 'https://www.facebook.com/data.cesky';
         <div class="nadpis">
           <span class="nadhlavi nadhlavi--zive">Nová data{aktualizovano && ` · ${datum(aktualizovano)}`}</span>
           <h2>Novinky z dat</h2>
-          <p class="drobne">Nejzajímavější čísla, která za poslední měsíc zveřejnil ČSÚ a Eurostat.</p>
+          <p class="drobne">Nejzajímavější nová čísla z Česka, Evropy i světa od ČSÚ, Eurostatu a Světové banky.</p>
         </div>
         <a class="tlacitko tlacitko--male" href="/novinky/">Všechny novinky</a>
       </div>
       <ul class="posuvnik" data-posuvnik>
-        {novinky.slice(0, 6).map((p) => <NovinkaKarta p={p} />)}
+        {novinky.slice(0, 6).map((p) => <NovinkaKarta p={p} hlavni={p.hlavni} />)}
       </ul>
       <div class="tecky" aria-hidden="true" data-tecky>{novinky.slice(0, 6).map((_, i) => <i class:list={{ 'je-aktivni': i === 0 }}></i>)}</div>
     </section>

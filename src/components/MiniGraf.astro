@@ -4,6 +4,7 @@
 // a po najetí myší nebo ťuknutí ukáže přesnou hodnotu.
 // Sloupce vždy začínají od nuly. Čára může začínat jinde, proto má popsané vodorovné linky.
 import { obdobi, hodnota, kratce } from '../lib/obdobi';
+import { ZEME } from '../lib/svet';
 
 type Graf = {
   typ: 'cara' | 'sloupce' | 'zeme';
@@ -19,10 +20,13 @@ type Graf = {
 };
 interface Props {
   graf: Graf;
+  // velikost kreslicí plochy; větší plocha = víc místa a menší písmo vůči grafu (hlavní novinka)
+  sirka?: number;
+  vyska?: number;
 }
-const { graf: g } = Astro.props;
+const { graf: g, sirka = 300, vyska = 132 } = Astro.props;
 
-const W = 300, H = 132;
+const W = sirka, H = vyska;
 const L = 4, R = W - 4, T = 22, B = H - 20;
 const d = g.desetinna ?? 1;
 const j = g.jednotka;
@@ -136,8 +140,14 @@ if (g.typ === 'cara') {
   if (iDruhy !== iZv) popisky.push(popisek(iDruhy, false));
   // popisek reference vlevo, kde jsou sloupce u zemí seřazených od nejnižší nejníž
   const ref = g.reference ? { y: f1(y(g.reference.hodnota)), t: `${g.reference.popis} ${sJednotkou(g.reference.hodnota)}`, x: g.typ === 'zeme' ? L : R, kotva: g.typ === 'zeme' ? 'start' : 'end' } : null;
+  // Ve velkém grafu zemí (hlavní novinka) jsou pod sloupci vlajky: kódy EU (CZ, EL) i světové (CZE)
+  const vlajka = (k: string) => (k.length === 3 ? ZEME[k]?.[1] : k === 'EL' ? 'gr' : k.toLowerCase());
+  const fw = Math.min(16, pas * 0.82);
+  const vlajky = g.typ === 'zeme' && W >= 420
+    ? sloupce.map((s, i) => ({ x: f1(s.x + s.w / 2 - fw / 2), y: B + 5, w: f1(fw), h: f1(fw * 0.75), href: vlajka(body[i][0]) })).filter((v) => v.href)
+    : [];
   obsah = {
-    sloupce, popisky, ref, nula, zaporne: lo < 0,
+    sloupce, popisky, ref, nula, zaporne: lo < 0, vlajky,
     od: g.typ === 'zeme' ? 'nejnižší' : obdobi(body[0][0], true),
     do: g.typ === 'zeme' ? 'nejvyšší' : obdobi(body[n - 1][0], true),
   };
@@ -198,8 +208,14 @@ const legenda = g.typ === 'cara' && (g.rady?.length ?? 0) > 1 ? obsah.cesty.map(
         {obsah.sloupce.map((s: any) => <rect class="mg__hit" x={s.hit.x} y="0" width={s.hit.w} height={B} data-tip={s.tip} />)}
       </g>
     )}
-    <text class="mg__osa" x={L} y={H - 5}>{obsah.od}</text>
-    <text class="mg__osa" x={R} y={H - 5} text-anchor="end">{obsah.do}</text>
+    {obsah.vlajky?.length ? (
+      obsah.vlajky.map((v: any) => <image class="mg__vlajka" href={`/vlajky/${v.href}.svg`} x={v.x} y={v.y} width={v.w} height={v.h} preserveAspectRatio="xMidYMid slice" />)
+    ) : (
+      <>
+        <text class="mg__osa" x={L} y={H - 5}>{obsah.od}</text>
+        <text class="mg__osa" x={R} y={H - 5} text-anchor="end">{obsah.do}</text>
+      </>
+    )}
   </svg>
   {legenda.length > 0 && (
     <ul class="mg__legenda">
@@ -225,6 +241,7 @@ const legenda = g.typ === 'cara' && (g.rady?.length ?? 0) > 1 ? obsah.cesty.map(
   .mg__hodnota--hlavni { font-size: 12.5px !important; font-weight: 900 !important; fill: var(--orange-text) !important; }
   .mg__nula { stroke: var(--line-2); stroke-width: 1; }
   .mg__vodic { stroke: var(--orange); stroke-width: 1.2; }
+  .mg__vlajka { opacity: 0.92; }
   .mg__osa { font-size: 9.5px !important; font-weight: 600 !important; fill: var(--osa-grafu) !important; }
   .mg__hit { fill: transparent; cursor: crosshair; }
   .mg__kriz { stroke: var(--navy); stroke-width: 1; stroke-dasharray: 2 2; opacity: 0; transition: opacity 0.15s ease; pointer-events: none; }

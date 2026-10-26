@@ -39,3 +39,11 @@ export function sklonuj(n: number, jeden: string, dva: string, pet: string): str
   if (n >= 2 && n <= 4) return `${n} ${dva}`;
   return `${n} ${pet}`;
 }
+
+// Česká typografie v textech novinek: číslo a jednotka (2,5 %, 7,01 Kč) a jednopísmenné předložky (v září, o rok)
+// se nerozdělí na konci řádku.
+export function nezalomit(text: string): string {
+  return text
+    .replace(/(\d) (?=%|‰|Kč|p\. b\.|kWh|mil\.|tis\.|mld\.|dolar|eur|dět|host|zem)/g, '$1\u00a0')
+    .replace(/(?<=^|[\s(„\u00a0])([vVkKsSzZoOuUaAiI]) /g, '$1\u00a0');
+}

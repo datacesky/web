@@ -1,4 +1,4 @@
-// Čitelné názvy období z kódů dat: 2026-08, 2026-Q2, 2026-W41, 2026
+// Čitelné názvy období z kódů dat: 2026-08, 2026-Q2, 2026-W41, 2026-S1, 2026
 const MESICE = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec'];
 const MESICE_K = ['led', 'úno', 'bře', 'dub', 'kvě', 'čvn', 'čvc', 'srp', 'zář', 'říj', 'lis', 'pro'];
 
@@ -9,6 +9,8 @@ export function obdobi(kod: string, kratce = false): string {
   if (m) return kratce ? `Q${m[2]} ${m[1]}` : `${m[2]}. čtvrtletí ${m[1]}`;
   m = kod.match(/^(\d{4})-W(\d{2})$/);
   if (m) return `${Number(m[2])}. týden ${m[1]}`;
+  m = kod.match(/^(\d{4})-S(\d)$/);
+  if (m) return kratce ? `${m[2]}. pol. ${m[1]}` : `${m[2]}. pololetí ${m[1]}`;
   return kod;
 }
 

@@ -36,7 +36,7 @@ export async function GET() {
 
   // Stránky a nejdůležitější místa webu
   radky.push(
-    ['stranka', 'Novinky z dat', 'Nová čísla od ČSÚ a Eurostatu', '/novinky/', 'blesk'],
+    ['stranka', 'Novinky z dat', 'Nová čísla z Česka, Evropy a světa', '/novinky/', 'blesk'],
     ['stranka', 'Žebříčky', 'Kde je Česko ve světě a žebříčky z Česka', '/zebricky/', 'graf'],
     ['stranka', 'Mapa Česka', 'Kraje, města, vývoj v čase', '/mapa/', 'mapa'],
     ['stranka', 'Svět', 'Glóbus a srovnání s Českem', '/svet/', 'svet'],

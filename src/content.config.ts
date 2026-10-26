@@ -64,6 +64,8 @@ const novinky = defineCollection({
   schema: z.object({
     titul: z.string(),
     datum: z.date(),
+    // id hlavní novinky vydání (velká karta nahoře); když chybí, je hlavní první položka
+    hlavni: z.string().optional(),
     polozky: z
       .array(
         z.object({
@@ -82,6 +84,12 @@ const novinky = defineCollection({
           smer: z.enum(['nahoru', 'dolu', 'stejne']).optional(),
           // ikona karty (viz src/lib/ikony.ts)
           ikona: z.string().optional(),
+          // čeho se novinka týká: Česko (data ČSÚ), Evropa (srovnání zemí EU), Svět (srovnání zemí světa)
+          oblast: z.enum(['cesko', 'evropa', 'svet']).default('cesko'),
+          // jen u hlavní novinky: delší text místo pole text a obrázek (soubor v public/novinky/)
+          pribeh: z.string().optional(),
+          obrazek: z.string().optional(),
+          obrazekPopis: z.string().optional(),
           // malý graf nad textem: cara (vývoj), sloupce (období), zeme (srovnání zemí EU)
           graf: z
             .object({

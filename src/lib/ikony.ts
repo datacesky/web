@@ -22,6 +22,9 @@ export const IKONY: Record<string, string> = {
   vlak: 'M5 15V8a4 4 0 0 1 4-4h6a4 4 0 0 1 4 4v7a3 3 0 0 1-3 3H8a3 3 0 0 1-3-3z M5 11h14 M8.5 14.5h.01 M15.5 14.5h.01 M8 18l-2 3 M16 18l2 3 M10 4V2.5 M14 4V2.5',
   auto: 'M5 17a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M15 17a2 2 0 1 0 4 0a2 2 0 1 0-4 0 M5 17H3v-5l2.2-5h9.3l3.5 5H20a1 1 0 0 1 1 1v4h-2 M9 17h6 M3 12h15 M12 12V7',
   ptak: 'M2.5 9.5c2.4-1.7 5.1-1.5 7.2 1.1L12 13.5l2.3-2.9c2.1-2.6 4.8-2.8 7.2-1.1 M12 13.5v1.5',
+  dum: 'M5 12H3l9-9 9 9h-2 M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7 M9 21v-6a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v6',
+  blesk: 'M13 3v7h6l-8 11v-7H5l8-11',
+  banka: 'M3 21h18 M3 10h18 M5 6l7-3 7 3 M4 10v11 M20 10v11 M8 14v3 M12 14v3 M16 14v3',
 };
 
 export const ikona = (id?: string) => (id && IKONY[id]) || IKONY.graf;

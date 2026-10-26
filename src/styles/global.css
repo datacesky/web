@@ -633,3 +633,8 @@ select {
 @media (max-width: 680px) { .tecky { display: flex; } }
 .tecky i { width: 7px; height: 7px; border-radius: 999px; background: var(--line-2); transition: width 0.3s var(--ease-out), background-color 0.3s ease; }
 .tecky i.je-aktivni { width: 20px; background: var(--navy); }
+
+/* Oblast novinky: Česko, Evropa, Svět (karty, filtr a hlavní novinka na stránce novinek) */
+.oblast-tecka { display: inline-block; flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
+.oblast-tecka--evropa { background: var(--navy); }
+.oblast-tecka--svet { background: var(--teal); }

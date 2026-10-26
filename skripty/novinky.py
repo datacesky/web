@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Novinky z dat: jednou měsíčně stáhne čerstvá čísla z ČSÚ a Eurostatu, vybere to nejzajímavější
+"""Novinky z dat: jednou měsíčně stáhne čerstvá čísla z ČSÚ, Eurostatu a Světové banky, vybere to nejzajímavější
 a připraví vydání do src/content/novinky/RRRR-MM.md. Spouští ho GitHub Action (.github/workflows/novinky.yml),
 která výsledek pošle jako návrh ke schválení (pull request). Nic se nezveřejní bez tvého Merge.
 
@@ -8,8 +8,12 @@ Ručně ze složky webu:
     python3 skripty/novinky.py
 
 Věty se skládají ze šablon přímo z čísel, nic se nedomýšlí. Každá položka má i data pro malý graf
-(pole graf), štítek a změnu pro pás s čísly na úvodní stránce. Položky, které je potřeba ověřit,
-mají v návrhu poznámku „zkontroluj“. Používá jen standardní knihovnu Pythonu.
+(pole graf), štítek a změnu na kartě a oblast (cesko, evropa, svet) pro filtr na stránce novinek.
+Hlavní novinka vydání je položka s nejvyšším skóre (řádek hlavni: v hlavičce souboru, jde přepsat).
+Položky, které je potřeba ověřit, mají v návrhu poznámku „zkontroluj“. Používá jen standardní knihovnu Pythonu.
+
+Zveřejněná vydání se nikdy nepřepisují: když už vydání za tento měsíc vyšlo, další spuštění
+připraví nové vydání RRRR-MM-DD jen s tím, co od té doby přibylo.
 """
 import csv
 import io
@@ -25,8 +29,9 @@ from pathlib import Path
 
 KOREN = Path(__file__).resolve().parent.parent
 SLOZKA = KOREN / 'src' / 'content' / 'novinky'
-DNES = date.today()
-VYDANI = f'{DNES.year}-{DNES.month:02d}'
+SVET = KOREN / 'src' / 'data' / 'svet.json'
+DNES = date.fromisoformat(os.environ['NOVINKY_DNES']) if os.environ.get('NOVINKY_DNES') else date.today()
+MESICNI = f'{DNES.year}-{DNES.month:02d}'
 
 MESIC = ['leden', 'únor', 'březen', 'duben', 'květen', 'červen', 'červenec', 'srpen', 'září', 'říjen', 'listopad', 'prosinec']
 V_MESICI = ['v lednu', 'v únoru', 'v březnu', 'v dubnu', 'v květnu', 'v červnu', 'v červenci', 'v srpnu', 'v září', 'v říjnu', 'v listopadu', 'v prosinci']
@@ -220,7 +225,7 @@ def nezamestnanost() -> list[dict]:
     zmeny = [e[('CZ', b)] - e[('CZ', a)] for a, b in zip(obd[:-1], obd[1:])]
     serazene = sorted(zeme.items(), key=lambda x: (x[1], ZEME_EU[x[0]]))
     return [{
-        'id': 'nezamestnanost', 'obdobi': t, 'ikona': 'kufrik', 'stitek': 'Nezaměstnanost',
+        'id': 'nezamestnanost', 'obdobi': t, 'ikona': 'kufrik', 'stitek': 'Nezaměstnanost', 'oblast': 'evropa',
         'nadpis': f'Nezaměstnanost {mesic_text(t, True)}', 'cislo': f'{cislo(cz)} %',
         'text': text + ' Údaje jsou sezónně očištěné.',
         'zmena': f'{se_znamenkem(cz - e[("CZ", p)])} p. b.', 'smer': smer(cz - e[('CZ', p)]),
@@ -278,7 +283,7 @@ def hdp() -> list[dict]:
     text += ' Údaje jsou očištěné o sezónní vlivy a změny cen.'
     zmeny = [cz[b] - cz[a] for a, b in zip(obd[:-1], obd[1:])]
     return [{
-        'id': 'hdp', 'obdobi': t, 'ikona': 'trend', 'stitek': 'HDP',
+        'id': 'hdp', 'obdobi': t, 'ikona': 'trend', 'stitek': 'HDP', 'oblast': 'evropa',
         'nadpis': f'Růst ekonomiky, {ctvrtleti_text(t, "1")}', 'cislo': f'{se_znamenkem(cz[t])} %', 'popisCisla': 'za rok',
         'zmena': f'{se_znamenkem(cz[t] - cz[p])} p. b.', 'smer': smer(cz[t] - cz[p]),
         'text': text, 'zdroj': 'Eurostat', 'sada': 'namq_10_gdp',
@@ -416,10 +421,294 @@ def maloobchod() -> list[dict]:
     }]
 
 
-UKAZATELE = (inflace, narozeni, pohonne_hmoty, turiste, nezamestnanost, hdp, mzdy, maloobchod, prumysl)
+# ---------- Evropa (Eurostat) ----------
+
+def zemi(n: int) -> str:
+    """5 → „5 zemí“, 3 → „3 země“"""
+    return f'{n} {"země" if 1 <= n <= 4 else "zemí"}'
+
+
+def sloveso(n: int, jedna: str, dve_ctyri: str, pet: str) -> str:
+    return jedna if n == 1 else dve_ctyri if 2 <= n <= 4 else pet
+
+
+def z_ze(n: int) -> str:
+    """Předložka před číslovkou: ze 185 (sto…), ze 27? ne: z 27 (dvacet…), ze 46 (čtyřicet…)"""
+    s = str(n)
+    if n >= 100:
+        return 'ze' if s[0] in '1467' else 'z'
+    if 10 <= n <= 19:
+        return 'ze' if n in (14, 16, 17) else 'z'
+    return 'ze' if s[0] in '467' else 'z'
+
+
+def pololeti_text(s: str) -> str:
+    """2026-S1 → „1. pololetí 2026“"""
+    r, h = s.split('-S')
+    return f'{h}. pololetí {r}'
+
+
+def eu_obdobi(e: dict, min_zemi: int = 25) -> str:
+    """Nejnovější období, za které už má data průměr EU, Česko a aspoň min_zemi zemí EU."""
+    for t in sorted({t for (_, t) in e}, reverse=True):
+        if ('EU27_2020', t) in e and ('CZ', t) in e and sum(1 for g in EU27 if (g, t) in e) >= min_zemi:
+            return t
+    raise ValueError('zatím málo zemí s daty')
+
+
+def eu_zeme(e: dict, t: str) -> dict:
+    return {g: e[(g, t)] for g in EU27 if (g, t) in e}
+
+
+def kolik_zemi_eu(zeme: dict) -> str:
+    return 'ze všech 27 zemí EU' if len(zeme) == 27 else f'{z_ze(len(zeme))} {len(zeme)} zemí EU, které už data zveřejnily'
+
+
+def graf_zemi(zeme: dict, jednotka: str, desetinna: int, popis: str, prumer: float, znamenko: bool = False) -> dict:
+    g = {
+        'typ': 'zeme', 'jednotka': jednotka, 'desetinna': desetinna, 'zvyraznit': 'CZ', 'popis': popis,
+        'zeme': [[k, ZEME_EU[k], round(v, desetinna)] for k, v in sorted(zeme.items(), key=lambda x: (x[1], ZEME_EU[x[0]]))],
+        'reference': {'hodnota': round(prumer, desetinna), 'popis': 'průměr EU'},
+    }
+    if znamenko:
+        g['znamenko'] = True
+    return g
+
+
+def inflace_eu() -> list[dict]:
+    e = eurostat('prc_hicp_minr', {'geo': EU27 + ['EU27_2020'], 'coicop18': 'TOTAL', 'unit': 'RCH_A', 'lastTimePeriod': 14})
+    t = eu_obdobi(e)
+    obd = sorted(x for (g, x) in e if g == 'EU27_2020')
+    p = obd[obd.index(t) - 1]
+    eu, eu_p = e[('EU27_2020', t)], e[('EU27_2020', p)]
+    zeme = eu_zeme(e, t)
+    serazene = sorted(zeme.items(), key=lambda x: (x[1], ZEME_EU[x[0]]))
+    (nn, vn), (nv, vv) = serazene[0], serazene[-1]
+    text = (f'Ceny v EU byly {mesic_text(t, True)} meziročně v průměru o {cislo(eu)} % vyšší, {predchozi(p, t)} o {cislo(eu_p)} %. '
+            f'Nejvyšší inflaci má {ZEME_EU[nv]} ({cislo(vv)} %), nejnižší {ZEME_EU[nn]} ({cislo(vn)} %).')
+    cz = zeme['CZ']
+    nizsi = sum(1 for v in zeme.values() if v < cz)
+    if nizsi == 0:
+        text += f' Česko má s {cislo(cz)} % nejnižší inflaci {kolik_zemi_eu(zeme)}.'
+    else:
+        text += f' Česko má {cislo(cz)} %, nižší inflaci {sloveso(nizsi, "má", "mají", "má")}{" jen" if nizsi <= 5 else ""} {zemi(nizsi)} EU.'
+    text += ' Jde o evropsky srovnatelnou inflaci (HICP), která se počítá trochu jinak než česká.'
+    zmeny = [e[('EU27_2020', b)] - e[('EU27_2020', a)] for a, b in zip(obd[:-1], obd[1:])]
+    return [{
+        'id': 'inflace-eu', 'obdobi': t, 'ikona': 'cenovka', 'stitek': 'Inflace v EU', 'oblast': 'evropa',
+        'nadpis': f'Inflace v zemích EU {mesic_text(t, True)}', 'cislo': f'{cislo(eu)} %', 'popisCisla': 'průměr EU',
+        'zmena': f'{se_znamenkem(eu - eu_p)} p. b.', 'smer': smer(eu - eu_p),
+        'text': text, 'zdroj': 'Eurostat', 'sada': 'prc_hicp_minr',
+        'url': 'https://ec.europa.eu/eurostat/databrowser/view/prc_hicp_minr/default/table',
+        'graf': graf_zemi(zeme, '%', 1, f'Meziroční inflace v zemích EU, {mesic_text(t)}, od nejnižší', eu),
+        'skore': 1.2 + z_skore(eu - eu_p, zmeny) * 0.5,
+    }]
+
+
+def bydleni_eu() -> list[dict]:
+    e = eurostat('prc_hpi_q', {'geo': EU27 + ['EU27_2020'], 'purchase': 'TOTAL', 'unit': 'RCH_A', 'lastTimePeriod': 8})
+    t = eu_obdobi(e, 22)
+    obd = sorted(x for (g, x) in e if g == 'CZ')
+    p = obd[obd.index(t) - 1]
+    zeme = eu_zeme(e, t)
+    cz, cz_p, eu = zeme['CZ'], e[('CZ', p)], e[('EU27_2020', t)]
+    serazene = sorted(zeme.items(), key=lambda x: (x[1], ZEME_EU[x[0]]))
+    (nn, vn), (nv, vv) = serazene[0], serazene[-1]
+    text = (f'Byty a domy byly {ctvrtleti_text(t)} v Česku o {cislo(cz)} % dražší než před rokem. '
+            f'V průměru EU zdražily o {cislo(eu)} %.')
+    vyssi = sum(1 for v in zeme.values() if v > cz)
+    if vyssi == 0:
+        text += f' Česko má nejrychlejší růst cen bydlení {kolik_zemi_eu(zeme)}.'
+    else:
+        text += (f' Rychlejší růst cen než Česko {sloveso(vyssi, "má", "mají", "má")} {zemi(vyssi)} EU, '
+                 f'na prvním místě je {ZEME_EU[nv]} ({se_znamenkem(vv)} %).')
+    if vn < 0:
+        text += f' Největší pokles cen má {ZEME_EU[nn]} ({se_znamenkem(vn)} %).'
+    text += ' Index zahrnuje nové i starší byty a domy.'
+    zmeny = [e[('CZ', b)] - e[('CZ', a)] for a, b in zip(obd[:-1], obd[1:])]
+    return [{
+        'id': 'bydleni-eu', 'obdobi': t, 'ikona': 'dum', 'stitek': 'Ceny bydlení', 'oblast': 'evropa',
+        'nadpis': f'Ceny bydlení v EU, {ctvrtleti_text(t, "1")}', 'cislo': f'{se_znamenkem(cz)} %', 'popisCisla': 'v Česku za rok',
+        'zmena': f'{se_znamenkem(cz - cz_p)} p. b.', 'smer': smer(cz - cz_p),
+        'text': text, 'zdroj': 'Eurostat', 'sada': 'prc_hpi_q',
+        'url': 'https://ec.europa.eu/eurostat/databrowser/view/prc_hpi_q/default/table',
+        'graf': graf_zemi(zeme, '%', 1, f'Meziroční změna cen bytů a domů, {ctvrtleti_text(t, "1")}, od nejnižší', eu, True),
+        'skore': 1.6 + (0.5 if vyssi <= 4 else 0) + z_skore(cz - cz_p, zmeny) * 0.2,
+    }]
+
+
+def dluh_eu() -> list[dict]:
+    e = eurostat('gov_10q_ggdebt', {'geo': EU27 + ['EU27_2020'], 'unit': 'PC_GDP', 'sector': 'S13', 'na_item': 'GD', 'lastTimePeriod': 8})
+    t = eu_obdobi(e)
+    obd = sorted(x for (g, x) in e if g == 'CZ')
+    p = obd[obd.index(t) - 1]
+    zeme = eu_zeme(e, t)
+    cz, cz_p, eu = zeme['CZ'], e[('CZ', p)], e[('EU27_2020', t)]
+    serazene = sorted(zeme.items(), key=lambda x: (x[1], ZEME_EU[x[0]]))
+    (nn, vn), (nv, vv) = serazene[0], serazene[-1]
+    nizsi = sum(1 for v in zeme.values() if v < cz)
+    text = (f'Dluh veřejných rozpočtů v Česku (stát, kraje, obce a zdravotní pojišťovny) byl na konci {ctvrtleti_text(t, "1")} '
+            f'{cislo(cz)} % HDP, o čtvrtletí dřív {cislo(cz_p)} %. Průměr EU je {cislo(eu)} % HDP. ')
+    text += (f'Nižší dluh než Česko {sloveso(nizsi, "má", "mají", "má")} {zemi(nizsi)} EU, nejnižší {ZEME_EU[nn]} ({cislo(vn)} %). ' if nizsi
+             else f'Česko má nejnižší dluh {kolik_zemi_eu(zeme)}. ')
+    text += f'Nejvyšší dluh má {ZEME_EU[nv]} ({cislo(vv)} % HDP). Maastrichtská kritéria pro přijetí eura připouštějí nejvýš 60 % HDP.'
+    return [{
+        'id': 'dluh-eu', 'obdobi': t, 'ikona': 'banka', 'stitek': 'Veřejný dluh', 'oblast': 'evropa',
+        'nadpis': f'Veřejný dluh v EU, {ctvrtleti_text(t, "1")}', 'cislo': f'{cislo(cz)} %', 'popisCisla': 'HDP v Česku',
+        'zmena': f'{se_znamenkem(cz - cz_p)} p. b.', 'smer': smer(cz - cz_p),
+        'text': text, 'zdroj': 'Eurostat', 'sada': 'gov_10q_ggdebt',
+        'url': 'https://ec.europa.eu/eurostat/databrowser/view/gov_10q_ggdebt/default/table',
+        'graf': graf_zemi(zeme, '% HDP', 1, f'Veřejný dluh v % HDP, konec {ctvrtleti_text(t, "1")}, od nejnižšího', eu),
+        'skore': 1.0 + abs(cz - cz_p) * 0.3,
+    }]
+
+
+def elektrina_eu() -> list[dict]:
+    zaklad = {'nrg_cons': 'KWH2500-4999', 'unit': 'KWH', 'tax': 'I_TAX', 'lastTimePeriod': 4}
+    e = eurostat('nrg_pc_204', {**zaklad, 'geo': EU27 + ['EU27_2020'], 'currency': 'EUR'})
+    k = eurostat('nrg_pc_204', {**zaklad, 'geo': 'CZ', 'currency': 'NAC'})
+    t = eu_obdobi(e)
+    r, h = t.split('-S')
+    loni = f'{int(r) - 1}-S{h}'
+    kurz = k[('CZ', t)] / e[('CZ', t)]  # Kč za euro v daném pololetí podle samotných dat
+    zeme = {g: v * kurz for g, v in eu_zeme(e, t).items()}
+    cz, eu = k[('CZ', t)], e[('EU27_2020', t)] * kurz
+    serazene = sorted(zeme.items(), key=lambda x: (x[1], ZEME_EU[x[0]]))
+    (nn, vn), (nv, vv) = serazene[0], serazene[-1]
+    text = f'Domácnosti v Česku platily v {pololeti_text(t)} za kilowatthodinu elektřiny v průměru {cislo(cz, 2)} Kč včetně daní a poplatků'
+    zmena = None
+    if ('CZ', loni) in k:
+        zmena = (cz / k[('CZ', loni)] - 1) * 100
+        text += f', o rok dřív {cislo(k[("CZ", loni)], 2)} Kč ({se_znamenkem(zmena, 0)} %)'
+    text += f'. Průměr EU je {cislo(eu, 2)} Kč. '
+    drazsi = sum(1 for v in zeme.values() if v > cz)
+    text += (f'Dražší elektřinu než Česko {sloveso(drazsi, "má", "mají", "má")} {zemi(drazsi)} EU. ' if drazsi
+             else f'Česko má nejdražší elektřinu {kolik_zemi_eu(zeme)}. ')
+    text += (f'Nejdražší je {ZEME_EU[nv]} ({cislo(vv, 2)} Kč), nejlevnější {ZEME_EU[nn]} ({cislo(vn, 2)} Kč). '
+             f'Jde o domácnosti se spotřebou 2 500 až 5 000 kWh za rok, ceny ostatních zemí jsou přepočtené na koruny kurzem za stejné pololetí.')
+    return [{
+        'id': 'elektrina-eu', 'obdobi': t, 'ikona': 'blesk', 'stitek': 'Cena elektřiny', 'oblast': 'evropa',
+        'nadpis': f'Ceny elektřiny v EU, {pololeti_text(t)}', 'cislo': f'{cislo(cz, 2)} Kč', 'popisCisla': 'za kWh v Česku',
+        'zmena': f'{se_znamenkem(zmena, 0)} % za rok' if zmena is not None else '', 'smer': smer(zmena or 0),
+        'text': text, 'zdroj': 'Eurostat', 'sada': 'nrg_pc_204',
+        'url': 'https://ec.europa.eu/eurostat/databrowser/view/nrg_pc_204/default/table',
+        'graf': graf_zemi(zeme, 'Kč/kWh', 2, f'Cena elektřiny pro domácnosti s daněmi, {pololeti_text(t)}, od nejlevnější', eu),
+        'skore': 1.4 + (abs(zmena) / 10 if zmena is not None else 0),
+    }]
+
+
+# ---------- Svět (Světová banka) ----------
+
+# Země, se kterými Česko ve světových grafech srovnáváme: sousedé, velké ekonomiky a pár dalších
+SROVNANI = ['USA', 'DEU', 'AUT', 'GBR', 'FRA', 'JPN', 'KOR', 'ITA', 'ESP', 'POL', 'SVK', 'HUN', 'TUR', 'CHN', 'MEX', 'BRA', 'IND', 'CZE']
+
+
+def nazvy_zemi() -> dict:
+    """Kód ISO A3 → český název (ze src/data/svet.json, bez souhrnů typu EU)"""
+    zeme = json.loads(SVET.read_text(encoding='utf-8'))['zeme']
+    return {a3: z[0] for a3, z in zeme.items() if a3 != 'EUZ'}
+
+
+def svetova_banka(ukazatel: str) -> dict:
+    """{(kód A3, rok): hodnota} z World Development Indicators za posledních pár let"""
+    url = (f'https://api.worldbank.org/v2/country/all/indicator/{ukazatel}'
+           f'?format=json&source=2&per_page=20000&date={DNES.year - 4}:{DNES.year}')
+    d = json.loads(stahni(url))
+    return {(r['countryiso3code'], r['date']): r['value'] for r in d[1] if r['value'] is not None}
+
+
+def svet_rok(d: dict, nazvy: dict, min_zemi: int = 150) -> str:
+    for t in sorted({t for (_, t) in d}, reverse=True):
+        if ('CZE', t) in d and ('WLD', t) in d and sum(1 for a in nazvy if (a, t) in d) >= min_zemi:
+            return t
+    raise ValueError('zatím málo zemí s daty')
+
+
+def graf_svet(d: dict, nazvy: dict, t: str, jednotka: str, desetinna: int, popis: str, znamenko: bool = False) -> dict:
+    vyber = sorted(((a, nazvy[a], round(d[(a, t)], desetinna)) for a in SROVNANI if (a, t) in d), key=lambda x: (x[2], x[1]))
+    g = {'typ': 'zeme', 'jednotka': jednotka, 'desetinna': desetinna, 'zvyraznit': 'CZE', 'popis': popis,
+         'zeme': [list(x) for x in vyber], 'reference': {'hodnota': round(d[('WLD', t)], desetinna), 'popis': 'svět'}}
+    if znamenko:
+        g['znamenko'] = True
+    return g
+
+
+def hdp_na_obyvatele_svet() -> list[dict]:
+    nazvy = nazvy_zemi()
+    d = svetova_banka('NY.GDP.PCAP.PP.CD')
+    t = svet_rok(d, nazvy)
+    zeme = {a: d[(a, t)] for a in nazvy if (a, t) in d}
+    poradi = sorted(zeme, key=lambda a: -zeme[a])
+    misto, n = poradi.index('CZE') + 1, len(poradi)
+    p = str(int(t) - 1)
+    loni = {a: d[(a, p)] for a in zeme if (a, p) in d}
+    text = (f'Česko mělo v roce {t} HDP na obyvatele {cislo(zeme["CZE"], 0)} mezinárodních dolarů. '
+            f'Přepočet podle parity kupní síly zohledňuje, že stejné zboží stojí v každé zemi jinak. '
+            f'Je to {misto}. místo {z_ze(n)} {n} zemí světa')
+    zmena = None
+    if 'CZE' in loni and len(loni) >= 150:
+        misto_p = sorted(loni, key=lambda a: -loni[a]).index('CZE') + 1
+        zmena = misto_p - misto
+        text += f', o rok dřív {misto_p}. místo' if zmena else ', stejně jako o rok dřív'
+    vys = poradi[0]
+    text += (f'. Světový průměr je {cislo(d[("WLD", t)], 0)} dolarů, na prvním místě je {nazvy[vys]} ({cislo(zeme[vys], 0)} dolarů). '
+             'Data za poslední rok jsou předběžná a Světová banka je ještě může zpřesnit.')
+    return [{
+        'id': 'hdp-na-obyvatele-svet', 'obdobi': t, 'ikona': 'svet', 'stitek': 'Bohatství zemí', 'oblast': 'svet',
+        'nadpis': f'HDP na obyvatele ve světě, rok {t}', 'cislo': f'{misto}. místo', 'popisCisla': f'{z_ze(n)} {n} zemí',
+        'zmena': (f'{"+" if zmena > 0 else "−"}{abs(zmena)} {"místo" if abs(zmena) == 1 else "místa" if abs(zmena) <= 4 else "míst"}' if zmena else 'beze změny') if zmena is not None else '',
+        'smer': smer(zmena or 0),
+        'text': text, 'zdroj': 'Světová banka', 'sada': 'NY.GDP.PCAP.PP.CD',
+        'url': 'https://data.worldbank.org/indicator/NY.GDP.PCAP.PP.CD',
+        'graf': graf_svet({k: v / 1000 for k, v in d.items()}, nazvy, t, 'tis. $', 1,
+                          f'HDP na obyvatele v paritě kupní síly, rok {t}, vybrané země (tisíce mezinárodních dolarů)'),
+        'skore': 1.3 + (abs(zmena) * 0.2 if zmena else 0),
+    }]
+
+
+def rust_hdp_svet() -> list[dict]:
+    nazvy = nazvy_zemi()
+    d = svetova_banka('NY.GDP.MKTP.KD.ZG')
+    t = svet_rok(d, nazvy)
+    zeme = {a: d[(a, t)] for a in nazvy if (a, t) in d}
+    poradi = sorted(zeme, key=lambda a: -zeme[a])
+    n, cz, wld = len(poradi), zeme['CZE'], d[('WLD', t)]
+    rychleji = sum(1 for v in zeme.values() if v > cz)
+    vys = poradi[0]
+    text = f'Světová ekonomika rostla v roce {t} reálně o {cislo(wld)} %, česká o {cislo(cz)} %'
+    if ('EUU', t) in d:
+        text += f' a EU jako celek o {cislo(d[("EUU", t)])} %'
+    text += (f'. Rychleji než Česko {sloveso(rychleji, "rostla", "rostly", "rostlo")} {rychleji} {z_ze(n)} {n} zemí světa, '
+             f'na prvním místě je {nazvy[vys]} ({se_znamenkem(zeme[vys])} %). Data za poslední rok jsou předběžná.')
+    p = str(int(t) - 1)
+    zmena = round(wld - d[('WLD', p)], 1) if ('WLD', p) in d else None
+    return [{
+        'id': 'rust-hdp-svet', 'obdobi': t, 'ikona': 'trend', 'stitek': 'Růst ekonomik', 'oblast': 'svet',
+        'nadpis': f'Růst ekonomik světa, rok {t}', 'cislo': f'{se_znamenkem(wld)} %', 'popisCisla': 'svět',
+        'zmena': ('beze změny' if zmena == 0 else f'{se_znamenkem(zmena)} p. b.') if zmena is not None else '', 'smer': smer(zmena or 0),
+        'text': text, 'zdroj': 'Světová banka', 'sada': 'NY.GDP.MKTP.KD.ZG',
+        'url': 'https://data.worldbank.org/indicator/NY.GDP.MKTP.KD.ZG',
+        'graf': graf_svet(d, nazvy, t, '%', 1, f'Reálný růst HDP v roce {t}, vybrané země', True),
+        'skore': 1.0,
+    }]
+
+
+UKAZATELE = (inflace, narozeni, pohonne_hmoty, turiste, nezamestnanost, hdp, mzdy, maloobchod, prumysl,
+             inflace_eu, bydleni_eu, elektrina_eu, dluh_eu, hdp_na_obyvatele_svet, rust_hdp_svet)
 
 
 # ---------- vydání ----------
+
+def vydani_id() -> str:
+    """RRRR-MM. Už zveřejněné vydání se nikdy nepřepíše: další dostane název RRRR-MM-DD (případně RRRR-MM-DD-2…)."""
+    for nazev in [MESICNI, f'{MESICNI}-{DNES.day:02d}'] + [f'{MESICNI}-{DNES.day:02d}-{i}' for i in range(2, 10)]:
+        if not (SLOZKA / f'{nazev}.md').exists():
+            return nazev
+    raise SystemExit('Dnes už vyšlo příliš mnoho vydání.')
+
+
+VYDANI = vydani_id()
+
 
 def uz_vyslo() -> set:
     """Dvojice (id, období), které už vyšly v dřívějších vydáních, ať se neopakují."""
@@ -432,8 +721,21 @@ def uz_vyslo() -> set:
     return hotovo
 
 
+def minula_hlavni() -> str | None:
+    """id hlavní novinky posledního dřívějšího vydání (bez řádku hlavni: je to první položka)"""
+    dalsi = sorted((f for f in SLOZKA.glob('*.md') if f.stem != VYDANI), key=lambda f: f.stem)
+    if not dalsi:
+        return None
+    t = dalsi[-1].read_text(encoding='utf-8')
+    m = re.search(r'^hlavni: "([^"]+)"', t, re.M) or re.search(r'- id: "([^"]+)"', t)
+    return m.group(1) if m else None
+
+
 def yaml_text(s: str) -> str:
     return '"' + s.replace('\\', '\\\\').replace('"', '\\"') + '"'
+
+
+OBLASTI = {'cesko': 'Česko', 'evropa': 'Evropa', 'svet': 'Svět'}
 
 
 def main() -> None:
@@ -451,29 +753,55 @@ def main() -> None:
         print('Žádná nová data od minulého vydání.')
         return
     nove.sort(key=lambda p: -p['skore'])
-    radky = ['---', f'titul: "Novinky z dat: {MESIC[DNES.month - 1]} {DNES.year}"', f'datum: {DNES.isoformat()}', 'polozky:']
+    for p in nove:
+        print(f'    {p["skore"]:5.2f}  {p["id"]}')
+    # Hlavní novinka: nejzajímavější položka, ale jiný ukazatel než hlavní novinka minulého vydání
+    minula = minula_hlavni()
+    hlavni = next((p for p in nove if p['id'] != minula), nove[0])
+    nove.remove(hlavni)
+    nove.insert(0, hlavni)
+    druhe = VYDANI != MESICNI
+    poradi = 1 + sum(1 for f in SLOZKA.glob(f'{MESICNI}*.md') if f.stem != VYDANI)
+    titul = f'{MESIC[DNES.month - 1]} {DNES.year}' + (f', {poradi}. vydání' if druhe else '')
+    radky = ['---', f'titul: "Novinky z dat: {titul}"', f'datum: {DNES.isoformat()}',
+             f'# hlavní novinka vydání (velká karta nahoře na stránce novinek); jde přepsat na id jiné položky',
+             f'hlavni: "{nove[0]["id"]}"', 'polozky:']
     for p in nove:
         radky.append(f'  - id: "{p["id"]}"')
         radky.append(f'    obdobi: "{p["obdobi"]}"')
-        for k in ('nadpis', 'cislo', 'popisCisla', 'stitek', 'zmena', 'smer', 'ikona', 'text', 'zdroj', 'sada', 'url', 'zkontroluj'):
+        p.setdefault('oblast', 'cesko')
+        for k in ('nadpis', 'cislo', 'popisCisla', 'stitek', 'zmena', 'smer', 'ikona', 'oblast', 'text', 'zdroj', 'sada', 'url', 'zkontroluj'):
             if p.get(k):
                 radky.append(f'    {k}: {yaml_text(p[k])}')
         if p.get('graf'):
             # JSON je platný YAML, graf tak zůstane na jednom řádku
             radky.append(f'    graf: {json.dumps(p["graf"], ensure_ascii=False, separators=(", ", ": "))}')
-    radky += ['---', '', 'Co nového ukázala data, která Český statistický úřad a Eurostat zveřejnili za poslední měsíc.', '']
+    radky += ['---', '', 'Co nového ukázala data, která zveřejnil Český statistický úřad, Eurostat a Světová banka.', '']
     (SLOZKA / f'{VYDANI}.md').write_text('\n'.join(radky), encoding='utf-8')
-    print(f'Uloženo src/content/novinky/{VYDANI}.md ({len(nove)} položek)')
+    print(f'Uloženo src/content/novinky/{VYDANI}.md ({len(nove)} položek, hlavní: {nove[0]["id"]})')
+
+    # Pro GitHub Action: název vydání (větev návrhu se jmenuje novinky/<vydání>)
+    if os.environ.get('GITHUB_OUTPUT'):
+        with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as out:
+            out.write(f'vydani={VYDANI}\n')
 
     # Popis návrhu pro pull request
-    popis = [f'## Novinky z dat: {MESIC[DNES.month - 1]} {DNES.year}', '',
+    popis = [f'## Novinky z dat: {titul}', '',
              'Automaticky připravený návrh. Projdi čísla, případně uprav text v souboru '
              f'`src/content/novinky/{VYDANI}.md` (záložka Files changed → tři tečky → Edit file) a klikni **Merge**. Pak se novinky objeví na webu.',
-             'Položku smažeš tak, že odstraníš celý její blok od `- id:` po řádek `graf:` včetně.', '']
-    for p in nove:
-        popis.append(f'- **{p["nadpis"]}** ({p["cislo"]}): {p["text"]} [{p["sada"]}]({p["url"]})')
-        if p.get('zkontroluj'):
-            popis.append(f'  - ⚠️ Zkontroluj: {p["zkontroluj"]}')
+             'Položku smažeš tak, že odstraníš celý její blok od `- id:` po řádek `graf:` včetně.',
+             f'Hlavní novinka měsíce je **{nove[0]["nadpis"]}**. Jinou vybereš tak, že v řádku `hlavni:` přepíšeš id na id jiné položky.',
+             'Delší text jen pro hlavní novinku přidáš řádkem `pribeh: "…"` pod její `text:`, obrázek řádkem `obrazek: "/novinky/nazev.jpg"` (soubor dej do `public/novinky/`).', '']
+    for o, nazev in OBLASTI.items():
+        cast = [p for p in nove if p['oblast'] == o]
+        if not cast:
+            continue
+        popis.append(f'### {nazev}')
+        for p in cast:
+            popis.append(f'- **{p["nadpis"]}** ({p["cislo"]}): {p["text"]} [{p["sada"]}]({p["url"]})')
+            if p.get('zkontroluj'):
+                popis.append(f'  - ⚠️ Zkontroluj: {p["zkontroluj"]}')
+        popis.append('')
     cil = os.environ.get('NAVRH_POPIS')
     if cil:
         Path(cil).write_text('\n'.join(popis) + '\n', encoding='utf-8')

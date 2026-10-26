@@ -26,7 +26,7 @@ Po `git push` do větve main se web sám nasadí.
 | Ověření pro Google, Seznam a měření návštěvnosti | `src/data/web.ts` |
 | Náhledové obrázky pro sdílení | `public/og/` |
 | Vývoj v čase a „Porovnej se“ u grafů | `src/data/grafy/*.json`, obnoví je `python3 skripty/data_grafu.py` |
-| Novinky z dat | `src/content/novinky/RRRR-MM.md`, připravuje je `skripty/novinky.py` |
+| Novinky z dat | `src/content/novinky/RRRR-MM.md`, připravuje je `skripty/novinky.py`, stránka `src/pages/novinky.astro`, hlavní novinka `src/components/NovinkaHlavni.astro` |
 | 3D model Česka | `public/data/cesko3d.json`, obnoví ho `python3 skripty/data_3d.py` |
 | Vlaky za 24 hodin (Mapa Česka) | `public/data/vlaky.json`, vyrobí ho `python3 skripty/data_vlaky.py` z GTFS jízdního řádu (postup je v hlavičce skriptu) |
 | Cesta čápů (Svět) | `src/data/capi.json`, vyrobí ho `python3 skripty/data_capi.py` ze zamčených dat `skripty/capi_data.py` |
@@ -40,18 +40,36 @@ Po `git push` do větve main se web sám nasadí.
 ## Novinky z dat
 
 Jednou měsíčně (12. den v 8:00) spustí GitHub skript `skripty/novinky.py`. Ten stáhne čerstvá čísla
-z otevřených dat ČSÚ (DataStat) a Eurostatu, vybere to nejzajímavější a pošle to jako **návrh ke schválení**
-(Pull request „Novinky z dat: RRRR-MM“). Projdi ho, případně uprav text a klikni **Merge**. Až pak se
-novinky objeví na webu. Ručně jde spustit v záložce Actions → Novinky z dat → Run workflow.
+z otevřených dat ČSÚ (DataStat), Eurostatu a Světové banky, vybere to nejzajímavější a pošle to jako
+**návrh ke schválení** (Pull request „Novinky z dat: RRRR-MM“). Projdi ho, případně uprav text a klikni **Merge**.
+Až pak se novinky objeví na webu.
 
-Sleduje devět ukazatelů: inflace (ČSÚ CEN0101H + Eurostat prc_hicp_minr), pohonné hmoty (CENPHMT),
-nezaměstnanost v EU (Eurostat une_rt_m), průměrná mzda (MZDQ1), HDP (Eurostat namq_10_gdp),
-narození (OBY01CRQM), turisté (CRU02M), průmysl (PRU01B) a maloobchod (OBC01). Ukazatel, který od minulého
-vydání nemá nová data, se vynechá. Úvodní stránka ukazuje šest nejčerstvějších položek napříč vydáními
-a pás s čísly pod hlavičkou.
+**Nová data hned, bez čekání na 12.:** záložka Actions → Novinky z dat → Run workflow. Když už vydání
+za tento měsíc vyšlo, nepřepíše se: vznikne samostatné vydání `RRRR-MM-DD` („říjen 2026, 2. vydání“)
+jen s tím, co od minula přibylo. Když nic nového není, návrh nevznikne.
 
-Každá položka má v souboru i řádek `graf:` s daty pro malý graf (JSON na jednom řádku). Položku smažeš
-tak, že odstraníš celý její blok od `- id:` po `graf:` včetně.
+Sleduje tyhle ukazatele (ukazatel, který od minulého vydání nemá nová data, se vynechá):
+
+| Oblast | Ukazatele |
+| :-- | :-- |
+| Česko | inflace (ČSÚ CEN0101H), pohonné hmoty (CENPHMT), průměrná mzda (MZDQ1), narození (OBY01CRQM), turisté (CRU02M), průmysl (PRU01B), maloobchod (OBC01) |
+| Evropa | nezaměstnanost (Eurostat une_rt_m), HDP (namq_10_gdp), inflace v zemích EU (prc_hicp_minr), ceny bydlení (prc_hpi_q), ceny elektřiny pro domácnosti (nrg_pc_204), veřejný dluh (gov_10q_ggdebt) |
+| Svět | HDP na obyvatele v paritě kupní síly (Světová banka NY.GDP.PCAP.PP.CD), růst HDP (NY.GDP.MKTP.KD.ZG); vycházejí jednou ročně |
+
+**Stránka Novinky:** nahoře velká **hlavní novinka měsíce**, pod ní ostatní novinky posledního vydání s filtrem
+Česko / Evropa / Svět a dole **archiv starších vydání** (rozbalovací, nic se nemaže). Úvodní stránka ukazuje
+šest nejčerstvějších položek napříč vydáními, hlavní novinka je první.
+
+Úpravy v souboru vydání `src/content/novinky/…md` (v návrhu: Files changed → tři tečky → Edit file):
+
+- **Jiná hlavní novinka:** v řádku `hlavni:` přepiš id na id jiné položky. Skript vybírá nejzajímavější položku,
+  ale nikdy stejný ukazatel jako minulý měsíc.
+- **Delší text k hlavní novince:** pod její `text:` přidej `pribeh: "…"` (odstavce odděl `\n\n`).
+- **Obrázek k hlavní novince:** soubor dej do `public/novinky/` (JPG nebo WebP, ideálně 2100 × 800 px) a k položce
+  přidej `obrazek: "/novinky/nazev.jpg"` a `obrazekPopis: "co je na obrázku"`. Bez obrázku je vedle textu velký graf.
+- **Smazání položky:** odstraň celý její blok od `- id:` po `graf:` včetně.
+
+Každá položka má v souboru i řádek `graf:` s daty pro graf (JSON na jednom řádku) a `oblast:` (cesko, evropa, svet).
 
 Aby GitHub mohl návrh vytvořit, musí být v Settings → Actions → General → Workflow permissions
 zapnuté **Read and write permissions** a **Allow GitHub Actions to create and approve pull requests**.

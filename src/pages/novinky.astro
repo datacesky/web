@@ -1,50 +1,181 @@
 ---
 import Base from '../layouts/Base.astro';
 import NovinkaKarta from '../components/NovinkaKarta.astro';
-import { vydaniNovinek } from '../lib/novinky';
+import NovinkaHlavni from '../components/NovinkaHlavni.astro';
+import IkonaZare from '../components/IkonaZare.astro';
+import { vydaniNovinek, hlavniNovinka, polozkyVydani, nazevVydani, OBLASTI, type Oblast } from '../lib/novinky';
 import { datum } from '../lib/format';
 
 const vydani = await vydaniNovinek();
-// kotvy z pásu čísel míří vždy na nejnovější výskyt ukazatele
-const kotvy = new Set<string>();
+const posledni = vydani[0];
+const hlavni = posledni ? hlavniNovinka(posledni) : null;
+const dalsi = posledni ? polozkyVydani(posledni).slice(1) : [];
+const starsi = vydani.slice(1);
+
+// kotvy (#n-inflace) míří vždy na nejnovější výskyt ukazatele
+const kotvy = new Set<string>(hlavni ? [hlavni.id] : []);
+const kotva = (id: string) => (kotvy.has(id) ? false : (kotvy.add(id), true));
+
+// filtr podle oblasti jen u oblastí, které v posledním vydání jsou
+const pocty = (Object.keys(OBLASTI) as Oblast[]).map((o) => [o, dalsi.filter((p) => p.oblast === o).length] as const).filter(([, n]) => n > 0);
+const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 'novinky' : 'novinek'}`;
 ---
 
 <Base
   titul="Novinky z dat — data.cesky"
-  popis="Nejzajímavější čísla, která za poslední měsíc zveřejnil Český statistický úřad a Eurostat. Inflace, ceny, mzdy, nezaměstnanost, HDP, porodnost i turisté."
+  popis="Nejzajímavější nová čísla z Česka, Evropy i světa: inflace, ceny, mzdy, bydlení, energie, HDP a další. Data ČSÚ, Eurostatu a Světové banky s grafy a odkazy na zdroje."
 >
-  <section class="obal sekce--mala sloupec" style="gap: 2rem;">
-    <div class="sloupec" style="max-width: 62ch;">
-      <span class="nadhlavi nadhlavi--zive">Novinky z dat{vydani[0] && ` · ${datum(vydani[0].data.datum)}`}</span>
+  <section class="obal sekce--mala sloupec" style="gap: clamp(1.75rem, 4vw, 2.75rem);">
+    <div class="sloupec" style="max-width: 64ch; gap: 0.85rem;">
+      <span class="nadhlavi nadhlavi--zive">Novinky z dat{posledni && ` · ${datum(posledni.data.datum)}`}</span>
       <h1>Co nového ukázala data</h1>
-      <p class="perex">Jednou měsíčně vybírám nejzajímavější čísla, která zveřejnil Český statistický úřad a Eurostat. U každého je malý graf a odkaz na datovou sadu, ze které pochází.</p>
+      <p class="perex">Jednou měsíčně vybírám nejzajímavější čísla z Česka, Evropy i světa, která zveřejnil Český statistický úřad, Eurostat a Světová banka. U každého je graf a odkaz na datovou sadu, ze které pochází.</p>
     </div>
 
-    {vydani.length === 0 && <p class="drobne">První vydání chystám.</p>}
-    {vydani.map((v) => (
-      <section class="sloupec" style="gap: 1.1rem;" id={v.id}>
-        <h2 class="vydani__titul">{v.data.titul.replace('Novinky z dat: ', '')}</h2>
-        <ul class="mrizka-novinek">
-          {v.data.polozky.map((p) => {
-            const kotva = !kotvy.has(p.id);
-            kotvy.add(p.id);
-            return <NovinkaKarta p={p} kotva={kotva} />;
-          })}
+    {!posledni && <p class="drobne">První vydání chystám.</p>}
+
+    {hlavni && posledni && <NovinkaHlavni p={hlavni} vydani={nazevVydani(posledni)} />}
+
+    {dalsi.length > 0 && posledni && (
+      <section class="sloupec" style="gap: 1.25rem;" id={posledni.id} aria-labelledby="dalsi-novinky">
+        <div class="dalsi__hlava">
+          <div class="nadpis">
+            <h2 id="dalsi-novinky" class="dalsi__titul">Další novinky</h2>
+            <p class="drobne">{nazevVydani(posledni)} · {novinek(dalsi.length)}</p>
+          </div>
+          {pocty.length > 1 && (
+            <div class="filtr" role="group" aria-label="Které novinky ukázat" data-filtr>
+              <button type="button" class="chip filtr__chip" aria-pressed="true" data-oblast="">Vše <span>{dalsi.length}</span></button>
+              {pocty.map(([o, n]) => (
+                <button type="button" class="chip filtr__chip" aria-pressed="false" data-oblast={o}>
+                  <span class:list={['oblast-tecka', `oblast-tecka--${o}`]}></span>{OBLASTI[o]} <span>{n}</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+        <ul class="mrizka-novinek" data-filtr-mrizka>
+          {dalsi.map((p) => <NovinkaKarta p={p} kotva={kotva(p.id)} />)}
         </ul>
       </section>
-    ))}
+    )}
+
+    {starsi.length > 0 && (
+      <section class="archiv sloupec" aria-labelledby="archiv">
+        <div class="nadpis">
+          <span class="nadhlavi">Archiv</span>
+          <h2 id="archiv" class="dalsi__titul">Starší vydání</h2>
+          <p class="drobne">Všechna dřívější čísla tu zůstávají. Rozklikni vydání a uvidíš všechny jeho novinky i s grafy.</p>
+        </div>
+        <div class="archiv__seznam">
+          {starsi.map((v) => {
+            const h = hlavniNovinka(v);
+            const polozky = polozkyVydani(v);
+            return (
+              <details class="vydani" id={v.id}>
+                <summary class="vydani__radek">
+                  <IkonaZare id={h.ikona} velikost={40} />
+                  <span class="vydani__info">
+                    <span class="vydani__titul">{nazevVydani(v)}</span>
+                    <span class="vydani__hlavni">{h.nadpis}: <b>{h.cislo}</b></span>
+                  </span>
+                  <span class="vydani__pocet">{novinek(polozky.length)}<span class="vydani__datum"> · vyšlo {datum(v.data.datum)}</span></span>
+                  <svg class="vydani__sipka" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
+                </summary>
+                <ul class="mrizka-novinek vydani__mrizka">
+                  {polozky.map((p) => <NovinkaKarta p={p} kotva={kotva(p.id)} hlavni={p === h} />)}
+                </ul>
+              </details>
+            );
+          })}
+        </div>
+      </section>
+    )}
 
     <p class="drobne" style="max-width: 70ch;">
-      Čísla stahuje automat přímo z otevřených dat ČSÚ (DataStat) a Eurostatu. Před zveřejněním každé vydání projdu a ověřím.
+      Čísla stahuje automat přímo z otevřených dat ČSÚ (DataStat), Eurostatu a Světové banky. Před zveřejněním každé vydání projdu a ověřím.
       Najdeš chybu? Napiš na <a href="mailto:data.cesky@gmail.com">data.cesky@gmail.com</a>.
     </p>
   </section>
 </Base>
 
 <style>
-  .vydani__titul { font-size: clamp(1.4rem, 3vw, 1.9rem); text-transform: none; }
-  .vydani__titul::first-letter { text-transform: uppercase; }
+  .dalsi__hlava { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; }
+  .dalsi__titul { font-size: clamp(1.4rem, 3vw, 1.9rem); }
+  .filtr { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .filtr__chip { min-height: 40px; padding: 0 0.95rem; gap: 0.45rem; font-size: 0.88rem; }
+  .filtr__chip span:last-child { font-weight: 800; opacity: 0.6; font-variant-numeric: tabular-nums; }
+  .filtr__chip[aria-pressed='true'] .oblast-tecka { box-shadow: 0 0 0 2px var(--cream); }
+
   .mrizka-novinek { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; list-style: none; margin: 0; padding: 0; }
+  /* filtr: ukáže jen novinky vybrané oblasti */
+  .mrizka-novinek[data-vyber='cesko'] > :global(li:not([data-oblast='cesko'])),
+  .mrizka-novinek[data-vyber='evropa'] > :global(li:not([data-oblast='evropa'])),
+  .mrizka-novinek[data-vyber='svet'] > :global(li:not([data-oblast='svet'])) { display: none; }
+  .mrizka-novinek[data-vyber] > :global(li) { animation: naskoc 0.35s var(--ease-out); }
+  @keyframes naskoc { from { opacity: 0; transform: translateY(6px); } }
+
+  .archiv { gap: 1.25rem; margin-top: 0.5rem; padding-top: clamp(1.5rem, 4vw, 2.5rem); border-top: 1px solid var(--line); }
+  .archiv__seznam { display: flex; flex-direction: column; gap: 0.75rem; }
+  .vydani { border-radius: 20px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); }
+  .vydani__radek {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 0.6rem 1rem;
+    padding: 0.85rem 1.1rem; border-radius: 20px; list-style: none; cursor: pointer; transition: background-color 0.2s ease;
+  }
+  .vydani__radek::-webkit-details-marker { display: none; }
+  @media (hover: hover) and (pointer: fine) { .vydani__radek:hover { background: var(--hover); } }
+  .vydani__radek:focus-visible { outline: 2px solid var(--orange); outline-offset: 2px; }
+  .vydani__info { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
+  .vydani__titul { font-size: 1.05rem; font-weight: 900; color: var(--navy); }
+  .vydani__hlavni { font-size: 0.86rem; font-weight: 600; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .vydani__hlavni b { color: var(--orange-text); font-weight: 800; }
+  .vydani__pocet { font-size: 0.82rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
+  .vydani__sipka { color: var(--navy); transition: transform 0.3s var(--ease-out); }
+  .vydani[open] .vydani__sipka { transform: rotate(180deg); }
+  .vydani[open] .vydani__radek { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: 1px solid var(--line-jemna); }
+  .vydani__mrizka { padding: 1.1rem; }
+
   @media (max-width: 1020px) { .mrizka-novinek { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-  @media (max-width: 640px) { .mrizka-novinek { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) {
+    .mrizka-novinek { grid-template-columns: 1fr; }
+    .vydani__radek { grid-template-columns: auto minmax(0, 1fr) auto; }
+    .vydani__pocet { grid-column: 2; grid-row: 2; }
+    .vydani__datum { display: none; }
+    .vydani__sipka { grid-column: 3; grid-row: 1 / span 2; }
+    .vydani__mrizka { padding: 0.75rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .mrizka-novinek[data-vyber] > :global(li) { animation: none; }
+    .vydani__sipka { transition: none; }
+  }
 </style>
+
+<script>
+  // Filtr Česko / Evropa / Svět u novinek posledního vydání
+  const filtr = document.querySelector<HTMLElement>('[data-filtr]');
+  const mrizka = document.querySelector<HTMLElement>('[data-filtr-mrizka]');
+  const vyber = (oblast: string) => {
+    if (!filtr || !mrizka) return;
+    for (const b of filtr.querySelectorAll<HTMLButtonElement>('button')) b.setAttribute('aria-pressed', String(b.dataset.oblast === oblast));
+    if (oblast) mrizka.dataset.vyber = oblast;
+    else delete mrizka.dataset.vyber;
+  };
+  filtr?.addEventListener('click', (e) => {
+    const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
+    if (b) vyber(b.dataset.oblast ?? '');
+  });
+
+  // Odkaz na novinku ze staršího vydání (#n-mzdy) nebo na vydání (#2026-10) rozbalí archiv a dojede k ní
+  const otevri = () => {
+    const id = decodeURIComponent(location.hash.slice(1));
+    if (!id) return;
+    const cil = document.getElementById(id);
+    if (!cil) return;
+    const det = cil instanceof HTMLDetailsElement ? cil : cil.closest('details');
+    if (det && !det.open) det.open = true;
+    if (mrizka?.contains(cil) && cil.matches('[data-oblast]')) vyber('');
+    requestAnimationFrame(() => cil.scrollIntoView({ block: 'start' }));
+  };
+  otevri();
+  addEventListener('hashchange', otevri);
+</script>

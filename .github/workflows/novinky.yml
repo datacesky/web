@@ -1,6 +1,7 @@
-# Novinky z dat: jednou měsíčně stáhne čerstvá čísla z ČSÚ a Eurostatu (skripty/novinky.py)
+# Novinky z dat: jednou měsíčně stáhne čerstvá čísla z ČSÚ, Eurostatu a Světové banky (skripty/novinky.py)
 # a pošle je jako návrh ke schválení (pull request). Na web se dostanou, až návrh schválíš (Merge).
-# Ručně: záložka Actions → Novinky z dat → Run workflow.
+# Ručně: záložka Actions → Novinky z dat → Run workflow. Už zveřejněné vydání se nepřepíše,
+# druhé spuštění ve stejném měsíci připraví samostatný doplněk jen s tím, co mezitím přibylo.
 name: Novinky z dat
 
 on:
@@ -21,6 +22,7 @@ jobs:
         uses: actions/checkout@v7
 
       - name: Stáhnout data a připravit novinky
+        id: novinky
         env:
           NAVRH_POPIS: ${{ runner.temp }}/navrh.md
         run: python3 skripty/novinky.py
@@ -28,21 +30,23 @@ jobs:
       - name: Poslat jako návrh ke schválení
         env:
           GH_TOKEN: ${{ github.token }}
+          VYDANI: ${{ steps.novinky.outputs.vydani }}
         run: |
           if [ -z "$(git status --porcelain src/content/novinky)" ]; then
             echo "Od minulého vydání nejsou nová data."
             exit 0
           fi
-          MESIC="$(date +%Y-%m)"
-          VETEV="novinky/$MESIC"
+          VETEV="novinky/$VYDANI"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$VETEV"
           git add src/content/novinky
-          git commit -m "Novinky z dat: $MESIC (návrh)"
+          git commit -m "Novinky z dat: $VYDANI (návrh)"
           git push --force origin "$VETEV"
-          if gh pr view "$VETEV" > /dev/null 2>&1; then
-            gh pr edit "$VETEV" --body-file "$RUNNER_TEMP/navrh.md"
+          # otevřený návrh pro stejné vydání jen aktualizuje, jinak založí nový
+          OTEVRENY="$(gh pr list --head "$VETEV" --state open --json number --jq '.[].number' | head -n 1)"
+          if [ -n "$OTEVRENY" ]; then
+            gh pr edit "$OTEVRENY" --body-file "$RUNNER_TEMP/navrh.md"
           else
-            gh pr create --base main --head "$VETEV" --title "Novinky z dat: $MESIC" --body-file "$RUNNER_TEMP/navrh.md"
+            gh pr create --base main --head "$VETEV" --title "Novinky z dat: $VYDANI" --body-file "$RUNNER_TEMP/navrh.md"
           fi

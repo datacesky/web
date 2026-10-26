@@ -1,0 +1,107 @@
+---
+// Hlavní novinka měsíce: velká karta nahoře na stránce novinek. Vlevo číslo a text, vpravo velký graf.
+// Volitelně obrázek nahoře (pole obrazek, soubor v public/novinky/) a delší text (pole pribeh).
+import MiniGraf from './MiniGraf.astro';
+import IkonaZare from './IkonaZare.astro';
+import type { Novinka } from '../lib/novinky';
+import { OBLASTI } from '../lib/novinky';
+import { nezalomit } from '../lib/format';
+
+interface Props {
+  p: Novinka;
+  // „Říjen 2026“
+  vydani: string;
+}
+const { p, vydani } = Astro.props;
+const SIPKA = { nahoru: 'M12 19V5 M6 11l6-6 6 6', dolu: 'M12 5v14 M6 13l6 6 6-6', stejne: 'M5 12h14' };
+const odstavce = nezalomit(p.pribeh ?? p.text).split(/\n\s*\n/);
+---
+
+<article class="hn odhal" id={`n-${p.id}`} data-oblast={p.oblast} aria-label={`Hlavní novinka měsíce, ${vydani}`}>
+  {p.obrazek && (
+    <figure class="hn__obrazek">
+      <img src={p.obrazek} alt={p.obrazekPopis ?? ''} loading="eager" decoding="async" />
+    </figure>
+  )}
+  <div class="hn__mrizka">
+    <div class="hn__text">
+      <span class="hn__nadhlavi">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M13 3v7h6l-8 11v-7H5l8-11z" /></svg>
+        Hlavní novinka měsíce
+      </span>
+      <div class="hn__hlava">
+        <IkonaZare id={p.ikona} velikost={46} />
+        <div class="hn__stitky">
+          <span class="hn__oblast"><span class:list={['oblast-tecka', `oblast-tecka--${p.oblast}`]}></span>{OBLASTI[p.oblast]} · {p.stitek ?? p.zdroj}</span>
+          {p.zmena && (
+            <span class:list={['hn__zmena', `hn__zmena--${p.smer ?? 'stejne'}`]}>
+              <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={SIPKA[p.smer ?? 'stejne']} /></svg>
+              {p.zmena}
+            </span>
+          )}
+        </div>
+      </div>
+      <h2 class="hn__nadpis">{p.nadpis}</h2>
+      <p class="hn__cislo"><span data-pocitej>{p.cislo}</span>{p.popisCisla && <small>{p.popisCisla}</small>}</p>
+      <div class="hn__popis">{odstavce.map((o) => <p>{o}</p>)}</div>
+      <p class="hn__zdroj">Zdroj: <a href={p.url}>{p.zdroj} ({p.sada})</a></p>
+    </div>
+    {p.graf && (
+      <div class="hn__graf">
+        {/* velký graf na počítači, na telefonu menší plocha, ať popisky nejsou drobné */}
+        <div class="hn__graf-velky"><MiniGraf graf={p.graf} sirka={440} vyska={215} /></div>
+        <div class="hn__graf-maly"><MiniGraf graf={p.graf} sirka={300} vyska={150} /></div>
+      </div>
+    )}
+  </div>
+</article>
+
+<style>
+  .hn {
+    position: relative; isolation: isolate; overflow: hidden;
+    border-radius: 28px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin);
+  }
+  /* jemná oranžová záře a vrstevnice v pozadí */
+  .hn::before {
+    content: ''; position: absolute; z-index: -1; inset: -30% auto auto -15%; width: 70%; aspect-ratio: 1; pointer-events: none;
+    background: radial-gradient(circle, rgba(240, 136, 41, 0.16), rgba(240, 136, 41, 0) 62%);
+  }
+  .hn::after {
+    content: ''; position: absolute; z-index: -2; inset: 0; pointer-events: none;
+    background: url('/vrstevnice.svg') center / cover no-repeat; opacity: calc(0.35 * var(--vrstevnice-sila));
+  }
+  .hn__obrazek { margin: 0; aspect-ratio: 21 / 8; max-height: 300px; width: 100%; overflow: hidden; border-bottom: 1px solid var(--line); }
+  .hn__obrazek img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .hn__mrizka { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center; padding: clamp(1.4rem, 3.5vw, 2.6rem); }
+  .hn__text { display: flex; flex-direction: column; gap: 0.85rem; min-width: 0; }
+  .hn__nadhlavi { display: inline-flex; align-items: center; gap: 0.45rem; align-self: flex-start; padding: 0.35rem 0.75rem; border-radius: 999px; background: var(--oranzova-svetla); color: var(--orange-text); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
+  .hn__hlava { display: flex; align-items: center; gap: 0.85rem; margin-top: 0.2rem; }
+  .hn__stitky { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; min-width: 0; }
+  .hn__oblast { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+  .hn__zmena { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.22rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 800; white-space: nowrap; background: var(--bezova); color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .hn__zmena--nahoru { background: var(--oranzova-svetla); color: var(--orange-text); }
+  .hn__zmena--dolu { background: var(--modra-svetla); color: var(--navy); }
+  .hn__nadpis { font-size: clamp(1.35rem, 2.6vw, 1.85rem); line-height: 1.25; letter-spacing: -0.015em; color: var(--navy); text-wrap: balance; }
+  .hn__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.2rem 0.65rem; font-size: clamp(2.8rem, 6.5vw, 4.4rem); font-weight: 900; line-height: 1.02; letter-spacing: -0.04em; color: var(--orange-text); font-variant-numeric: tabular-nums; }
+  .hn__cislo small { font-size: 1rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
+  .hn__popis { display: flex; flex-direction: column; gap: 0.7rem; font-size: 0.98rem; line-height: 1.7; color: var(--text-2); max-width: 60ch; text-wrap: pretty; }
+  .hn__zdroj { padding-top: 0.75rem; border-top: 1px solid var(--line); font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+  .hn__zdroj a { color: var(--muted); }
+  .hn__graf { min-width: 0; padding: clamp(1rem, 2.4vw, 1.5rem); border-radius: 20px; background: var(--plocha-2); border: 1px solid var(--line-jemna); }
+  /* v grafu musí obrys popisků splývat s podkladem panelu */
+  .hn__graf :global(.mg__svg text) { stroke: var(--plocha-2); }
+  .hn__graf :global(.mg__popis) { font-size: 0.8rem; }
+
+  @media (max-width: 900px) {
+    .hn__mrizka { grid-template-columns: 1fr; }
+    .hn__obrazek { aspect-ratio: 16 / 9; }
+  }
+  .hn__graf-maly { display: none; }
+  @media (max-width: 560px) {
+    .hn__graf-velky { display: none; }
+    .hn__graf-maly { display: block; }
+    .hn { border-radius: 22px; }
+    .hn__mrizka { padding: 1.15rem; gap: 1.25rem; }
+    .hn__graf { padding: 0.85rem; margin-inline: -0.25rem; }
+  }
+</style>
