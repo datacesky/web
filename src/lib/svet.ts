@@ -1,4 +1,5 @@
 import svet from '../data/svet.json';
+import { STAV } from '../data/konflikty';
 
 // Světová data: názvy zemí, vrstvy a jejich pořadí. Používá je stránka Svět i úvodní stránka.
 // Data se generují skriptem (viz metodika) a leží v src/data/svet.json.
@@ -18,7 +19,7 @@ export const lidi = (v: number) =>
 
 export type SvetVrstva = {
   id: string;
-  skupina: 'Naše série' | 'Lidé a země' | 'Peníze' | 'Svoboda a společnost';
+  skupina: 'Z našich videí' | 'Lidé a země' | 'Peníze' | 'Svoboda a společnost';
   nazev: string;
   // Jak se čte pořadí: "11. nejsvobodnější"
   poradiSlovo: string;
@@ -49,12 +50,19 @@ const I = {
   cepice: 'M22 9L12 5 2 9l10 4z M6 10.6V16a6 3 0 0 0 12 0v-5.4 M22 9v6',
   stit: 'M12 3a12 12 0 0 0 8.5 3A12 12 0 0 1 12 21 12 12 0 0 1 3.5 6 12 12 0 0 0 12 3 M9 12l2 2 4-4',
   usmev: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M9 10h.01 M15 10h.01 M9.5 15a3.5 3.5 0 0 0 5 0',
+  mece: 'M21 3v5l-11 9l-4 4l-3-3l4-4l9-11z M5 13l6 6 M14.32 17.32l3.68 3.68l3-3l-3.365-3.365 M10 5.5l-2-2.5h-5v5l3 2.5',
 };
 
 export const SVET_VRSTVY: SvetVrstva[] = [
   {
-    id: 'epizody', skupina: 'Naše série', nazev: 'Česko vs. svět', poradiSlovo: '', ikona: I.serie, smer: 'sestupne',
-    popis: 'Země, které jsme v sérii postavili vedle Česka.', obdobi: '', zdroj: 'data.cesky', zdrojUrl: '/serie/',
+    id: 'epizody', skupina: 'Z našich videí', nazev: 'Česko vs. svět', poradiSlovo: '', ikona: I.serie, smer: 'sestupne',
+    popis: 'Země, které jsme v sérii postavili vedle Česka.', obdobi: '', zdroj: 'data.cesky', zdrojUrl: '/videa/#cesko-vs-svet',
+    format: String,
+  },
+  {
+    id: 'konflikty', skupina: 'Z našich videí', nazev: 'Konflikty', poradiSlovo: '', ikona: I.mece, smer: 'sestupne',
+    popis: 'Státy, na jejichž území se bojuje: války a ozbrojené konflikty roku 2025 podle UCDP, zamrzlé spory a války roku 2026 podle zpráv.',
+    obdobi: `stav k ${STAV}`, zdroj: 'UCDP (Uppsala Conflict Data Program), CFR, zpravodajství', zdrojUrl: 'https://ucdp.uu.se/',
     format: String,
   },
   {
@@ -130,7 +138,9 @@ export const SVET_VRSTVY: SvetVrstva[] = [
   },
 ];
 
-export const SKUPINY = ['Naše série', 'Lidé a země', 'Peníze', 'Svoboda a společnost'] as const;
+export const SKUPINY = ['Z našich videí', 'Lidé a země', 'Peníze', 'Svoboda a společnost'] as const;
+// Vrstvy bez číselných hodnot (barví se podle kategorie, nemají žebříček ani místo Česka)
+export const ZVLASTNI = new Set(['epizody', 'konflikty']);
 export const vrstvaPodleId = (id: string) => SVET_VRSTVY.find((v) => v.id === id);
 
 export function hodnota(id: string, a3: string): number | undefined {

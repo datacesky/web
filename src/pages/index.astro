@@ -9,14 +9,17 @@ import MapaMini from '../components/uvod/MapaMini.astro';
 import NoveNaWebu from '../components/uvod/NoveNaWebu.astro';
 import HlasovaniPozvanka from '../components/HlasovaniPozvanka.astro';
 import NovinkaKarta from '../components/NovinkaKarta.astro';
-import SerieObalka from '../components/SerieObalka.astro';
-import { vsechnyDily } from '../lib/dily';
+import { nactiVidea } from '../lib/dily';
+import VideoKarta from '../components/VideoKarta.astro';
 import { ZEME } from '../lib/svet';
 import { epizody } from '../data/epizody';
 import { datum } from '../lib/format';
 
 const grafy = (await getCollection('grafy')).sort((a, b) => b.data.datum.valueOf() - a.data.datum.valueOf());
 const tydne = grafy[0];
+// Nejnovější videa, která už vyšla (karta bez odkazu na reel by vedla jen na profil)
+const videa = await nactiVidea();
+const nejnovejsiVidea = videa.vse.filter((d) => !d.brzy).slice(0, 5);
 const novinky = await posledniNovinky(6);
 const aktualizovano = novinky.length ? new Date(Math.max(...novinky.map((n) => n.datumVydani.valueOf()))) : null;
 // Seznam zemí pro vyhledávání v úvodu (jen název a vlajka, ať je stránka lehká)
@@ -97,19 +100,14 @@ const FB = 'https://www.facebook.com/data.cesky';
   <section class="obal sekce--mala">
     <div class="nadpis-sekce">
       <div class="nadpis">
-        <span class="nadhlavi">Série</span>
-        <h2>Poslední díly</h2>
+        <span class="nadhlavi">Videa</span>
+        <h2>Nejnovější videa</h2>
       </div>
-      <a class="tlacitko tlacitko--male" href="/serie/">Všechny díly</a>
+      <a class="tlacitko tlacitko--male" href="/videa/">Všechna videa</a>
     </div>
     <ul class="dily-uvod">
-      {vsechnyDily.slice(0, 5).map((d) => (
-        <li>
-          <a class="dily-uvod__dil" href={d.odkaz}>
-            <SerieObalka slug={d.slug} serie={d.serie} typ={d.typ} dil={d.dil} nazev={d.nazev} a3={d.a3} ikonaId={d.ikona} />
-            <span class="dily-uvod__nazev">{d.typ === 'vs' ? `Česko vs. ${d.nazev}` : d.nazev}</span>
-          </a>
-        </li>
+      {nejnovejsiVidea.map((d) => (
+        <li><VideoKarta d={d} bezPopisu /></li>
       ))}
     </ul>
   </section>
@@ -222,11 +220,6 @@ const FB = 'https://www.facebook.com/data.cesky';
     .dily-uvod::-webkit-scrollbar { display: none; }
     .dily-uvod > li { flex: 0 0 min(40vw, 190px); scroll-snap-align: start; }
   }
-  .dily-uvod__dil { display: flex; flex-direction: column; gap: 0.6rem; color: var(--navy); text-decoration: none; -webkit-touch-callout: none; }
-  .dily-uvod__dil :global(.so) { transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); }
-  @media (hover: hover) and (pointer: fine) { .dily-uvod__dil:hover :global(.so) { transform: translateY(-4px); } .dily-uvod__dil:hover { color: var(--navy); } }
-  .dily-uvod__dil:active :global(.so) { transform: scale(0.98); }
-  .dily-uvod__nazev { font-size: 0.92rem; font-weight: 800; line-height: 1.3; }
   @media (max-width: 560px) {
     .pas__site { display: grid; grid-template-columns: 1fr; width: 100%; }
   }

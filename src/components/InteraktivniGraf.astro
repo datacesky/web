@@ -51,6 +51,7 @@ const souhrnNadpis = soucet ? 'Součet všech položek' : 'Rozpětí';
 const souhrnHodnota = soucet
   ? `${c(celkem)} ${jednotka}`
   : `${c(posledni.hodnota)} až ${c(prvni.hodnota)} ${jednotka}`;
+import { logo } from '../lib/loga';
 ---
 
 <div class="ig" data-ig style={`--sirka-hodnot: ${sirkaHodnot};`}>
@@ -84,7 +85,10 @@ const souhrnHodnota = soucet
             data-rozdil={r.rozdil}
             data-podil={r.podil}
           >
-            <span class="ig__jmeno">{r.nazev}</span>
+            <span class="ig__jmeno">
+              {logo(r.nazev) && <img class:list={['ig__logo', { 'ig__logo--tmave': logo(r.nazev)!.tmave }]} src={logo(r.nazev)!.src} alt="" width="40" height="40" loading="lazy" />}
+              {r.nazev}
+            </span>
             <span class="ig__draha"><span class="ig__pruh" style={`width: ${r.sirka}%; background: ${r.barva};`}></span></span>
             <span class="ig__hodnota">{c(r.hodnota)}</span>
           </button>
@@ -173,7 +177,10 @@ const souhrnHodnota = soucet
   .ig__radek:active { background: color-mix(in srgb, var(--navy) 8%, transparent); }
   .ig__radek[aria-pressed='true'] { background: var(--cream); }
   .ig--vyber .ig__radek[aria-pressed='false'] { opacity: 0.38; }
-  .ig__jmeno { text-align: right; font-weight: 700; font-size: 0.98rem; }
+  .ig__jmeno { display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; text-align: right; font-weight: 700; font-size: 0.98rem; }
+  .ig__logo { width: auto; height: 26px; max-width: 58px; object-fit: contain; padding: 3px 5px; border-radius: 7px; background: #FFFFFF; box-shadow: 0 0 0 1px rgba(27, 42, 74, 0.1); }
+  .ig__logo--tmave { background: #1B2A4A; }
+  @media (max-width: 560px) { .ig__logo { height: 22px; max-width: 42px; } }
   .ig__draha { display: block; }
   .ig__pruh { display: block; height: 28px; border-radius: 999px; min-width: 6px; }
   .ig__hodnota { font-weight: 800; font-size: 1.02rem; white-space: nowrap; font-variant-numeric: tabular-nums; }

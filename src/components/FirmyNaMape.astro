@@ -1,0 +1,139 @@
+---
+// Největší firmy na mapě: sídlo každé firmy z grafu jako bublina (plocha podle tržeb).
+// Šest z deseti firem sídlí v Praze, ty jsou v rámečku vedle mapy. Sídla jsou z obchodního rejstříku,
+// nová firma v grafu potřebuje řádek v SIDLA (název přesně jako v grafu, město, zeměpisná délka a šířka).
+import geo from '../data/kraje.json';
+import podklad from '../data/cesko-mapa.json';
+import { logo } from '../lib/loga';
+import { cislo } from '../lib/format';
+
+interface Props { polozky: { nazev: string; hodnota: number }[]; jednotka: string }
+const { polozky, jednotka } = Astro.props;
+
+// Poslední položka: kam dát popisek (p = vpravo, l = vlevo, lh = vlevo nahoře, ld = vlevo dole)
+const SIDLA: Record<string, [string, number, number, string?]> = {
+  'EP Group': ['Praha', 14.4194, 50.0907],
+  'Škoda Auto': ['Mladá Boleslav', 14.9135, 50.4196],
+  'ČEZ': ['Praha', 14.4554, 50.0489],
+  'Agrofert': ['Praha', 14.4916, 50.0331],
+  'Hyundai': ['Nošovice', 18.4294, 49.6617, 'lh'],
+  'Foxconn CZ': ['Pardubice', 15.7920, 50.0360],
+  'Orlen Unipetrol': ['Praha', 14.4440, 50.0440],
+  'Čepro': ['Praha', 14.4492, 50.1037],
+  'Kaufland': ['Praha', 14.3575, 50.0816],
+  'Moravia Steel': ['Třinec', 18.6635, 49.6727, 'ld'],
+};
+const P = podklad.projekce;
+const xy = (lon: number, lat: number): [number, number] => [P.k * (lon * Math.PI / 180) + P.tx, P.ty - P.k * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI / 180) / 2))];
+
+const serazene = [...polozky].sort((a, b) => b.hodnota - a.hodnota);
+const max = serazene[0].hodnota;
+const firmy = serazene.filter((p) => SIDLA[p.nazev]).map((p, i) => {
+  const [mesto, lon, lat, popisek = 'p'] = SIDLA[p.nazev];
+  const [x, y] = xy(lon, lat);
+  return { ...p, poradi: serazene.indexOf(p) + 1, mesto, x, y, popisek, r: 8 + 34 * Math.sqrt(p.hodnota / max), logo: logo(p.nazev) };
+});
+const praha = firmy.filter((f) => f.mesto === 'Praha');
+const mimo = firmy.filter((f) => f.mesto !== 'Praha');
+const [prahaX, prahaY] = xy(14.4378, 50.0755);
+const prahaSoucet = praha.reduce((s, f) => s + f.hodnota, 0);
+const rPraha = 8 + 34 * Math.sqrt(prahaSoucet / max);
+const podilPrahy = Math.round((prahaSoucet / polozky.reduce((s, p) => s + p.hodnota, 0)) * 100);
+// Posun popisku od bubliny: vpravo, vlevo, vlevo nahoře, vlevo dole (u firem na východě, ať nevyjedou z mapy)
+const posun = (f: { popisek: string; r: number }) => {
+  const dx = f.popisek === 'p' ? f.r + 10 : -(f.r + 10);
+  const dy = f.popisek === 'lh' ? -30 : f.popisek === 'ld' ? 34 : 0;
+  return { dx, dy, kotva: f.popisek === 'p' ? 'start' : 'end' };
+};---
+
+<section class="karta sloupec fm" id="mapa-firem">
+  <div class="sloupec" style="gap: 0.35rem;">
+    <h2 style="font-size: clamp(1.4rem, 3vw, 1.9rem);">Kde mají firmy sídlo</h2>
+    <p class="drobne" style="max-width: 62ch;">Velikost bubliny odpovídá tržbám. {praha.length} z {firmy.length} firem sídlí v Praze a dohromady mají {podilPrahy}&nbsp;% tržeb celé desítky. Mimo Prahu sídlí hlavně výrobci: Škoda Auto v Mladé Boleslavi, Hyundai v Nošovicích, Foxconn v Pardubicích a Moravia Steel v Třinci.</p>
+  </div>
+
+  <div class="fm__telo">
+    <div class="fm__mapa">
+      <svg viewBox={`0 0 ${geo.sirka} ${geo.vyska}`} class="fm-svg" role="img" aria-label="Mapa sídel největších českých firem">
+        <path class="fm-podstin" d={podklad.obrys} />
+        <g class="fm-kraje">{geo.kraje.map((k) => <path d={k.d} fill-rule="evenodd" />)}</g>
+        <path class="fm-obrys" d={podklad.obrys} />
+        <g class="fm-bubliny">
+          <g class="fm-bublina fm-bublina--praha" transform={`translate(${prahaX.toFixed(1)} ${prahaY.toFixed(1)})`}>
+            <circle r={rPraha.toFixed(1)} />
+            <text class="fm-cislo" y="-1">{praha.length} firem</text>
+            <text class="fm-mesto" y="21">Praha</text>
+          </g>
+          {mimo.map((f) => (
+            <g class:list={['fm-bublina', { 'fm-bublina--prvni': f.poradi === 1 }]} transform={`translate(${f.x.toFixed(1)} ${f.y.toFixed(1)})`}>
+              <circle r={f.r.toFixed(1)} />
+              <g transform={`translate(${posun(f).dx} ${posun(f).dy})`} text-anchor={posun(f).kotva}>
+                {f.logo && (
+                  <g transform={`translate(${posun(f).kotva === 'end' ? -104 : 0} -16)`}>
+                    <rect class="fm-logo-podklad" width="104" height="44" rx="10" />
+                    <image href={f.logo.src} x="7" y="5" width="90" height="34" preserveAspectRatio="xMidYMid meet" />
+                  </g>
+                )}
+                <text class="fm-nazev" x={f.logo ? (posun(f).kotva === 'end' ? -114 : 114) : 0} y="-1">{f.poradi}. {f.nazev}</text>
+                <text class="fm-hodnota" x={f.logo ? (posun(f).kotva === 'end' ? -114 : 114) : 0} y="22">{cislo(f.hodnota, 1)} {jednotka} · {f.mesto}</text>
+              </g>
+            </g>
+          ))}
+        </g>
+      </svg>
+    </div>
+
+    <div class="fm__praha">
+      <h3><span class="fm__tecka" aria-hidden="true"></span>Sídlo v Praze</h3>
+      <ol>
+        {praha.map((f) => (
+          <li>
+            <span class="fm__poz">{f.poradi}.</span>
+            {f.logo ? <span class:list={['fm__logo', { 'fm__logo--tmave': f.logo.tmave }]}><img src={f.logo.src} alt="" loading="lazy" /></span> : null}
+            <span class="fm__jm">{f.nazev}</span>
+            <span class="fm__h">{cislo(f.hodnota, 1)}</span>
+          </li>
+        ))}
+      </ol>
+      <p class="drobne">Tržby za rok 2024 v {jednotka}. Dohromady {cislo(prahaSoucet, 1)} {jednotka}.</p>
+    </div>
+  </div>
+  <p class="drobne">Sídla podle obchodního rejstříku. Tržby: CZECH TOP 100, 31. ročník.</p>
+</section>
+
+<style>
+  .fm { gap: 1.25rem; scroll-margin-top: 80px; }
+  .fm__telo { display: flex; flex-direction: column; gap: 1.25rem; }
+  .fm__mapa { border-radius: 18px; background: var(--plocha-2); padding: 0.5rem; }
+  .fm-svg { display: block; width: 100%; height: auto; overflow: visible; }
+  .fm-podstin { fill: none; stroke: rgba(27, 42, 74, 0.12); stroke-width: 7; stroke-linejoin: round; transform: translate(0, 3px); }
+  .fm-kraje path { fill: var(--zeme); stroke: var(--obrys); stroke-width: 1.4; stroke-linejoin: round; }
+  .fm-obrys { fill: none; stroke: var(--line-2); stroke-width: 1.4; }
+  .fm-bublina circle { fill: color-mix(in srgb, var(--navy) 82%, transparent); stroke: var(--paper); stroke-width: 2.5; }
+  .fm-bublina--prvni circle, .fm-bublina--praha circle { fill: color-mix(in srgb, var(--orange) 88%, transparent); }
+  .fm-bublina text { paint-order: stroke; stroke: var(--halo); stroke-width: 6px; stroke-linejoin: round; }
+  .fm-logo-podklad { fill: #FFFFFF; stroke: rgba(27, 42, 74, 0.12); stroke-width: 1.5; }
+  .fm-nazev { font-size: 24px; font-weight: 900; fill: var(--navy); }
+  .fm-hodnota { font-size: 19px; font-weight: 700; fill: var(--muted); }
+  .fm-bublina--praha text { text-anchor: middle; stroke: none; fill: #1B2A4A; }
+  .fm-cislo { font-size: 22px; font-weight: 900; }
+  .fm-mesto { font-size: 18px; font-weight: 800; }
+  @media (prefers-reduced-motion: no-preference) {
+    .fm-bublina { animation: fm-vjezd 0.7s var(--ease-out) both; }
+    .fm-bublina:nth-child(2) { animation-delay: 80ms; } .fm-bublina:nth-child(3) { animation-delay: 160ms; } .fm-bublina:nth-child(4) { animation-delay: 240ms; } .fm-bublina:nth-child(5) { animation-delay: 320ms; }
+  }
+  @keyframes fm-vjezd { from { opacity: 0; } }
+
+  .fm__praha { display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 1.1rem; border-radius: 18px; border: 1.5px solid var(--line); background: var(--paper); }
+  .fm__praha h3 { display: flex; align-items: center; gap: 0.5rem; font-size: 1.05rem; }
+  .fm__tecka { width: 12px; height: 12px; border-radius: 50%; background: var(--orange); }
+  .fm__praha ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 0.5rem 1.5rem; }
+  .fm__praha li { display: grid; grid-template-columns: 1.6rem auto minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; font-size: 0.92rem; font-weight: 800; }
+  .fm__praha li:not(:has(.fm__logo)) { grid-template-columns: 1.6rem minmax(0, 1fr) auto; }
+  .fm__poz { color: var(--muted); font-size: 0.8rem; text-align: right; }
+  .fm__logo { display: grid; place-items: center; overflow: hidden; width: 52px; height: 26px; padding: 2px 4px; border-radius: 7px; background: #FFFFFF; box-shadow: 0 0 0 1px rgba(27, 42, 74, 0.1); }
+  .fm__logo--tmave { background: #1B2A4A; }
+  .fm__logo img { display: block; width: 100%; height: 22px; object-fit: contain; }
+  .fm__h { font-variant-numeric: tabular-nums; font-weight: 900; }
+  .fm__praha .drobne { margin: 0; }
+</style>

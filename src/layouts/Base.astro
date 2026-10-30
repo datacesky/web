@@ -44,7 +44,7 @@ const DOK = [
   { href: '/zebricky/', nazev: 'Žebříčky', aktivni: aktivni('/zebricky') ?? aktivni('/grafy'), d: 'M4 5h10 M4 10h16 M4 15h13 M4 20h7' },
   { href: '/mapa/', nazev: 'Mapa', aktivni: aktivni('/mapa'), d: 'M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z M9 4v13 M15 7v13' },
   { href: '/svet/', nazev: 'Svět', aktivni: aktivni('/svet'), d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M3.6 9h16.8 M3.6 15h16.8 M11.5 3a17 17 0 0 0 0 18 M12.5 3a17 17 0 0 1 0 18' },
-  { href: '/serie/', nazev: 'Série', aktivni: aktivni('/serie'), d: 'M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M10 9.5v5l4.5-2.5z' },
+  { href: '/videa/', nazev: 'Videa', aktivni: aktivni('/videa'), d: 'M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M10 9.5v5l4.5-2.5z' },
 ];
 const LUPA = 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6';
 const MESIC = 'M12 3c.13 0 .26 0 .39 0a7.5 7.5 0 0 0 7.92 12.45A9 9 0 1 1 12 3z';
@@ -105,7 +105,7 @@ const VZHLED = [
           <a href="/zebricky/" aria-current={aktivni('/zebricky') ?? aktivni('/grafy')}>Žebříčky</a>
           <a href="/mapa/" aria-current={aktivni('/mapa')}>Mapa Česka</a>
           <a href="/svet/" aria-current={aktivni('/svet')}>Svět</a>
-          <a href="/serie/" aria-current={aktivni('/serie')}>Série</a>
+          <a href="/videa/" aria-current={aktivni('/videa')}>Videa</a>
           <a href="/metodika/" aria-current={aktivni('/metodika')}>Metodika</a>
         </nav>
         <div class="hlavicka__akce">
@@ -157,7 +157,7 @@ const VZHLED = [
               <li><a href="/zebricky/">Žebříčky a grafy</a></li>
               <li><a href="/mapa/">Mapa Česka</a></li>
               <li><a href="/svet/">Svět</a></li>
-              <li><a href="/serie/">Série</a></li>
+              <li><a href="/videa/">Videa</a></li>
               {hlasovaniZapnute && <li><a href="/hlasovani/">Hlasuj o dalším dílu</a></li>}
             </ul>
           </div>

@@ -19,7 +19,7 @@ const nastaveni = JSON.stringify({ ...hlasovani, zapnute: hlasovaniZapnute, mozn
     <div class="hledani hl__hledani">
       <div class="hledani__pole">
         <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
-        <input type="search" enterkeyhint="search" placeholder="Napiš zemi, třeba Japonsko" aria-label="Země pro další díl" autocomplete="off" data-vstup />
+        <input type="search" enterkeyhint="search" placeholder="Napiš zemi, třeba Kanada" aria-label="Země pro další díl" autocomplete="off" data-vstup />
       </div>
       <ul class="naseptavac" data-seznam hidden></ul>
     </div>
@@ -178,8 +178,11 @@ const nastaveni = JSON.stringify({ ...hlasovani, zapnute: hlasovaniZapnute, mozn
 
     function vykresli() {
       const m = mujHlas();
+      // Celkové počty ze všech kol, jen bez zemí, které už vlastní díl mají (třeba Japonsko).
+      // Ty se nepočítají ani do součtu hlasů.
       const data = [...vysledky.pocty.entries()].filter(([k]) => podleKodu.has(k)).sort((a, b) => b[1] - a[1] || podleKodu.get(a[0])!.n.localeCompare(podleKodu.get(b[0])!.n, 'cs'));
-      celkemEl.textContent = vysledky.celkem ? hlasuText(vysledky.celkem) : '';
+      const celkem = data.reduce((s, [, n]) => s + n, 0);
+      celkemEl.textContent = celkem ? hlasuText(celkem) : '';
       // rychlá volba z nejčastějších návrhů
       const rychle = data.slice(0, 6);
       $<HTMLElement>('[data-rychle]').hidden = rychle.length < 2 || !!m;

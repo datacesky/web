@@ -1,16 +1,21 @@
 ---
-// Upoutávka na úvodní stránce: nejsledovanější videa jako interaktivní mapy.
-// Náhledy v public/nahledy/ jsou snímky přímo z těchto map.
+// Upoutávka na úvodní stránce: co nového přibylo na webu.
+// Náhledy v public/nahledy/ jsou snímky přímo z těchto stránek (720 × 440 px).
 const karty = [
   {
-    href: '/mapa/#v=vlaky', obr: '/nahledy/vlaky.webp', stitek: 'Mapa Česka',
-    titul: 'Vlaky za 24 hodin',
-    text: 'Všech 9 143 vlaků jednoho všedního dne. Posuň čas, schovej dopravce a klikni na stanici, uvidíš nejbližší odjezdy.',
+    href: '/svet/#v=konflikty', obr: '/nahledy/konflikty.webp', stitek: 'Svět', dal: 'Otevřít glóbus',
+    titul: 'Konflikty ve světě',
+    text: 'Války a ozbrojené konflikty na glóbusu podle našeho reelu. Klikni na stát a uvidíš, kdo s kým bojuje a od kdy.',
   },
   {
-    href: '/svet/#capi', obr: '/nahledy/capi.webp', stitek: 'Svět',
-    titul: 'Kam letí čeští čápi na zimu',
-    text: 'Devět čápů se satelitní vysílačkou v jednom kalendáři. Jedni letí přes Gibraltar, druzí přes Izrael až do Etiopie.',
+    href: '/grafy/supermarkety-v-cesku/#mapa-prodejen', obr: '/nahledy/supermarkety.webp', stitek: 'Mapa', dal: 'Otevřít mapu',
+    titul: 'Supermarkety na mapě',
+    text: 'Přes 1 700 prodejen sedmi řetězců. Vyber logo a uvidíš, kde má Lidl nebo Penny nejhustší síť.',
+  },
+  {
+    href: '/videa/', obr: '/nahledy/videa.webp', stitek: 'Videa', dal: 'Procházet videa',
+    titul: 'Všechna videa na jednom místě',
+    text: 'Série 24 hodin MHD, České rody, Češi, kteří změnili svět a další. S hledáním podle místa, země nebo tématu.',
   },
 ];
 ---
@@ -19,7 +24,7 @@ const karty = [
   <div class="nadpis-sekce">
     <div class="nadpis">
       <span class="nadhlavi nadhlavi--zive">Nově na webu</span>
-      <h2>Z videa na mapu, kde si čas posouváš sám</h2>
+      <h2>Z videí na web: mapy, které si proklikáš</h2>
     </div>
   </div>
   <ul class="nw">
@@ -31,7 +36,7 @@ const karty = [
             <span class="nw__stitek">{k.stitek}</span>
             <strong>{k.titul}</strong>
             <span>{k.text}</span>
-            <span class="nw__dal">Otevřít mapu →</span>
+            <span class="nw__dal">{k.dal} →</span>
           </span>
         </a>
       </li>
@@ -40,8 +45,9 @@ const karty = [
 </section>
 
 <style>
-  .nw { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(0.8rem, 2vw, 1.4rem); list-style: none; margin: 0; padding: 0; }
-  @media (max-width: 760px) { .nw { grid-template-columns: 1fr; } }
+  .nw { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(0.8rem, 2vw, 1.4rem); list-style: none; margin: 0; padding: 0; }
+  @media (max-width: 960px) { .nw { grid-template-columns: repeat(2, minmax(0, 1fr)); } .nw > li:last-child { grid-column: 1 / -1; } }
+  @media (max-width: 640px) { .nw { grid-template-columns: 1fr; } .nw > li:last-child { grid-column: auto; } }
   .nw__karta { display: flex; flex-direction: column; height: 100%; border-radius: 22px; overflow: hidden; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); color: var(--navy); text-decoration: none; transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); -webkit-touch-callout: none; }
   @media (hover: hover) and (pointer: fine) { .nw__karta:hover { transform: translateY(-4px); box-shadow: var(--stin); color: var(--navy); } .nw__karta:hover img { transform: scale(1.03); } }
   .nw__karta:active { transform: scale(0.99); }

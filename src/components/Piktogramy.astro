@@ -14,6 +14,7 @@ const { polozky, barvy = {}, jednotka, zaIkonu } = Astro.props;
 const serazene = [...polozky].sort((a, b) => b.hodnota - a.hodnota);
 const data = JSON.stringify(serazene.map((p) => ({ ...p, barva: barvaKategorie(p.kategorie, barvy) })));
 const celkem = polozky.reduce((s, p) => s + p.hodnota, 0);
+import { logo } from '../lib/loga';
 ---
 
 <div class="pk" data-pk data-polozky={data} data-za-ikonu={zaIkonu}>
@@ -28,7 +29,10 @@ const celkem = polozky.reduce((s, p) => s + p.hodnota, 0);
   <ul class="pk__radky">
     {serazene.map((p) => (
       <li class="pk__radek" aria-label={`${p.nazev}: ${cislo(p.hodnota)} ${jednotka}`}>
-        <span class="pk__nazev">{p.nazev}</span>
+        <span class="pk__nazev">
+          {logo(p.nazev) && <img class:list={['pk__logo', { 'pk__logo--tmave': logo(p.nazev)!.tmave }]} src={logo(p.nazev)!.src} alt="" width="40" height="40" loading="lazy" />}
+          {p.nazev}
+        </span>
         <span class="pk__ikony" aria-hidden="true" data-pk-ikony style={`color: ${barvaKategorie(p.kategorie, barvy)};`}></span>
         <span class="pk__hodnota">{cislo(p.hodnota)}</span>
       </li>
@@ -44,7 +48,10 @@ const celkem = polozky.reduce((s, p) => s + p.hodnota, 0);
   .pk__ikona { width: 18px; height: 18px; flex-shrink: 0; }
   .pk__radky { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.85rem; }
   .pk__radek { display: grid; grid-template-columns: minmax(70px, 110px) minmax(0, 1fr) 3rem; gap: 0.8rem; align-items: center; }
-  .pk__nazev { text-align: right; font-weight: 800; font-size: 0.95rem; }
+  .pk__nazev { display: flex; align-items: center; justify-content: flex-end; gap: 0.55rem; text-align: right; font-weight: 800; font-size: 0.95rem; }
+  .pk__logo { width: auto; height: 30px; max-width: 64px; object-fit: contain; padding: 3px 5px; border-radius: 8px; background: #FFFFFF; box-shadow: 0 0 0 1px rgba(27, 42, 74, 0.1); }
+  .pk__logo--tmave { background: #1B2A4A; }
+  @media (max-width: 560px) { .pk__logo { height: 24px; max-width: 46px; } }
   .pk__ikony { display: flex; flex-wrap: wrap; gap: 3px; min-height: 18px; }
   .pk__pozn { font-size: 0.8rem; }
   .pk__hodnota { font-weight: 900; font-variant-numeric: tabular-nums; }

@@ -1,0 +1,87 @@
+---
+// Karta jednoho videa: obálka 9:16, série a datum, název, popis. Používá ji stránka Videa a úvodní stránka.
+// rada = karta v řadě jedné série (stačí krátký název a číslo dílu, série je v nadpisu řady)
+import SerieObalka from './SerieObalka.astro';
+import type { Dil } from '../lib/dily';
+import { TEMATA } from '../data/serie';
+import { datum } from '../lib/format';
+
+interface Props {
+  d: Dil;
+  rada?: boolean;
+  bezPopisu?: boolean;
+  velka?: boolean;
+}
+const { d, rada = false, bezPopisu = false, velka = false } = Astro.props;
+const den = datum(new Date(d.datum));
+const zarazeni = d.serie
+  ? `${d.serie}${d.dil ? ` · ${d.dil}. díl` : ''}`
+  : d.tema.map((t) => TEMATA[t].nazev).join(' · ');
+const nazev = rada ? (d.dil ? `${d.dil}. ${d.nazev}` : d.nazev) : d.titul;
+// Video, které ještě nevyšlo, není odkaz
+const Obal = d.brzy ? 'div' : 'a';
+---
+
+<article
+  class:list={['vk', { 'vk--rada': rada, 'vk--brzy': d.brzy }]}
+  data-video={d.slug}
+  data-serie={d.serieId || 'ostatni'}
+  data-tema={d.tema.join(' ')}
+  data-hledat={d.hledat}
+  data-datum={d.datum}
+  data-dil={d.dil ?? ''}
+>
+  <Obal class="vk__odkaz" href={d.brzy ? undefined : d.odkaz} aria-label={d.brzy ? `${d.titul}, brzy na Instagramu` : `${d.titul}, ${d.vyslo ? 'přehrát na Instagramu' : 'otevřít profil @data.cesky'}`}>
+    <span class="vk__obal">
+      <SerieObalka slug={d.slug} serie={d.stitek} typ={d.typ} dil={d.dil} nazev={d.nazev} a3={d.a3} ikonaId={d.ikona} velka={velka} />
+      {d.brzy ? <span class="vk__novy vk__novy--brzy">Brzy</span> : <span class="vk__novy" data-novy hidden>Nové</span>}
+    </span>
+    <span class="vk__meta">
+      {!rada && <span class="vk__serie">{zarazeni}</span>}
+      {d.brzy ? <span>Brzy na Instagramu</span> : <time datetime={d.datum}>{den}</time>}
+    </span>
+    <strong class="vk__nazev">{nazev}</strong>
+    {!bezPopisu && <span class="vk__popis">{d.popis}</span>}
+  </Obal>
+  {d.web && <a class="vk__web" href={d.web}>Interaktivně na webu <span aria-hidden="true">→</span></a>}
+</article>
+
+<style>
+  .vk { display: flex; flex-direction: column; gap: 0.45rem; min-width: 0; }
+  .vk__odkaz { display: flex; flex-direction: column; gap: 0.35rem; color: inherit; text-decoration: none; border-radius: 20px; -webkit-tap-highlight-color: transparent; }
+  .vk__obal { position: relative; display: block; margin-bottom: 0.3rem; border-radius: 18px; transition: transform 0.35s var(--ease-out); }
+  .vk__obal :global(.so) { transition: box-shadow 0.35s var(--ease-out); }
+  @media (hover: hover) and (pointer: fine) {
+    .vk__odkaz:hover .vk__obal { transform: translateY(-4px); }
+    .vk__odkaz:hover .vk__obal :global(.so) { box-shadow: 0 0 0 1px rgba(226, 217, 201, 0.9), 0 22px 40px -18px rgba(27, 42, 74, 0.55); }
+    .vk__odkaz:hover .vk__nazev { color: var(--orange-text); }
+  }
+  .vk__odkaz:active .vk__obal { transform: scale(0.98); transition-duration: var(--stisk); }
+  .vk__odkaz:focus-visible { outline: none; }
+  .vk__odkaz:focus-visible .vk__obal { box-shadow: 0 0 0 3px var(--cream), 0 0 0 5px var(--navy); }
+  .vk__novy { position: absolute; top: 7px; left: 7px; padding: 0.16rem 0.5rem; border-radius: 999px; background: var(--orange); color: #1B2A4A; font-size: 0.62rem; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; box-shadow: 0 4px 10px -4px rgba(27, 42, 74, 0.5); }
+  .vk__novy--brzy { background: var(--panel); color: var(--na-panelu-akcent); }
+  .vk--brzy .vk__obal :global(.so) { filter: saturate(0.75); }
+  .vk--brzy .vk__obal :global(.so__prehrat) { display: none; }
+  .vk--brzy .vk__odkaz { cursor: default; }
+  .vk--brzy .vk__obal { transform: none !important; }
+  .vk__meta { display: flex; flex-wrap: wrap; gap: 0.1rem 0.55rem; align-items: baseline; font-size: 0.76rem; font-weight: 700; color: var(--muted); line-height: 1.35; }
+  .vk__serie { color: var(--orange-text); font-weight: 800; }
+  .vk__nazev { font-size: 0.98rem; font-weight: 900; line-height: 1.3; color: var(--navy); text-wrap: balance; transition: color 0.2s ease; }
+  .vk--rada .vk__nazev { font-size: 0.92rem; }
+  .vk__popis { font-size: 0.84rem; font-weight: 500; line-height: 1.5; color: var(--text-2); display: -webkit-box; -webkit-line-clamp: 3; line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; text-wrap: pretty; }
+  .vk--rada .vk__popis { -webkit-line-clamp: 2; line-clamp: 2; }
+  .vk__web { align-self: flex-start; font-size: 0.82rem; font-weight: 800; color: var(--orange-text); text-decoration: none; }
+  @media (hover: hover) and (pointer: fine) { .vk__web:hover { text-decoration: underline; } }
+  @media (prefers-reduced-motion: reduce) { .vk__obal, .vk__obal :global(.so) { transition: none; } }
+</style>
+
+<script>
+  // Štítek „Nové“ u videí z posledních deseti dnů (počítá se v prohlížeči, web je statický)
+  const DNY = 10 * 24 * 3600 * 1000;
+  document.querySelectorAll<HTMLElement>('[data-video]').forEach((k) => {
+    const d = Date.parse(k.dataset.datum ?? '');
+    const novy = k.querySelector<HTMLElement>('[data-novy]');
+    if (novy && Number.isFinite(d) && Date.now() - d < DNY && Date.now() >= d) novy.hidden = false;
+  });
+</script>

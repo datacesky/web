@@ -3,7 +3,8 @@ import Base from '../layouts/Base.astro';
 import HlasovaniPozvanka from '../components/HlasovaniPozvanka.astro';
 import CestaCapu from '../components/CestaCapu.astro';
 import { epizody, odkazDilu } from '../data/epizody';
-import { SVET_VRSTVY, SKUPINY, hodnota, poradiZeme, vlajka, vrstvaPodleId, cislo } from '../lib/svet';
+import { SVET_VRSTVY, SKUPINY, ZVLASTNI, hodnota, poradiZeme, vlajka, vrstvaPodleId, cislo } from '../lib/svet';
+import { STATY, POCTY } from '../data/konflikty';
 
 
 // Srovnání s Českem pro každý díl série (stejné zdroje pro všechny země)
@@ -26,7 +27,7 @@ const dily = [...epizody].reverse().map((e) => ({
 }));
 
 const czPoradi = Object.fromEntries(
-  SVET_VRSTVY.filter((v) => v.id !== 'epizody').map((v) => [v.id, poradiZeme(v.id, 'CZE')])
+  SVET_VRSTVY.filter((v) => !ZVLASTNI.has(v.id)).map((v) => [v.id, poradiZeme(v.id, 'CZE')])
 );
 ---
 
@@ -58,7 +59,7 @@ const czPoradi = Object.fromEntries(
                   <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d={v.ikona} /></svg>
                   <span class="dlazdice__nazev">{v.nazev}</span>
                   <span class="dlazdice__cz">
-                    {v.id === 'epizody' ? `${epizody.length} dílů` : czPoradi[v.id] ? `Česko ${czPoradi[v.id]}.` : ''}
+                    {v.id === 'epizody' ? `${epizody.length} dílů` : v.id === 'konflikty' ? `${POCTY.valky} válek` : czPoradi[v.id] ? `Česko ${czPoradi[v.id]}.` : ''}
                   </span>
                 </button>
               ))}
@@ -106,6 +107,10 @@ const czPoradi = Object.fromEntries(
               <filter id="f-stin" x="-25%" y="-20%" width="150%" height="160%">
                 <feDropShadow dx="0" dy="24" stdDeviation="26" flood-color="#1B2A4A" flood-opacity="0.22" />
               </filter>
+              <pattern id="p-valka-2026" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                <rect width="8" height="8" style="fill: var(--valka);" />
+                <line x1="0" y1="0" x2="0" y2="8" style="stroke: var(--teal);" stroke-width="3.6" />
+              </pattern>
               <pattern id="p-bez-dat" width="7" height="7" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
                 <rect width="7" height="7" style="fill: var(--bez-dat-1);" />
                 <line x1="0" y1="0" x2="0" y2="7" style="stroke: var(--bez-dat-2);" stroke-width="2.4" />
@@ -116,6 +121,7 @@ const czPoradi = Object.fromEntries(
             <g data-zeme></g>
             <path class="scena__lesk" data-lesk fill="url(#g-lesk)"></path>
             <path class="scena__okraj" data-okraj></path>
+            <g class="scena__znacky" data-znacky></g>
           </svg>
           <div class="scena__tooltip" data-tooltip hidden></div>
           <div class="zoom-ovladani" role="group" aria-label="Přiblížení">
@@ -344,6 +350,20 @@ const czPoradi = Object.fromEntries(
   :global(.panel__stat .s-radek .draha) { height: 10px; border-radius: 999px; background: var(--draha); overflow: hidden; }
   :global(.panel__stat .s-radek .pruh) { display: block; height: 100%; border-radius: 999px; transform-origin: left; animation: rust 1s cubic-bezier(0.22, 0.8, 0.24, 1) both; }
   :global(.panel__stat .s-radek .hod) { font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }
+  .scena__znacky { pointer-events: none; }
+  :global(.znacka circle) { fill: var(--valka); stroke: #FFFFFF; stroke-width: 2; filter: drop-shadow(0 2px 3px rgba(27, 42, 74, 0.45)); }
+  :global(.znacka--2026 circle) { stroke: var(--teal); stroke-width: 2.6; }
+  :global(.znacka path) { fill: none; stroke: #FFFFFF; stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; }
+  :global(.konf-vzorek) { display: inline-block; width: 14px; height: 14px; border-radius: 4px; flex-shrink: 0; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--navy) 14%, transparent); }
+  :global(.zebricek .poz .konf-vzorek) { margin-top: 0.15rem; }
+  :global(.panel__stat .konflikt) { display: flex; flex-direction: column; gap: 0.6rem; padding: 0.9rem 1rem; border-radius: 14px; border: 1.5px solid var(--valka); background: color-mix(in srgb, var(--valka) 7%, var(--paper)); }
+  :global(.panel__stat .konflikt .stitek) { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.82rem; font-weight: 900; color: var(--valka-text); }
+  :global(.panel__stat .konflikt ul) { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.6rem; }
+  :global(.panel__stat .konflikt li) { display: flex; flex-direction: column; gap: 0.15rem; }
+  :global(.panel__stat .konflikt .k-hlava) { display: flex; align-items: center; gap: 0.45rem; font-size: 0.92rem; color: var(--navy); }
+  :global(.panel__stat .konflikt .k-info) { padding-left: 1.3rem; font-size: 0.8rem; font-weight: 600; line-height: 1.45; color: var(--muted); }
+  :global(.panel__stat .konflikt .k-pozn) { padding-left: 1.3rem; font-size: 0.8rem; line-height: 1.45; color: var(--text-2); }
+  :global(.panel__stat .konflikt .k-odkaz) { font-size: 0.85rem; font-weight: 800; color: var(--valka-text); text-decoration: none; }
   :global(.panel__stat .video) { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.9rem 1rem; border-radius: 14px; border: 1.5px solid var(--orange); background: var(--oranzova-podklad); }
   :global(.panel__stat .video p) { font-size: 0.9rem; line-height: 1.6; color: var(--text-2); }
 
@@ -382,7 +402,8 @@ const czPoradi = Object.fromEntries(
   import svet from '../data/svet.json';
   import { epizody, odkazDilu } from '../data/epizody';
   import { hranice, trida } from '../lib/mapa';
-  import { SVET_VRSTVY, ZEME, zebricek, pocet, hodnota, rok, poradiZeme, jmeno, vlajka, vrstvaPodleId, cislo, type SvetVrstva } from '../lib/svet';
+  import { SVET_VRSTVY, ZVLASTNI, ZEME, zebricek, pocet, hodnota, rok, poradiZeme, jmeno, vlajka, vrstvaPodleId, cislo, type SvetVrstva } from '../lib/svet';
+  import { STATY, STATY_PORADI, NAZEV_UROVNE, STAV, REEL, type StatVKonfliktu } from '../data/konflikty';
   import { naseptavac } from '../lib/naseptavac';
   import { pruzina, setrvacnost, merickoRychlosti, gumove, zpetGumove } from '../lib/pohyb';
 
@@ -392,6 +413,10 @@ const czPoradi = Object.fromEntries(
   // Barvy jsou CSS proměnné (global.css), takže se mapa sama přebarví v tmavém režimu
   const PALETA = ['var(--s1)', 'var(--s2)', 'var(--s3)', 'var(--s4)', 'var(--s5)'];
   const ORANZ = 'var(--orange)', NAVY = 'var(--navy)', PEVNINA = 'var(--zeme)', BEZ_DAT = 'url(#p-bez-dat)';
+  // Vrstva Konflikty: válka, válka roku 2026 (pruhy), ozbrojený konflikt, zamrzlý konflikt
+  const VALKA = 'var(--valka)', VALKA26 = 'url(#p-valka-2026)', KONFLIKT = 'var(--konflikt)', ZAMRZLY = 'var(--zamrzly)';
+  const barvaKonfliktu = (k: StatVKonfliktu) => (k.uroven === 'valka' ? (k.rok2026 ? VALKA26 : VALKA) : k.uroven === 'konflikt' ? KONFLIKT : ZAMRZLY);
+  const urovenText = (k: StatVKonfliktu) => (k.uroven === 'valka' && k.rok2026 && !k.konflikty.some((x) => x.uroven === 'valka' && !x.rok2026) ? 'válka v roce 2026' : NAZEV_UROVNE[k.uroven]);
   const klidne = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const $ = <T extends Element>(s: string) => document.querySelector<T>(s)!;
@@ -434,6 +459,7 @@ const czPoradi = Object.fromEntries(
     if (a3 === 'CZE') return ORANZ;
     if (!a3) return BEZ_DAT;
     if (vrstva.id === 'epizody') return epMapa.has(a3) ? NAVY : PEVNINA;
+    if (vrstva.id === 'konflikty') { const k = STATY.get(a3); return k ? barvaKonfliktu(k) : PEVNINA; }
     const v = hodnota(vrstva.id, a3);
     return v === undefined ? BEZ_DAT : barvaTridy(trida(v, hr));
   }
@@ -574,10 +600,46 @@ const czPoradi = Object.fromEntries(
       if (mez < Infinity && geoDistance(stred, obalStatu[i].c) - obalStatu[i].r > mez) { nastavD(p, ''); continue; }
       nastavD(p, cesta(f) ?? '');
     }
+    kresliZnacky();
+  }
+
+  // Ikony zkřížených mečů nad státy, kde je válka (jen ve vrstvě Konflikty). Překrývající se značky
+  // (Izrael, Gaza, Libanon) se nekreslí dvakrát, přednost má větší válka.
+  const elZnacky = $<SVGGElement>('[data-znacky]');
+  const MECE = 'M21 3v5l-11 9l-4 4l-3-3l4-4l9-11z M5 13l6 6 M14.32 17.32l3.68 3.68l3-3l-3.365-3.365 M10 5.5l-2-2.5h-5v5l3 2.5';
+  const znacky = STATY_PORADI.filter((k) => k.uroven === 'valka').map((k) => {
+    const f = zeme.find((z) => z.id === k.a3);
+    if (!f) return null;
+    // Střed největšího kusu státu (u souostroví a exkláv by střed celku mohl ležet v moři)
+    const kusy = f.geometry.type === 'MultiPolygon' ? f.geometry.coordinates.map((c: any) => ({ type: 'Polygon', coordinates: c })) : [f.geometry];
+    const hlavni = kusy.reduce((a: any, b: any) => (geoArea(b) > geoArea(a) ? b : a));
+    const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+    g.setAttribute('class', 'znacka' + (k.rok2026 ? ' znacka--2026' : ''));
+    g.innerHTML = `<circle r="11"></circle><path d="${MECE}" transform="translate(-6.6 -6.6) scale(0.55)"></path>`;
+    elZnacky.append(g);
+    return { k, c: geoCentroid(hlavni as any) as [number, number], g };
+  }).filter(Boolean) as { k: StatVKonfliktu; c: [number, number]; g: SVGGElement }[];
+  function kresliZnacky() {
+    const zapnuto = vrstva.id === 'konflikty';
+    elZnacky.style.display = zapnuto ? '' : 'none';
+    if (!zapnuto) return;
+    const proj = rezim === 'globus' ? globus : plocha;
+    const stred: [number, number] = [-rotace[0], -rotace[1]];
+    const mez = rezim === 'globus' ? Math.min(Math.PI / 2 - 0.12, Math.asin(Math.min(1, 580 / globus.scale()))) : Infinity;
+    const obsazeno: [number, number][] = [];
+    const meritko = rezim === 'globus' ? Math.min(1.25, 0.9 + zoomG * 0.1) : 1.15;
+    for (const z of znacky) {
+      const xy = proj(z.c);
+      const vidim = xy && (mez === Infinity || geoDistance(stred, z.c) < mez) && !obsazeno.some(([x, y]) => Math.hypot(x - xy[0], y - xy[1]) < 20);
+      if (!vidim) { z.g.style.display = 'none'; continue; }
+      obsazeno.push(xy as [number, number]);
+      z.g.style.display = '';
+      z.g.setAttribute('transform', `translate(${xy![0].toFixed(1)} ${xy![1].toFixed(1)}) scale(${meritko})`);
+    }
   }
 
   function obarvi() {
-    if (vrstva.id !== 'epizody') hr = hranice(zebricek(vrstva.id).map((z) => z.v));
+    if (!ZVLASTNI.has(vrstva.id)) hr = hranice(zebricek(vrstva.id).map((z) => z.v));
     for (const { f, p } of prvky) {
       p.style.fill = barva(f.id);
       p.classList.toggle('zeme--vybrana', !!f.id && f.id === vybrana);
@@ -587,6 +649,7 @@ const czPoradi = Object.fromEntries(
     const vyb = prvky.find((x) => x.f.id === vybrana);
     if (vyb) skupina.append(vyb.p);
     legenda();
+    kresliZnacky();
     for (const b of document.querySelectorAll<HTMLButtonElement>('[data-vrstva]')) b.setAttribute('aria-pressed', String(b.dataset.vrstva === vrstva.id));
     // Na mobilu je výběr posuvný řádek – vybranou dlaždici posuneme do záběru (jen do strany, stránka neposkočí).
     const box = document.querySelector<HTMLElement>('.vyber');
@@ -602,6 +665,8 @@ const czPoradi = Object.fromEntries(
     const polozky: [string, string][] = [];
     if (vrstva.id === 'epizody') {
       polozky.push([ORANZ, 'Česko'], [NAVY, 'má díl Česko vs. svět']);
+    } else if (vrstva.id === 'konflikty') {
+      polozky.push([VALKA, 'válka'], ['valka26', 'válka v roce 2026 (podle zpráv)'], [KONFLIKT, 'ozbrojený konflikt'], [ZAMRZLY, 'zamrzlý konflikt']);
     } else {
       const f = vrstva.kratce ?? vrstva.format;
       const n = hr.length + 1;
@@ -618,7 +683,8 @@ const czPoradi = Object.fromEntries(
       tecka.style.borderRadius = '4px';
       tecka.style.width = '20px';
       tecka.style.boxShadow = 'inset 0 0 0 1px color-mix(in srgb, var(--navy) 12%, transparent)';
-      tecka.style.background = b === 'bez' ? 'repeating-linear-gradient(45deg, var(--bez-dat-1) 0 3px, var(--bez-dat-2) 3px 5px)' : b;
+      tecka.style.background = b === 'bez' ? 'repeating-linear-gradient(45deg, var(--bez-dat-1) 0 3px, var(--bez-dat-2) 3px 5px)'
+        : b === 'valka26' ? 'repeating-linear-gradient(45deg, var(--valka) 0 4px, var(--teal) 4px 6.5px)' : b;
       li.append(tecka, t);
       return li;
     }));
@@ -632,6 +698,34 @@ const czPoradi = Object.fromEntries(
     const a = el('a', undefined, vrstva.zdroj) as HTMLAnchorElement;
     a.href = vrstva.zdrojUrl;
     zdroj.replaceChildren('Zdroj: ', a);
+
+    if (vrstva.id === 'konflikty') {
+      czKarta.hidden = true;
+      const reel = el('a', undefined, 'reelu') as HTMLAnchorElement;
+      reel.href = REEL;
+      zdroj.append(`. Stav k ${STAV}, podle našeho `, reel, '.');
+      seznam.replaceChildren(...STATY_PORADI.map((k) => {
+        const li = el('li');
+        const b = el('button') as HTMLButtonElement;
+        b.type = 'button';
+        b.dataset.kod = k.a3;
+        b.style.alignItems = 'start';
+        const vzorek = el('span', 'poz');
+        const ctverec = el('i', 'konf-vzorek');
+        ctverec.style.background = k.uroven === 'valka' && k.rok2026 ? 'repeating-linear-gradient(45deg, var(--valka) 0 3px, var(--teal) 3px 5px)' : barvaKonfliktu(k);
+        vzorek.append(ctverec);
+        const stred = el('span', 'stred');
+        const hlavni = k.konflikty[0];
+        const dalsi = k.konflikty.length - 1;
+        stred.append(el('span', 'jm', jmeno(k.a3)), el('span', 'datum', `${urovenText(k)} · ${hlavni.nazev}${dalsi ? ` a ${dalsi} ${dalsi <= 4 ? 'další' : 'dalších'}` : ''}`));
+        b.append(vzorek, obrVlajka(k.a3), stred, el('span', 'hod', k.obeti ? cislo(k.obeti) : ''));
+        if (k.a3 === vybrana) b.classList.add('radek--vybrany');
+        li.append(b);
+        return li;
+      }));
+      seznam.scrollTop = 0;
+      return;
+    }
 
     if (vrstva.id === 'epizody') {
       czKarta.hidden = true;
@@ -720,7 +814,15 @@ const czPoradi = Object.fromEntries(
     hlava.append(obrVlajka(a3, ''), el('span', 'jmeno', jmeno(a3)));
     pohledStat.append(zpet, hlava);
 
-    if (vrstva.id !== 'epizody') {
+    const konf = STATY.get(a3);
+    if (vrstva.id === 'konflikty') {
+      const box = el('div', 'hlavni');
+      const n = konf?.konflikty.length ?? 0;
+      const kolik = n === 1 ? 'probíhá 1 konflikt' : n <= 4 ? `probíhají ${n} konflikty` : `probíhá ${n} konfliktů`;
+      const nadpis = konf ? urovenText(konf) : 'bez konfliktu';
+      box.append(el('strong', undefined, nadpis[0].toUpperCase() + nadpis.slice(1)), el('span', undefined, konf ? `Na území státu ${kolik}, stav k ${STAV}.` : `Podle UCDP se tu v roce 2025 nebojovalo, stav k ${STAV}.`));
+      pohledStat.append(box);
+    } else if (vrstva.id !== 'epizody') {
       const v = hodnota(vrstva.id, a3);
       const box = el('div', 'hlavni');
       if (v !== undefined) {
@@ -728,6 +830,35 @@ const czPoradi = Object.fromEntries(
         const y = rok(vrstva.id, a3);
         box.append(el('strong', undefined, vrstva.format(v)), el('span', undefined, `${vrstva.nazev}: ${poradiText(vrstva, r)}${y ? `, rok ${y}` : ''}`));
       } else box.append(el('strong', undefined, 'Bez dat'), el('span', undefined, `${vrstva.nazev} pro tuto zemi v datech není.`));
+      pohledStat.append(box);
+    }
+
+    if (konf) {
+      const box = el('div', 'konflikt');
+      const hlava = el('span', 'stitek');
+      hlava.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${MECE}"></path></svg>`;
+      hlava.append(vrstva.id === 'konflikty' ? 'Konflikty na území státu' : `Zrovna tu probíhá ${urovenText(konf)}`);
+      const ul = el('ul');
+      for (const k of konf.konflikty.slice(0, 5)) {
+        const li = el('li');
+        const r = el('span', 'k-hlava');
+        const t = el('i', 'konf-vzorek');
+        t.style.background = k.rok2026 ? 'repeating-linear-gradient(45deg, var(--valka) 0 3px, var(--teal) 3px 5px)' : k.uroven === 'valka' ? VALKA : k.uroven === 'konflikt' ? KONFLIKT : ZAMRZLY;
+        r.append(t, el('strong', undefined, k.nazev));
+        const info = [`${NAZEV_UROVNE[k.uroven]} od ${k.od}`, k.strany];
+        if (k.obeti) info.push(`${cislo(k.obeti)} obětí v boji za rok 2025`);
+        li.append(r, el('span', 'k-info', info.join(' · ')));
+        if (k.pozn) li.append(el('span', 'k-pozn', k.pozn));
+        ul.append(li);
+      }
+      box.append(hlava, ul);
+      if (konf.konflikty.length > 5) box.append(el('span', 'k-pozn', `a ${konf.konflikty.length - 5} dalších`));
+      if (vrstva.id !== 'konflikty') {
+        const a = el('a', 'k-odkaz', 'Všechny konflikty na glóbusu →') as HTMLAnchorElement;
+        a.href = '#v=konflikty';
+        a.addEventListener('click', (e) => { e.preventDefault(); prepniVrstvu('konflikty'); });
+        box.append(a);
+      }
       pohledStat.append(box);
     }
 
@@ -747,7 +878,7 @@ const czPoradi = Object.fromEntries(
     if (a3 === 'CZE') {
       pohledStat.append(el('span', 'podnadpis', 'Česko ve světových žebříčcích'));
       for (const v of SVET_VRSTVY) {
-        if (v.id === 'epizody' || v.id === 'km') continue;
+        if (ZVLASTNI.has(v.id) || v.id === 'km') continue;
         const h = hodnota(v.id, 'CZE');
         if (h === undefined) continue;
         const r = poradiZeme(v.id, 'CZE')!;
@@ -759,7 +890,7 @@ const czPoradi = Object.fromEntries(
       const km = hodnota('km', a3);
       if (km !== undefined) ul.append(radekSrovnani('Vzdálenost od Prahy', 'vzdušnou čarou', [[jmeno(a3), km, `${cislo(km)} km`, NAVY]]));
       for (const v of SVET_VRSTVY) {
-        if (v.id === 'epizody' || v.id === 'km') continue;
+        if (ZVLASTNI.has(v.id) || v.id === 'km') continue;
         const cz = hodnota(v.id, 'CZE');
         const x = hodnota(v.id, a3);
         if (cz === undefined || x === undefined) continue;
@@ -781,6 +912,7 @@ const czPoradi = Object.fromEntries(
   // --- tooltip, otáčení a výběr
   function textTooltipu(kod: string) {
     if (vrstva.id === 'epizody') return epMapa.has(kod) ? `${jmeno(kod)}: díl ${epMapa.get(kod)!.dil}` : jmeno(kod);
+    if (vrstva.id === 'konflikty') { const k = STATY.get(kod); return k ? `${jmeno(kod)}: ${urovenText(k)}` : jmeno(kod); }
     const v = hodnota(vrstva.id, kod);
     if (v === undefined) return `${jmeno(kod)}: bez dat`;
     return `${poradiZeme(vrstva.id, kod)}. ${jmeno(kod)}: ${vrstva.format(v)}`;
@@ -1096,14 +1228,15 @@ const czPoradi = Object.fromEntries(
   });
 
   for (const b of document.querySelectorAll<HTMLButtonElement>('[data-rezim]')) b.addEventListener('click', () => nastavRezim(b.dataset.rezim as 'globus' | 'mapa'));
+  function prepniVrstvu(id: string) {
+    vrstva = vrstvaPodleId(id) ?? vrstva;
+    obarvi();
+    zebricekPanel();
+    statPanel();
+    ulozOdkaz();
+  }
   for (const b of document.querySelectorAll<HTMLButtonElement>('[data-vrstva]')) {
-    b.addEventListener('click', () => {
-      vrstva = vrstvaPodleId(b.dataset.vrstva!)!;
-      obarvi();
-      zebricekPanel();
-      statPanel();
-      ulozOdkaz();
-    });
+    b.addEventListener('click', () => prepniVrstvu(b.dataset.vrstva!));
   }
   for (const b of document.querySelectorAll<HTMLButtonElement>('[data-zeme-kod]')) {
     b.addEventListener('click', () => {

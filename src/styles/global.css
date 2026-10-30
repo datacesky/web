@@ -75,6 +75,8 @@
   --teal-text: #146F66;
   --cesko-plocha: #FBD3AE;
   --zimoviste: #F6E1C6;
+  /* Konflikty na glóbusu */
+  --valka: #D8473B; --valka-text: #B23126; --konflikt: #4E5F84; --zamrzly: #AEB8CB;
   /* 3D model Česka: světlá deska na podložce (v tmavém režimu na tmavém stole) */
   --scena-3d-1: #FBF8F2; --scena-3d-2: #F2EDE3; --scena-3d-3: #E9E1D3;
   --obal: 1200px;
@@ -159,6 +161,7 @@
   --teal-text: #63CFC3;
   --cesko-plocha: #6A4728;
   --zimoviste: #463626;
+  --valka: #E2574A; --valka-text: #F28A7E; --konflikt: #7386A8; --zamrzly: #56658B;
   --scena-3d-1: #24314F; --scena-3d-2: #172239; --scena-3d-3: #0E1628;
   color-scheme: dark;
 }

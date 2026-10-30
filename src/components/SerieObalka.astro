@@ -1,7 +1,7 @@
 ---
-// Obálka dílu ve stylu příspěvků @data.cesky (9:16 jako reel): krémové pozadí s vrstevnicemi, název série,
-// číslo dílu a vodoznak. Když v public/serie/ leží vlastní náhledovka (třeba cesko-vs-svet-9.jpg),
-// použije se místo vygenerované obálky.
+// Obálka videa ve stylu příspěvků @data.cesky (9:16 jako reel): krémové pozadí s vrstevnicemi, název série,
+// číslo dílu a vodoznak. Když v public/videa/ leží náhledovka podle id videa (třeba cesko-vs-svet-11.webp
+// nebo gaston.webp), použije se místo vygenerované obálky. Starší složka public/serie/ funguje taky.
 import fs from 'node:fs';
 import path from 'node:path';
 import { vlajka } from '../lib/svet';
@@ -18,14 +18,16 @@ interface Props {
   velka?: boolean;
 }
 const { slug, serie, typ, dil, nazev, a3, ikonaId, velka = false } = Astro.props;
-const vlastni = ['webp', 'jpg', 'jpeg', 'png'].map((p) => `${slug}.${p}`).find((f) => fs.existsSync(path.join(process.cwd(), 'public', 'serie', f)));
+const vlastni = ['videa', 'serie']
+  .flatMap((slozka) => ['webp', 'jpg', 'jpeg', 'png'].map((p) => `${slozka}/${slug}.${p}`))
+  .find((f) => fs.existsSync(path.join(process.cwd(), 'public', f)));
 // Vlastní obálka pro 100 lidí: mřížka 10×10, jeden člověk zvýrazněný
 const lide = Array.from({ length: 100 }, (_, i) => i);
 ---
 
 <div class:list={['so', 'vzdy-svetle', `so--${typ}`, { 'so--velka': velka, 'so--foto': vlastni }]}>
   {vlastni ? (
-    <img src={`/serie/${vlastni}`} alt="" loading="lazy" decoding="async" />
+    <img src={`/${vlastni}`} alt="" width="540" height="960" loading={velka ? 'eager' : 'lazy'} decoding="async" />
   ) : (
     <div class="so__plocha" aria-hidden="true">
       <span class="so__serie">{serie}</span>

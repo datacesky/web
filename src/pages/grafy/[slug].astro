@@ -8,6 +8,8 @@ import PorovnejMzdu from '../../components/PorovnejMzdu.astro';
 import Piktogramy from '../../components/Piktogramy.astro';
 import NaObyvatele from '../../components/NaObyvatele.astro';
 import GrafCard from '../../components/GrafCard.astro';
+import ObchodyNaMape from '../../components/ObchodyNaMape.astro';
+import FirmyNaMape from '../../components/FirmyNaMape.astro';
 import vysokoskolaci from '../../data/grafy/vysokoskolaci.json';
 import turiste from '../../data/grafy/turiste.json';
 import { datum } from '../../lib/format';
@@ -72,6 +74,9 @@ const NAPOVEDA_VYVOJE: Record<string, string> = {
             <span class="znacka">@data<span>.cesky</span></span>
           </div>
         </div>
+
+        {graf.id === 'supermarkety-v-cesku' && <ObchodyNaMape />}
+        {graf.id === 'nejvetsi-ceske-firmy' && <FirmyNaMape polozky={data.polozky} jednotka={data.jednotka} />}
 
         {data.porovnej && (
           <section class="karta sloupec porovnej" style="gap: 1.1rem;" id="porovnej">

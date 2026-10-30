@@ -21,7 +21,12 @@ Po `git push` do větve main se web sám nasadí.
 | Města na mapě | `src/data/mesta.json` (ČSÚ, Databáze demografických údajů za vybraná města) |
 | Podklad mapy (popisky krajů, řeky, vrcholy) | `src/data/cesko-mapa.json` |
 | Světová data pro glóbus | `src/data/svet.json` |
-| Ostatní série | `src/data/serie.ts` |
+| Ostatní série a samostatná videa | `src/data/serie.ts` (série, díly, témata, odkazy na reely), stránka `src/pages/videa.astro` |
+| Náhledovky videí | `public/videa/{id}.webp` (id videa ze `serie.ts`, díly Česko vs. svět `cesko-vs-svet-11.webp`) |
+| Konflikty na glóbusu | `src/data/konflikty.ts` (návod na aktualizaci je nahoře v souboru) |
+| Supermarkety na mapě | `public/data/obchody.json`, vyrobí ho `python3 skripty/data_obchody.py export.geojson` (postup v hlavičce skriptu) |
+| Sídla největších firem | tabulka `SIDLA` v `src/components/FirmyNaMape.astro` |
+| Loga firem a obchodů | `public/loga/{název bez diakritiky}.png`, třeba `penny.png`, `skoda-auto.png`; v grafech a mapách se ukážou samy |
 | Hlasování o dalším dílu | `src/data/hlasovani.ts`, skript `navody/hlasovani-apps-script.gs` |
 | Ověření pro Google, Seznam a měření návštěvnosti | `src/data/web.ts` |
 | Náhledové obrázky pro sdílení | `public/og/` |
@@ -90,15 +95,17 @@ python3 skripty/data_3d.py
 Skript stáhne asi 500 MB dat (ČSÚ, hranice obcí, Natural Earth), uloží si je do dočasné složky a trvá pár minut.
 Samotný model je v `src/lib/cesko3d.ts` (three.js) a `src/components/Cesko3D.astro`.
 
-## Série a náhledovky
+## Videa a náhledovky
 
-Stránka Série ukazuje každý díl jako obálku 9:16. Bez obrázku se obálka vygeneruje sama (vlajky, název, číslo dílu).
-Vlastní náhledovku dáš do složky `public/serie/` (JPG, PNG nebo WebP, ideálně 720 × 1280 px):
+Stránka Videa (`/videa/`, stará adresa `/serie/` na ni přesměruje) ukazuje všechna videa: nejnovější nahoře,
+série jako vodorovné řady a pod nimi ostatní videa. Nahoře je hledání a filtr podle série nebo tématu.
+Filtr jde poslat odkazem: `/videa/#ceske-rody`, `/videa/#t=historie`, `/videa/#q=brno`.
 
-- `cesko-vs-svet-9.jpg` = díl 9 série Česko vs. svět
-- `index-tydne-1.jpg`, `kdyby-cesko-bylo-100-lidi-1.jpg` = díly ostatních sérií v pořadí ze `src/data/serie.ts`
-
-Nový díl Česko vs. svět přidáš do `src/data/epizody.ts`, ostatní do `src/data/serie.ts`.
+- Nový díl Česko vs. svět přidáš do `src/data/epizody.ts`, ostatní videa do `src/data/serie.ts` (u série do `dily`,
+  video mimo sérii do `samostatna`). Grafy s odkazem na reel (`src/content/grafy`) se mezi videa přidají samy.
+- Dokud video nemá odkaz na Instagram, karta vede na profil a video se neukáže jako nejnovější.
+- Náhledovka: `public/videa/{id}.webp` (nebo JPG, PNG), ideálně 540 × 960 px. Bez ní se obálka vygeneruje sama.
+- Štítek „Nové“ mají videa z posledních deseti dnů.
 
 ## Data u grafů
 
@@ -107,6 +114,9 @@ Obnovíš je příkazem `python3 skripty/data_grafu.py` (potřebuje jen Python 3
 v `git diff`, zkontroluj je před pushnutím.
 
 ## Hlasování
+
+Tabulka ukazuje celkové počty hlasů ze všech kol. Země, které už mají díl v `src/data/epizody.ts`, z výběru,
+z tabulky i ze součtu hlasů zmizí samy. Hlasovat jde jednou za díl: po přidání dalšího dílu může každý hlasovat znovu.
 
 Doporučené je zapojení přes Google Apps Script: hlasy se zapisují hned a web dostane výsledky okamžitě.
 Postup je přímo v hlavičce souboru `navody/hlasovani-apps-script.gs`. Adresu webové aplikace (končí `/exec`)
