@@ -1,10 +1,9 @@
 ---
-// Videa: všechna videa na jednom místě. Nahoře hledání a filtry (série, témata), pod tím nejnovější video,
-// série jako vodorovné řady a ostatní videa. Při hledání nebo filtru se místo přehledu ukáže mřížka výsledků.
+// Videa jako profil na Instagramu: nahoře profil, série jako kroužky (zvýraznění), pod tím hledání
+// a hustá mřížka všech videí od nejnovějšího. Klik na kroužek mřížku vyfiltruje na jednu sérii.
 // Filtr jde nastavit odkazem: /videa/#ceske-rody (série), /videa/#t=historie (téma), /videa/#q=brno (hledání).
 import Base from '../layouts/Base.astro';
 import SerieObalka from '../components/SerieObalka.astro';
-import VideoKarta from '../components/VideoKarta.astro';
 import { nactiVidea } from '../lib/dily';
 import { TEMATA, type Tema } from '../data/serie';
 import { epizody } from '../data/epizody';
@@ -13,423 +12,364 @@ import { ikona } from '../lib/ikony';
 import { hlasovaniZapnute } from '../data/hlasovani';
 
 const { vse, ostatni, rady } = await nactiVidea();
-// Nejnovější video nahoře, nikdy video, které ještě nevyšlo
-const vyslo = vse.filter((d) => !d.brzy);
-const nejnovejsi = vyslo[0];
-const dalsiNova = vyslo.filter((d) => d !== nejnovejsi).slice(0, 3);
 const zemi = new Set(epizody.map((e) => e.a3)).size;
-const slovo = (n: number, a: string, b: string, c: string) => sklonuj(n, a, b, c).replace(/^\d+ /, '');
-const videi = (n: number) => sklonuj(n, 'video', 'videa', 'videí');
-const dilu = (n: number) => sklonuj(n, 'díl', 'díly', 'dílů');
+const vyslo = vse.filter((d) => !d.brzy);
+const posledni = vyslo[0];
+const kratce = (d: string) => new Date(d).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'numeric' });
 
 // Témata, která mají aspoň jedno video, od nejčastějšího
 const pocetTemat = new Map<Tema, number>();
 for (const d of vse) for (const t of d.tema) pocetTemat.set(t, (pocetTemat.get(t) ?? 0) + 1);
 const temata = [...pocetTemat.entries()].sort((a, b) => b[1] - a[1]).map(([t]) => t);
 
-// Popisy filtrů pro nadpis výsledků
+// Kroužky sérií: nejdřív série s nejnovějším dílem, nakonec Další videa
+const krouzky = [
+  ...rady.map((r) => ({ id: r.id, nazev: r.nazev, kratce: r.nazev, popis: r.popis, ikona: r.ikona, pocet: r.dily.length })),
+  { id: 'ostatni', nazev: 'Další videa', kratce: 'Další videa', popis: 'Mapy, žebříčky a příběhy z dat, které nepatří do žádné série.', ikona: 'graf', pocet: ostatni.length },
+];
+const KRATKE: Record<string, string> = { 'cesko-vs-svet': 'Česko vs. svět', 'kdyby-cesko-bylo-100-lidi': '100 lidí', 'cesi-kteri-zmenili-svet': 'Češi, kteří změnili svět', '24-hodin-mhd': '24 hodin MHD' };
+for (const k of krouzky) k.kratce = KRATKE[k.id] ?? k.nazev;
+
 const filtry = JSON.stringify({
-  serie: Object.fromEntries([
-    ...rady.map((r) => [r.id, { nazev: r.nazev, popis: r.popis }]),
-    ['ostatni', { nazev: 'Další videa', popis: 'Videa mimo série: mapy, žebříčky a příběhy z dat.' }],
-  ]),
+  serie: Object.fromEntries(krouzky.map((k) => [k.id, { nazev: k.nazev, popis: k.popis, pocet: k.pocet }])),
   tema: Object.fromEntries(temata.map((t) => [t, { nazev: TEMATA[t].nazev }])),
 });
 ---
 
 <Base
   titul="Videa — data.cesky"
-  popis="Všechna videa @data.cesky na jednom místě: Česko vs. svět, 24 hodin MHD, České rody, Češi, kteří změnili svět a další. S hledáním a filtrem podle tématu."
+  popis="Všechna videa @data.cesky na jednom místě: Česko vs. svět, 24 hodin MHD, České rody, Češi, kteří změnili svět a další. S hledáním podle místa, země nebo tématu."
 >
-  <div class="vi-uvod">
-    <section class="obal vi-uvod__obsah">
-      <span class="nadhlavi">Videa</span>
-      <h1>Všechna videa na jednom místě</h1>
-      <p class="perex">Každé video vyšlo nejdřív na Instagramu, TikToku a Facebooku. Tady jsou pohromadě, s hledáním podle názvu, místa, země nebo tématu.</p>
-      <ul class="vi-cisla">
-        <li><strong data-pocitej>{vse.length}</strong><span>{slovo(vse.length, 'video', 'videa', 'videí')}</span></li>
-        <li><strong data-pocitej>{rady.length}</strong><span>{slovo(rady.length, 'série', 'série', 'sérií')}</span></li>
-        <li><strong data-pocitej>{zemi}</strong><span>{slovo(zemi, 'země', 'země', 'zemí')} vedle Česka</span></li>
-      </ul>
-
-      <div class="vi-hledani" role="search">
-        <div class="hledani__pole">
-          <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
-          <input type="search" enterkeyhint="search" placeholder="Hledej třeba Brno nebo Karel IV." aria-label="Hledat ve videích" autocomplete="off" data-vi-hledat />
-          <button type="button" class="vi-hledani__smazat" data-vi-smazat aria-label="Smazat hledání" hidden>
-            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12 M18 6L6 18" /></svg>
-          </button>
-        </div>
+  <div class="obal pf">
+    <header class="pf__hlava">
+      <div class="pf__avatar" aria-hidden="true">
+        <span class="pf__avatar-vnitrek"><img src="/apple-touch-icon.png" alt="" width="180" height="180" /></span>
       </div>
-    </section>
-
-    <nav class="obal vi-filtry" aria-label="Filtrovat videa">
-      <div class="vi-filtry__rada">
-        <span class="vi-filtry__titul">Série</span>
-        <div class="vi-filtry__chipy">
-          <button type="button" class="chip vi-chip" data-filtr="" aria-pressed="true">Vše <small>{vse.length}</small></button>
-          {rady.map((r) => (
-            <button type="button" class="chip vi-chip" data-filtr={r.id} aria-pressed="false">{r.nazev} <small>{r.dily.length}</small></button>
-          ))}
-          <button type="button" class="chip vi-chip" data-filtr="ostatni" aria-pressed="false">Další videa <small>{ostatni.length}</small></button>
-        </div>
-      </div>
-      <div class="vi-filtry__rada">
-        <span class="vi-filtry__titul">Téma</span>
-        <div class="vi-filtry__chipy">
-          {temata.map((t) => (
-            <button type="button" class="chip vi-chip vi-chip--tema" data-filtr={`t=${t}`} aria-pressed="false">
-              <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d={ikona(TEMATA[t].ikona)} /></svg>
-              {TEMATA[t].nazev} <small>{pocetTemat.get(t)}</small>
-            </button>
-          ))}
-        </div>
-      </div>
-    </nav>
-  </div>
-
-  <div data-vi-prehled>
-    {nejnovejsi && (
-      <section class="obal sekce--mala">
-        <div class="vi-nove">
-          <a class="vi-nove__obalka" href={nejnovejsi.odkaz} aria-label={`${nejnovejsi.titul}, přehrát na Instagramu`}>
-            <SerieObalka slug={nejnovejsi.slug} serie={nejnovejsi.stitek} typ={nejnovejsi.typ} dil={nejnovejsi.dil} nazev={nejnovejsi.nazev} a3={nejnovejsi.a3} ikonaId={nejnovejsi.ikona} velka />
-          </a>
-          <div class="vi-nove__text">
-            <span class="nadhlavi nadhlavi--zive">Nejnovější video · {datum(new Date(nejnovejsi.datum))}</span>
-            {nejnovejsi.serie && <span class="vi-nove__serie">{nejnovejsi.serie}{nejnovejsi.dil ? `, ${nejnovejsi.dil}. díl` : ''}</span>}
-            <h2>{nejnovejsi.titul}</h2>
-            <p class="perex">{nejnovejsi.popis}</p>
-            <div class="rada">
-              <a class="tlacitko tlacitko--plny" href={nejnovejsi.odkaz}>
-                <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="currentColor"><path d={ikona('prehrat')} /></svg>
-                Přehrát na Instagramu
-              </a>
-              {nejnovejsi.a3 && <a class="tlacitko" href={`/svet/#z=${nejnovejsi.a3}`}>{nejnovejsi.nazev} na glóbusu</a>}
-              {nejnovejsi.web && <a class="tlacitko" href={nejnovejsi.web}>Interaktivně na webu</a>}
-            </div>
-            {nejnovejsi.typ === 'vs' && hlasovaniZapnute && (
-              <a class="vi-nove__hlasuj" href="/hlasovani/">
-                <span>Díl {epizody.length + 1} vybíráš ty</span>
-                <strong>Hlasuj, kterou zemi chceš příště →</strong>
-              </a>
-            )}
-            {dalsiNova.length > 0 && (
-              <div class="vi-nove__dalsi">
-                <span class="vi-nove__dalsi-titul">Taky nově</span>
-                <ul>
-                  {dalsiNova.map((d) => (
-                    <li>
-                      <a href={d.odkaz} class="vi-mini">
-                        <span class="vi-mini__obalka"><SerieObalka slug={d.slug} serie={d.stitek} typ={d.typ} dil={d.dil} nazev={d.nazev} a3={d.a3} ikonaId={d.ikona} /></span>
-                        <span class="vi-mini__text">
-                          <small>{d.serie || d.tema.map((t) => TEMATA[t].nazev).join(' · ')} · {datum(new Date(d.datum))}</small>
-                          <strong>{d.titul}</strong>
-                        </span>
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+      <div class="pf__info">
+        <div class="pf__radek">
+          <h1 class="pf__jmeno">data.cesky</h1>
+          <div class="pf__tlacitka">
+            <a class="pf__tl pf__tl--hlavni" href="https://www.instagram.com/data.cesky/">Sledovat</a>
+            <a class="pf__tl" href="https://www.tiktok.com/@data.cesky">TikTok</a>
+            <a class="pf__tl" href="https://www.facebook.com/data.cesky">Facebook</a>
           </div>
         </div>
-      </section>
-    )}
-
-    {rady.map((r) => (
-      <section class="obal vi-serie" data-rada={r.id}>
-        <header class="vi-serie__hlava">
-          <span class="vi-serie__ikona" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d={ikona(r.ikona)} /></svg>
-          </span>
-          <div class="vi-serie__text">
-            <h2>{r.nazev} <span class="vi-serie__pocet">{dilu(r.dily.length)}</span></h2>
-            <p>{r.popis}</p>
-          </div>
-          <div class="vi-serie__ovladani">
-            <button type="button" class="vi-sipka" data-posun="-1" aria-label={`${r.nazev}: předchozí díly`} hidden>
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6" /></svg>
-            </button>
-            <button type="button" class="vi-sipka" data-posun="1" aria-label={`${r.nazev}: další díly`} hidden>
-              <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6" /></svg>
-            </button>
-            <a class="tlacitko tlacitko--male" href={`#${r.id}`} data-filtr={r.id}>Celá série</a>
-          </div>
-        </header>
-        <ul class="vi-rada" data-rada-seznam>
-          {[...r.dily].reverse().map((d) => (
-            <li><VideoKarta d={d} rada /></li>
-          ))}
+        <ul class="pf__cisla">
+          <li><strong>{vse.length}</strong> <span>{sklonuj(vse.length, 'video', 'videa', 'videí').replace(/^\d+ /, '')}</span></li>
+          <li><strong>{rady.length}</strong> <span>{sklonuj(rady.length, 'série', 'série', 'sérií').replace(/^\d+ /, '')}</span></li>
+          <li><strong>{zemi}</strong> <span>{sklonuj(zemi, 'země', 'země', 'zemí').replace(/^\d+ /, '')} vedle Česka</span></li>
         </ul>
-      </section>
-    ))}
-
-    {ostatni.length > 0 && (
-      <section class="obal vi-serie vi-serie--ostatni">
-        <header class="vi-serie__hlava">
-          <span class="vi-serie__ikona vi-serie__ikona--svetla" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d={ikona('graf')} /></svg>
-          </span>
-          <div class="vi-serie__text">
-            <h2>Další videa <span class="vi-serie__pocet">{videi(ostatni.length)}</span></h2>
-            <p>Mapy, žebříčky a příběhy z dat, které nepatří do žádné série.</p>
-          </div>
-        </header>
-        <ul class="vi-mrizka">
-          {ostatni.map((d) => <li><VideoKarta d={d} /></li>)}
-        </ul>
-      </section>
-    )}
-  </div>
-
-  <section class="obal sekce--mala vi-vysledky" data-vi-vysledky hidden aria-live="polite">
-    <header class="vi-vysledky__hlava">
-      <div>
-        <h2 data-vi-titul>Výsledky</h2>
-        <p class="drobne" data-vi-popis hidden></p>
-      </div>
-      <div class="vi-vysledky__ovladani">
-        <span class="vi-vysledky__pocet" data-vi-pocet></span>
-        <div class="vi-razeni" role="group" aria-label="Řazení">
-          <button type="button" data-razeni="nove" aria-pressed="true">Nejnovější</button>
-          <button type="button" data-razeni="stare" aria-pressed="false">Od nejstaršího</button>
-        </div>
-        <button type="button" class="tlacitko tlacitko--male" data-vi-zrusit>Zrušit filtr</button>
+        <p class="pf__bio">
+          Česko v mapách, grafech a číslech. Všechna naše videa z Instagramu, TikToku a Facebooku na jednom místě.
+          {posledni && <span class="pf__posledni">Naposledy: <a href={posledni.odkaz}>{posledni.titul}</a> ({kratce(posledni.datum)})</span>}
+        </p>
+        {hlasovaniZapnute && (
+          <a class="pf__hlasuj" href="/hlasovani/"><span class="pf__pulz" aria-hidden="true"></span>Díl {epizody.length + 1} Česko vs. svět vybíráš ty <strong>Hlasovat →</strong></a>
+        )}
       </div>
     </header>
-    <ul class="vi-mrizka" data-vi-mrizka>
-      {vse.map((d) => <li data-polozka><VideoKarta d={d} /></li>)}
-    </ul>
-    <div class="vi-nic" data-vi-nic hidden>
-      <strong>Nic takového jsme nenašli.</strong>
-      <p class="drobne">Zkus jiné slovo, třeba název města, země nebo panovníka. Nebo vyber sérii nahoře.</p>
-    </div>
-  </section>
 
-  <script is:inline type="application/json" id="vi-filtry" set:html={filtry} />
+    <nav class="hl-krouzky" aria-label="Série">
+      <button type="button" class="kr" data-filtr="" aria-pressed="true">
+        <span class="kr__kruh kr__kruh--vse"><span class="kr__vnitrek">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h6v6H4z M14 4h6v6h-6z M4 14h6v6H4z M14 14h6v6h-6z" /></svg>
+        </span></span>
+        <span class="kr__nazev">Vše</span>
+        <span class="kr__pocet">{vse.length}</span>
+      </button>
+      {krouzky.map((k) => (
+        <button type="button" class="kr" data-filtr={k.id} aria-pressed="false" title={k.nazev}>
+          <span class="kr__kruh"><span class="kr__vnitrek">
+            <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d={ikona(k.ikona)} /></svg>
+          </span></span>
+          <span class="kr__nazev">{k.kratce}</span>
+          <span class="kr__pocet">{k.pocet}</span>
+        </button>
+      ))}
+    </nav>
+
+    <div class="pf__lista" data-lista>
+      <div class="hledani__pole pf__hledani" role="search">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
+        <input type="search" enterkeyhint="search" placeholder="Hledej Brno, Japonsko, Karel IV." aria-label="Hledat ve videích" autocomplete="off" data-hledat />
+        <button type="button" class="pf__smazat" data-smazat aria-label="Smazat hledání" hidden>
+          <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12 M18 6L6 18" /></svg>
+        </button>
+      </div>
+      <label class="pf__vyber">
+        <span class="sr-only">Téma</span>
+        <select data-tema aria-label="Téma">
+          <option value="">Všechna témata</option>
+          {temata.map((t) => <option value={t}>{TEMATA[t].nazev} ({pocetTemat.get(t)})</option>)}
+        </select>
+      </label>
+      <button type="button" class="pf__razeni" data-razeni aria-label="Řazení: od nejnovějšího">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16 M3 16l4 4 4-4 M17 20V4 M13 8l4-4 4 4" /></svg>
+        <span data-razeni-text>Nejnovější</span>
+      </button>
+    </div>
+
+    <div class="pf__stav" aria-live="polite">
+      <div class="pf__stav-text">
+        <strong data-titul>Všechna videa</strong>
+        <span data-popis></span>
+      </div>
+      <span class="pf__pocet" data-pocet>{vse.length} {sklonuj(vse.length, 'video', 'videa', 'videí').replace(/^\d+ /, '')}</span>
+    </div>
+
+    <ul class="mr" data-mrizka>
+      {vse.map((d, i) => {
+        const Obal = d.brzy ? 'div' : 'a';
+        return (
+          <li
+            class:list={['dl', { 'dl--brzy': d.brzy }]}
+            data-serie={d.serieId || 'ostatni'}
+            data-tema={d.tema.join(' ')}
+            data-hledat={d.hledat}
+            data-datum={d.datum}
+            data-dil={d.dil ?? ''}
+            data-i={i}
+          >
+            <Obal class="dl__odkaz" href={d.brzy ? undefined : d.odkaz} aria-label={d.brzy ? `${d.titul}, brzy na Instagramu` : `${d.titul}, přehrát`}>
+              <span class="dl__obal">
+                <SerieObalka slug={d.slug} serie={d.stitek} typ={d.typ} dil={d.dil} nazev={d.nazev} a3={d.a3} ikonaId={d.ikona} />
+                <span class="dl__prekryv" aria-hidden="true">
+                  <span class="dl__popis">{d.popis}</span>
+                </span>
+                {d.brzy ? <span class="dl__stitek dl__stitek--brzy">Brzy</span> : <span class="dl__stitek" data-novy hidden>Nové</span>}
+              </span>
+              <span class="dl__nazev">{d.titul}</span>
+              <span class="dl__meta">{d.serie ? `${d.serie}${d.dil ? ` · ${d.dil}.` : ''}` : d.tema.map((t) => TEMATA[t].nazev).join(' · ')}<span class="dl__datum"> · {d.brzy ? 'brzy' : kratce(d.datum)}</span></span>
+            </Obal>
+            {d.web && (
+              <a class="dl__web" href={d.web} title="Interaktivní verze na webu" aria-label={`${d.titul}: interaktivní verze na webu`}>
+                <svg viewBox="0 0 24 24" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z M9 4v13 M15 7v13" /></svg>
+                <span>Na webu</span>
+              </a>
+            )}
+          </li>
+        );
+      })}
+    </ul>
+    <div class="pf__nic" data-nic hidden>
+      <strong>Nic takového jsme nenašli.</strong>
+      <p class="drobne">Zkus jiné slovo, třeba název města, země nebo panovníka.</p>
+      <button type="button" class="tlacitko tlacitko--male" data-zrusit>Ukázat všechna videa</button>
+    </div>
+  </div>
+
+  <script is:inline type="application/json" id="pf-filtry" set:html={filtry} />
 </Base>
 
 <style>
-  .vi-uvod { position: relative; isolation: isolate; padding-bottom: 0.5rem; }
-  .vi-uvod::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
-    background: url('/vrstevnice.svg') center top / cover no-repeat; opacity: calc(0.7 * var(--vrstevnice-sila));
-    -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
-  }
-  .vi-uvod__obsah { display: flex; flex-direction: column; align-items: center; gap: 1rem; text-align: center; padding-block: clamp(2.5rem, 6vw, 4rem) 1.25rem; }
-  .vi-uvod__obsah h1 { font-size: clamp(2rem, 4.4vw, 3rem); line-height: 1.1; text-wrap: balance; }
-  .vi-uvod__obsah .perex { max-width: 56ch; margin: 0; }
-  .vi-cisla { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.5rem; list-style: none; margin: 0.2rem 0 0; padding: 0; }
-  .vi-cisla li { display: flex; align-items: baseline; gap: 0.4rem; padding: 0.45rem 1rem; border-radius: 999px; background: var(--paper); box-shadow: 0 0 0 1px var(--line), var(--stin-maly); }
-  .vi-cisla strong { font-size: 1.15rem; font-weight: 900; color: var(--orange-text); font-variant-numeric: tabular-nums; }
-  .vi-cisla span { font-size: 0.86rem; font-weight: 700; color: var(--muted); }
-  .vi-hledani { width: min(100%, 560px); margin-top: 0.6rem; }
-  .vi-hledani .hledani__pole { min-height: 58px; padding: 0 0.6rem 0 1.25rem; }
-  .vi-hledani input { font-size: 1.02rem; }
-  .vi-hledani__smazat { display: grid; place-items: center; width: 36px; height: 36px; border: 0; border-radius: 50%; background: var(--hover); color: var(--navy); cursor: pointer; transition: transform var(--stisk) var(--ease-out); }
-  .vi-hledani__smazat:active { transform: scale(0.9); }
+  .pf { --obal: 1080px; padding-block: clamp(1.5rem, 4vw, 2.75rem) clamp(2.5rem, 6vw, 4rem); display: flex; flex-direction: column; gap: clamp(1.25rem, 3vw, 1.75rem); }
 
-  .vi-filtry { display: flex; flex-direction: column; gap: 0.5rem; align-items: center; }
-  .vi-filtry__rada { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 0.4rem; max-width: 100%; }
-  .vi-filtry__chipy { display: contents; }
-  .vi-filtry__titul { flex: 0 0 auto; margin-right: 0.35rem; font-size: 0.7rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-  .vi-chip { min-height: 38px; padding: 0 0.85rem; gap: 0.4rem; font-size: 0.86rem; white-space: nowrap; }
-  .vi-chip small { font-size: 0.74rem; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
-  .vi-chip[aria-pressed='true'] small { color: var(--akcent-na-inkoustu); }
-  .vi-chip svg { color: var(--orange-text); flex-shrink: 0; }
-  .vi-chip[aria-pressed='true'] svg { color: var(--akcent-na-inkoustu); }
-  .vi-chip:active { transform: scale(0.96); }
-  @media (hover: hover) and (pointer: fine) { .vi-chip[aria-pressed='false']:hover { border-color: var(--navy); } }
-  /* Na telefonu jedna řada na posun do strany, ať filtry nezaberou půl obrazovky */
-  @media (max-width: 760px) {
-    .vi-filtry { align-items: stretch; gap: 0.7rem; }
-    .vi-filtry__rada { flex-direction: column; flex-wrap: nowrap; align-items: flex-start; gap: 0.35rem; }
-    .vi-filtry__chipy { display: flex; flex-wrap: nowrap; gap: 0.4rem; overflow-x: auto; width: calc(100% + 2.5rem); margin-inline: -1.25rem; padding: 0.15rem 1.25rem 0.4rem; scrollbar-width: none; scroll-snap-type: x proximity; scroll-padding-inline: 1.25rem; }
-    .vi-filtry__chipy::-webkit-scrollbar { display: none; }
-    .vi-chip { scroll-snap-align: start; }
-    .vi-filtry__titul { padding-left: 0.1rem; }
-  }
-
-  /* Nejnovější video */
-  .vi-nove { display: grid; grid-template-columns: minmax(200px, 300px) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center; padding: clamp(1.25rem, 3vw, 2rem); border-radius: 28px; background: var(--paper); box-shadow: 0 0 0 1px var(--line), var(--stin); }
-  @media (max-width: 720px) { .vi-nove { grid-template-columns: 1fr; justify-items: center; text-align: center; } .vi-nove__obalka { width: min(70%, 260px); } }
-  .vi-nove__obalka { display: block; border-radius: 18px; transition: transform 0.35s var(--ease-out); }
-  @media (hover: hover) and (pointer: fine) { .vi-nove__obalka:hover { transform: translateY(-4px) rotate(-0.6deg); } }
-  .vi-nove__obalka:active { transform: scale(0.98); }
-  .vi-nove__text { display: flex; flex-direction: column; gap: 0.75rem; align-items: flex-start; min-width: 0; }
-  @media (max-width: 720px) { .vi-nove__text { align-items: center; } .vi-nove__text .rada { justify-content: center; } }
-  .vi-nove__text h2 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); line-height: 1.15; text-wrap: balance; }
-  .vi-nove__text .perex { margin: 0; max-width: 52ch; }
-  .vi-nove__serie { font-size: 0.9rem; font-weight: 800; color: var(--muted); margin-bottom: -0.4rem; }
-  .vi-nove__hlasuj { display: inline-flex; flex-direction: column; gap: 0.1rem; padding: 0.75rem 1rem; border-radius: 16px; background: var(--panel); color: var(--na-panelu); text-decoration: none; transition: transform var(--stisk) var(--ease-out); }
-  .vi-nove__hlasuj span { font-size: 0.78rem; font-weight: 800; color: var(--na-panelu-akcent); }
-  .vi-nove__hlasuj strong { font-size: 0.95rem; }
-  .vi-nove__hlasuj:active { transform: scale(0.98); }
-  .vi-nove__dalsi { width: 100%; margin-top: 0.5rem; padding-top: 1rem; border-top: 1px solid var(--line); text-align: left; }
-  .vi-nove__dalsi-titul { display: block; margin-bottom: 0.6rem; font-size: 0.72rem; font-weight: 900; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
-  .vi-nove__dalsi ul { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.75rem; }
-  @media (max-width: 960px) { .vi-nove__dalsi ul { grid-template-columns: 1fr; } }
-  .vi-mini { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 0.7rem; align-items: center; padding: 0.35rem; border-radius: 14px; color: inherit; text-decoration: none; transition: background-color 0.2s ease, transform var(--stisk) var(--ease-out); }
-  @media (hover: hover) and (pointer: fine) { .vi-mini:hover { background: var(--hover); } }
-  .vi-mini:active { transform: scale(0.98); }
-  .vi-mini__obalka :global(.so) { border-radius: 9px; }
-  .vi-mini__obalka :global(.so__prehrat) { display: none; }
-  .vi-mini__text { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; }
-  .vi-mini__text small { font-size: 0.72rem; font-weight: 700; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .vi-mini__text strong { font-size: 0.88rem; font-weight: 900; line-height: 1.3; color: var(--navy); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
-
-  /* Série jako vodorovné řady */
-  .vi-serie { padding-block: clamp(1.25rem, 3vw, 2rem); }
-  .vi-serie + .vi-serie { border-top: 1px solid var(--line-jemna); }
-  .vi-serie__hlava { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 1rem; align-items: center; margin-bottom: 1.1rem; }
-  .vi-serie__ikona { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 15px; background: var(--panel); color: var(--orange); box-shadow: var(--stin-maly); }
-  .vi-serie__ikona svg { width: 26px; height: 26px; }
-  .vi-serie__ikona--svetla { background: var(--oranzova-svetla); color: var(--orange-text); }
-  .vi-serie__text h2 { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.7rem; font-size: clamp(1.3rem, 2.4vw, 1.6rem); line-height: 1.2; }
-  .vi-serie__pocet { font-size: 0.82rem; font-weight: 800; color: var(--orange-text); }
-  .vi-serie__text p { margin: 0.2rem 0 0; font-size: 0.92rem; color: var(--muted); max-width: 70ch; line-height: 1.55; }
-  .vi-serie__ovladani { display: flex; align-items: center; gap: 0.4rem; }
+  /* Profil */
+  .pf__hlava { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: clamp(1.25rem, 5vw, 4rem); align-items: center; padding-inline: clamp(0rem, 4vw, 3rem); }
+  .pf__avatar { width: clamp(84px, 16vw, 150px); aspect-ratio: 1; border-radius: 50%; padding: 3px; background: conic-gradient(from 210deg, #F08829, #F6C08C, #D8473B, #F08829); }
+  .pf__avatar-vnitrek { display: block; width: 100%; height: 100%; border-radius: 50%; padding: 4px; background: var(--cream); }
+  .pf__avatar img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; box-shadow: 0 0 0 1px var(--line); }
+  .pf__info { display: flex; flex-direction: column; gap: 0.85rem; min-width: 0; }
+  .pf__radek { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1.25rem; }
+  .pf__jmeno { font-size: clamp(1.4rem, 3vw, 1.75rem); font-weight: 800; letter-spacing: -0.01em; }
+  .pf__tlacitka { display: flex; gap: 0.5rem; }
+  .pf__tl { display: inline-flex; align-items: center; min-height: 36px; padding: 0 0.95rem; border-radius: 10px; background: var(--draha); color: var(--navy); font-size: 0.86rem; font-weight: 800; text-decoration: none; transition: transform var(--stisk) var(--ease-out), background-color 0.2s ease; }
+  .pf__tl--hlavni { background: var(--orange); color: var(--na-oranzove); }
+  .pf__tl:active { transform: scale(0.96); }
+  @media (hover: hover) and (pointer: fine) { .pf__tl:hover { background: var(--hover-silny); color: var(--navy); } .pf__tl--hlavni:hover { background: var(--orange-hover); color: var(--na-oranzove); } }
+  .pf__cisla { display: flex; flex-wrap: wrap; gap: 0.3rem 1.75rem; list-style: none; margin: 0; padding: 0; font-size: 0.98rem; color: var(--text-2); }
+  .pf__cisla strong { color: var(--navy); font-weight: 900; font-variant-numeric: tabular-nums; }
+  .pf__bio { margin: 0; max-width: 58ch; font-size: 0.92rem; line-height: 1.6; color: var(--text-2); }
+  .pf__posledni { display: block; color: var(--muted); }
+  .pf__posledni a { color: var(--navy); font-weight: 800; }
+  .pf__hlasuj { align-self: flex-start; display: inline-flex; align-items: center; gap: 0.55rem; padding: 0.5rem 0.85rem; border-radius: 12px; background: var(--panel); color: var(--na-panelu-2); font-size: 0.84rem; font-weight: 700; text-decoration: none; transition: transform var(--stisk) var(--ease-out); }
+  .pf__hlasuj strong { color: var(--na-panelu-akcent); }
+  .pf__hlasuj:active { transform: scale(0.98); }
+  .pf__pulz { width: 8px; height: 8px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 3px rgba(240, 136, 41, 0.3); }
+  /* Telefon: jako profil v aplikaci. Kroužek a čísla vedle sebe, pod tím popis a tlačítka přes celou šířku */
   @media (max-width: 640px) {
-    .vi-serie__hlava { grid-template-columns: auto minmax(0, 1fr); }
-    .vi-serie__ovladani { grid-column: 1 / -1; }
-    .vi-serie__ikona { width: 42px; height: 42px; border-radius: 13px; }
+    .pf__hlava { grid-template-columns: 84px minmax(0, 1fr); gap: 0.4rem 1rem; padding-inline: 0; }
+    .pf__info, .pf__radek { display: contents; }
+    .pf__avatar { width: 84px; grid-column: 1; grid-row: 1 / 3; align-self: center; }
+    .pf__jmeno { grid-column: 2; grid-row: 1; align-self: end; font-size: 1.25rem; }
+    .pf__cisla { grid-column: 2; grid-row: 2; align-self: start; gap: 1.1rem; font-size: 0.76rem; }
+    .pf__cisla li { display: flex; flex-direction: column; line-height: 1.25; }
+    .pf__cisla strong { font-size: 1.05rem; }
+    .pf__cisla li:last-child span { max-width: 6.5em; }
+    .pf__bio { grid-column: 1 / -1; grid-row: 3; margin-top: 0.5rem; font-size: 0.88rem; }
+    .pf__tlacitka { grid-column: 1 / -1; grid-row: 4; display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 0.4rem; margin-top: 0.3rem; }
+    .pf__tl { justify-content: center; min-height: 34px; padding: 0 0.5rem; font-size: 0.8rem; }
+    .pf__hlasuj { grid-column: 1 / -1; grid-row: 5; width: 100%; justify-content: center; margin-top: 0.3rem; font-size: 0.8rem; }
   }
-  .vi-sipka { display: grid; place-items: center; width: 40px; height: 40px; border-radius: 50%; border: 1.5px solid var(--line-2); background: var(--paper); color: var(--navy); cursor: pointer; transition: transform var(--stisk) var(--ease-out), opacity 0.2s ease, border-color 0.2s ease; }
-  .vi-sipka:disabled { opacity: 0.35; cursor: default; }
-  .vi-sipka:not(:disabled):active { transform: scale(0.92); }
-  @media (hover: hover) and (pointer: fine) { .vi-sipka:not(:disabled):hover { border-color: var(--navy); } }
-  .vi-rada {
-    list-style: none; margin: 0 -1.25rem; padding: 0.5rem 1.25rem 1rem; display: grid; grid-auto-flow: column;
-    grid-auto-columns: clamp(140px, 17vw, 186px); gap: clamp(0.85rem, 1.6vw, 1.25rem);
-    overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-padding-inline: 1.25rem; scrollbar-width: none;
-    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 1.25rem, #000 calc(100% - 2.5rem), transparent 100%);
-    mask-image: linear-gradient(to right, transparent 0, #000 1.25rem, #000 calc(100% - 2.5rem), transparent 100%);
+
+  /* Série jako kroužky (zvýraznění) */
+  .hl-krouzky { display: flex; gap: clamp(0.75rem, 2.4vw, 1.6rem); overflow-x: auto; padding: 0.35rem clamp(0rem, 4vw, 3rem) 0.6rem; margin-inline: -1.25rem; padding-left: max(1.25rem, clamp(0rem, 4vw, 3rem)); padding-right: 1.25rem; scrollbar-width: none; scroll-snap-type: x proximity; }
+  .hl-krouzky::-webkit-scrollbar { display: none; }
+  .kr { flex: 0 0 auto; display: flex; flex-direction: column; align-items: center; gap: 0.3rem; width: 84px; padding: 0; border: 0; background: none; color: var(--navy); font-family: inherit; cursor: pointer; scroll-snap-align: start; -webkit-tap-highlight-color: transparent; }
+  .kr__kruh { display: block; width: 72px; height: 72px; border-radius: 50%; padding: 2.5px; background: var(--line-2); transition: background 0.25s ease, transform var(--stisk) var(--ease-out); }
+  .kr[aria-pressed='true'] .kr__kruh { background: conic-gradient(from 210deg, #F08829, #F6C08C, #D8473B, #F08829); }
+  .kr:active .kr__kruh { transform: scale(0.94); }
+  .kr__vnitrek { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 50%; border: 3px solid var(--cream); background: var(--panel); color: var(--orange); }
+  .kr__kruh--vse .kr__vnitrek { background: var(--paper); color: var(--navy); }
+  .kr__vnitrek svg { width: 30px; height: 30px; }
+  .kr__nazev { width: 100%; font-size: 0.76rem; font-weight: 800; line-height: 1.25; text-align: center; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; }
+  .kr__pocet { margin-top: -0.15rem; font-size: 0.68rem; font-weight: 800; color: var(--muted); font-variant-numeric: tabular-nums; }
+  @media (hover: hover) and (pointer: fine) { .kr:hover .kr__kruh { background: var(--navy); } .kr[aria-pressed='true']:hover .kr__kruh { background: conic-gradient(from 210deg, #F08829, #F6C08C, #D8473B, #F08829); } }
+  @media (max-width: 640px) { .kr { width: 68px; } .kr__kruh { width: 60px; height: 60px; } .kr__vnitrek svg { width: 25px; height: 25px; } .kr__nazev { font-size: 0.7rem; } }
+
+  /* Lišta: hledání, téma, řazení (při posunu zůstane nahoře) */
+  .pf__lista { position: sticky; top: var(--vyska-hlavicky, 64px); z-index: 20; display: flex; flex-wrap: wrap; gap: 0.5rem; align-items: center; padding: 0.6rem 0; border-top: 1px solid var(--line); background: var(--cream); }
+  .pf__lista::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 12px; background: linear-gradient(var(--cream), transparent); pointer-events: none; }
+  .pf__hledani { flex: 1 1 260px; min-height: 44px; box-shadow: none; padding: 0 0.4rem 0 0.9rem; }
+  .pf__hledani input { min-height: 40px; font-size: 0.95rem; }
+  .pf__smazat { display: grid; place-items: center; width: 30px; height: 30px; border: 0; border-radius: 50%; background: var(--hover); color: var(--navy); cursor: pointer; }
+  .pf__vyber select { min-height: 44px; padding: 0 2.2rem 0 0.9rem; border: 1.5px solid var(--line); border-radius: 999px; background: var(--paper) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' width='16' height='16' fill='none' stroke='%2356627A' stroke-width='2.4' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E") no-repeat right 0.8rem center; color: var(--navy); font-family: inherit; font-size: 0.88rem; font-weight: 800; -webkit-appearance: none; appearance: none; cursor: pointer; }
+  .pf__razeni { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 44px; padding: 0 0.95rem; border: 1.5px solid var(--line); border-radius: 999px; background: var(--paper); color: var(--navy); font-family: inherit; font-size: 0.86rem; font-weight: 800; cursor: pointer; transition: transform var(--stisk) var(--ease-out), border-color 0.2s ease; }
+  .pf__razeni:active { transform: scale(0.96); }
+  .pf__razeni[data-stare] svg { transform: scaleY(-1); }
+  @media (hover: hover) and (pointer: fine) { .pf__razeni:hover, .pf__vyber select:hover { border-color: var(--navy); } }
+  /* Telefon: hledání přes celou šířku, pod ním téma a řazení vedle sebe */
+  @media (max-width: 640px) {
+    .pf__lista { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.4rem; padding: 0.5rem 0; }
+    .pf__hledani { grid-column: 1 / -1; min-height: 42px; }
+    .pf__vyber select { width: 100%; min-height: 38px; font-size: 0.82rem; }
+    .pf__razeni { min-height: 38px; padding: 0 0.75rem; font-size: 0.8rem; }
   }
-  .vi-rada::-webkit-scrollbar { display: none; }
-  .vi-rada > li { scroll-snap-align: start; min-width: 0; }
-  @media (prefers-reduced-motion: no-preference) { .vi-rada { scroll-behavior: smooth; } }
 
-  .vi-mrizka { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 176px), 1fr)); gap: clamp(1.25rem, 2.4vw, 1.75rem) clamp(0.9rem, 1.8vw, 1.25rem); }
-  @media (max-width: 480px) { .vi-mrizka { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  .pf__stav { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; align-items: baseline; justify-content: space-between; margin-top: -0.4rem; }
+  .pf__stav-text { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+  .pf__stav-text strong { font-size: 1.05rem; font-weight: 900; }
+  .pf__stav-text span { font-size: 0.86rem; color: var(--muted); max-width: 70ch; }
+  .pf__stav-text span:empty { display: none; }
+  .pf__pocet { font-size: 0.86rem; font-weight: 800; color: var(--orange-text); white-space: nowrap; }
 
-  /* Výsledky hledání a filtru */
-  .vi-vysledky { scroll-margin-top: 80px; }
-  .vi-vysledky__hlava { display: flex; flex-wrap: wrap; gap: 0.8rem 1.5rem; align-items: flex-end; justify-content: space-between; margin-bottom: 1.5rem; }
-  .vi-vysledky__hlava h2 { font-size: clamp(1.4rem, 2.8vw, 1.9rem); }
-  .vi-vysledky__hlava p { margin: 0.3rem 0 0; max-width: 64ch; }
-  .vi-vysledky__ovladani { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
-  .vi-vysledky__pocet { font-size: 0.9rem; font-weight: 800; color: var(--orange-text); }
-  .vi-razeni { display: inline-flex; padding: 3px; border-radius: 999px; background: var(--draha); }
-  .vi-razeni button { min-height: 34px; padding: 0 0.85rem; border: 0; border-radius: 999px; background: transparent; color: var(--muted); font-family: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer; transition: background-color 0.2s ease, color 0.2s ease; }
-  .vi-razeni button[aria-pressed='true'] { background: var(--paper); color: var(--navy); box-shadow: var(--stin-maly); }
-  .vi-nic { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 3rem 1rem; text-align: center; border-radius: 22px; border: 1.5px dashed var(--line-2); }
-  .vi-nic strong { font-size: 1.1rem; }
-  .vi-nic p { margin: 0; max-width: 46ch; }
-  .vi-mrizka > li[hidden] { display: none; }
-  .js .vi-mrizka.je-nova > li:not([hidden]) { animation: vi-vjezd 0.4s var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 12) * 28ms); }
-  @keyframes vi-vjezd { from { opacity: 0; transform: translateY(10px); } }
-  @media (prefers-reduced-motion: reduce) { .js .vi-mrizka.je-nova > li:not([hidden]) { animation: none; } }
+  /* Mřížka */
+  .mr { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1.25rem 0.75rem; }
+  @media (max-width: 1000px) { .mr { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+  @media (max-width: 800px) { .mr { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  @media (max-width: 600px) { .mr { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.85rem 0.35rem; margin-inline: -0.75rem; } }
+  .mr > li[hidden] { display: none; }
+  .dl { position: relative; min-width: 0; }
+  .dl__odkaz { display: flex; flex-direction: column; gap: 0.2rem; color: inherit; text-decoration: none; -webkit-tap-highlight-color: transparent; }
+  .dl__obal { position: relative; display: block; margin-bottom: 0.3rem; border-radius: 12px; overflow: hidden; transition: transform 0.3s var(--ease-out); }
+  .dl__obal :global(.so) { border-radius: 12px; box-shadow: 0 0 0 1px rgba(226, 217, 201, 0.9); }
+  .dl__obal :global(.so__prehrat) { display: none; }
+  .dl__prekryv { position: absolute; inset: 0; display: flex; align-items: flex-end; padding: 0.7rem; background: linear-gradient(to top, rgba(14, 22, 40, 0.92), rgba(14, 22, 40, 0.55) 55%, rgba(14, 22, 40, 0.15)); color: #F2EDE3; opacity: 0; transition: opacity 0.25s ease; }
+  .dl__popis { font-size: 0.78rem; font-weight: 600; line-height: 1.45; display: -webkit-box; -webkit-line-clamp: 7; line-clamp: 7; -webkit-box-orient: vertical; overflow: hidden; }
+  @media (hover: hover) and (pointer: fine) {
+    .dl__odkaz:hover .dl__prekryv, .dl__odkaz:focus-visible .dl__prekryv { opacity: 1; }
+    .dl__odkaz:hover .dl__obal { transform: translateY(-3px); }
+    .dl__odkaz:hover .dl__nazev { color: var(--orange-text); }
+  }
+  .dl__odkaz:active .dl__obal { transform: scale(0.97); transition-duration: var(--stisk); }
+  .dl__odkaz:focus-visible { outline: none; }
+  .dl__odkaz:focus-visible .dl__obal { box-shadow: 0 0 0 3px var(--cream), 0 0 0 5px var(--navy); }
+  .dl__stitek { position: absolute; top: 6px; left: 6px; padding: 0.12rem 0.45rem; border-radius: 999px; background: var(--orange); color: #1B2A4A; font-size: 0.6rem; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; box-shadow: 0 3px 8px -3px rgba(27, 42, 74, 0.5); }
+  .dl__stitek--brzy { background: #1B2A4A; color: #F6C08C; }
+  .dl--brzy .dl__obal :global(.so) { filter: saturate(0.7); }
+  .dl--brzy .dl__odkaz { cursor: default; }
+  .dl__nazev { font-size: 0.86rem; font-weight: 900; line-height: 1.28; color: var(--navy); display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; transition: color 0.2s ease; }
+  .dl__meta { font-size: 0.72rem; font-weight: 700; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dl__web { position: absolute; top: 6px; right: 6px; display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.18rem 0.45rem; border-radius: 999px; background: rgba(255, 255, 255, 0.92); color: #1B2A4A; font-size: 0.62rem; font-weight: 900; text-decoration: none; box-shadow: 0 2px 8px -3px rgba(27, 42, 74, 0.45); transition: transform var(--stisk) var(--ease-out); }
+  .dl__web:active { transform: scale(0.94); }
+  @media (max-width: 600px) {
+    .dl__nazev { font-size: 0.74rem; }
+    .dl__meta { font-size: 0.64rem; }
+    .dl__meta .dl__datum { display: none; }
+    .dl__web span { display: none; }
+    .dl__obal, .dl__obal :global(.so) { border-radius: 8px; }
+  }
+  .js .mr.je-nova > li:not([hidden]) { animation: dl-vjezd 0.38s var(--ease-out) both; animation-delay: calc(min(var(--i, 0), 18) * 18ms); }
+  @keyframes dl-vjezd { from { opacity: 0; transform: translateY(8px); } }
+  @media (prefers-reduced-motion: reduce) { .js .mr.je-nova > li:not([hidden]) { animation: none; } .dl__obal, .dl__prekryv { transition: none; } }
+
+  .pf__nic { display: flex; flex-direction: column; align-items: center; gap: 0.5rem; padding: 3rem 1rem; text-align: center; border-radius: 22px; border: 1.5px dashed var(--line-2); }
+  .pf__nic p { margin: 0; }
+  .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 </style>
 
 <script>
   import { bezDiakritiky } from '../lib/naseptavac';
 
-  type Popis = { nazev: string; popis?: string };
-  const F = JSON.parse(document.getElementById('vi-filtry')!.textContent!) as { serie: Record<string, Popis>; tema: Record<string, Popis> };
+  type Popis = { nazev: string; popis?: string; pocet?: number };
+  const F = JSON.parse(document.getElementById('pf-filtry')!.textContent!) as { serie: Record<string, Popis>; tema: Record<string, Popis> };
   const $ = <T extends Element>(s: string) => document.querySelector<T>(s)!;
-  const vstup = $<HTMLInputElement>('[data-vi-hledat]');
-  const smazat = $<HTMLButtonElement>('[data-vi-smazat]');
-  const prehled = $<HTMLElement>('[data-vi-prehled]');
-  const vysledky = $<HTMLElement>('[data-vi-vysledky]');
-  const mrizka = $<HTMLElement>('[data-vi-mrizka]');
-  const titul = $<HTMLElement>('[data-vi-titul]');
-  const popis = $<HTMLElement>('[data-vi-popis]');
-  const pocet = $<HTMLElement>('[data-vi-pocet]');
-  const nic = $<HTMLElement>('[data-vi-nic]');
-  const chipy = [...document.querySelectorAll<HTMLButtonElement>('.vi-chip')];
-  const razeniTl = [...document.querySelectorAll<HTMLButtonElement>('[data-razeni]')];
-  const polozky = [...mrizka.querySelectorAll<HTMLElement>('[data-polozka]')].map((li) => {
-    const k = li.querySelector<HTMLElement>('[data-video]')!;
-    return { li, serie: k.dataset.serie!, tema: k.dataset.tema!.split(' '), text: k.dataset.hledat!, datum: k.dataset.datum!, dil: Number(k.dataset.dil || 0) };
-  });
+  const vstup = $<HTMLInputElement>('[data-hledat]');
+  const smazat = $<HTMLButtonElement>('[data-smazat]');
+  const vyberTema = $<HTMLSelectElement>('[data-tema]');
+  const mrizka = $<HTMLElement>('[data-mrizka]');
+  const titul = $<HTMLElement>('[data-titul]');
+  const popis = $<HTMLElement>('[data-popis]');
+  const pocet = $<HTMLElement>('[data-pocet]');
+  const nic = $<HTMLElement>('[data-nic]');
+  const krouzky = [...document.querySelectorAll<HTMLButtonElement>('.kr')];
+  const razeniTl = $<HTMLButtonElement>('[data-razeni]');
+  const razeniText = $<HTMLElement>('[data-razeni-text]');
+  const polozky = [...mrizka.querySelectorAll<HTMLElement>(':scope > li')].map((li) => ({
+    li, serie: li.dataset.serie!, tema: li.dataset.tema!.split(' '), text: li.dataset.hledat!, datum: li.dataset.datum!, dil: Number(li.dataset.dil || 0), i: Number(li.dataset.i),
+  }));
 
-  let filtr = ''; // id série, 'ostatni' nebo 't=tema'
+  let serie = '';
+  let tema = '';
   let dotaz = '';
   let razeni: 'nove' | 'stare' = 'nove';
-
   const videi = (n: number) => `${n} ${n === 1 ? 'video' : n >= 2 && n <= 4 ? 'videa' : 'videí'}`;
+  const klidne = matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  function vykresli(posun = false) {
+  // Štítek „Nové“ u videí z posledních deseti dnů
+  const DNY = 10 * 24 * 3600 * 1000;
+  for (const p of polozky) {
+    const d = Date.parse(p.datum);
+    const s = p.li.querySelector<HTMLElement>('[data-novy]');
+    if (s && Date.now() - d < DNY && Date.now() >= d) s.hidden = false;
+  }
+
+  function vykresli(animace = true) {
     const slova = bezDiakritiky(dotaz).split(/\s+/).filter(Boolean);
-    const aktivni = Boolean(filtr || slova.length);
-    prehled.hidden = aktivni;
-    vysledky.hidden = !aktivni;
-    chipy.forEach((c) => c.setAttribute('aria-pressed', String((c.dataset.filtr ?? '') === filtr)));
+    krouzky.forEach((k) => k.setAttribute('aria-pressed', String((k.dataset.filtr ?? '') === serie)));
+    razeniText.textContent = razeni === 'nove' ? 'Nejnovější' : 'Nejstarší';
+    razeniTl.toggleAttribute('data-stare', razeni === 'stare');
+    razeniTl.setAttribute('aria-label', `Řazení: ${razeni === 'nove' ? 'od nejnovějšího' : 'od nejstaršího'}, přepnout`);
+    vyberTema.value = tema;
     smazat.hidden = !dotaz;
-    if (!aktivni) return;
 
-    const tema = filtr.startsWith('t=') ? filtr.slice(2) : '';
-    const serie = !tema ? filtr : '';
-    const vyhovuje = polozky.filter((p) =>
-      (!serie || p.serie === serie) && (!tema || p.tema.includes(tema)) && slova.every((s) => p.text.includes(s)));
-    const mnozina = new Set(vyhovuje);
-    // Série se řadí podle dílů, ostatní podle data
+    const vyhovuje = new Set(polozky.filter((p) => (!serie || p.serie === serie) && (!tema || p.tema.includes(tema)) && slova.every((s) => p.text.includes(s))));
+    // Série od 1. dílu podle čísla, jinak podle data (při stejném datu podle pořadí ze stránky)
     const klic = (p: (typeof polozky)[number]) => (serie && serie !== 'ostatni' && p.dil ? p.dil : 0);
-    const serazene = [...polozky].sort((a, b) => {
-      const r = razeni === 'nove' ? b.datum.localeCompare(a.datum) || klic(b) - klic(a) : a.datum.localeCompare(b.datum) || klic(a) - klic(b);
-      return r;
-    });
+    const serazene = [...polozky].sort((a, b) =>
+      razeni === 'nove' ? b.datum.localeCompare(a.datum) || klic(b) - klic(a) || a.i - b.i : a.datum.localeCompare(b.datum) || klic(a) - klic(b) || b.i - a.i);
     let i = 0;
     for (const p of serazene) {
-      p.li.hidden = !mnozina.has(p);
+      p.li.hidden = !vyhovuje.has(p);
       if (!p.li.hidden) p.li.style.setProperty('--i', String(i++));
       mrizka.append(p.li);
     }
-    mrizka.classList.remove('je-nova');
-    void mrizka.offsetWidth;
-    mrizka.classList.add('je-nova');
+    if (animace) { mrizka.classList.remove('je-nova'); void mrizka.offsetWidth; mrizka.classList.add('je-nova'); }
 
-    const info = serie ? F.serie[serie] : tema ? F.tema[tema] : null;
-    titul.textContent = info ? (slova.length ? `${info.nazev}: „${dotaz.trim()}“` : info.nazev) : `Hledání „${dotaz.trim()}“`;
-    popis.hidden = !info?.popis || slova.length > 0;
-    popis.textContent = info?.popis ?? '';
-    pocet.textContent = videi(vyhovuje.length);
-    nic.hidden = vyhovuje.length > 0;
-    if (posun) vysledky.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block: 'start' });
+    const info = serie ? F.serie[serie] : null;
+    const casti = [info?.nazev, tema ? F.tema[tema]?.nazev : '', slova.length ? `„${dotaz.trim()}“` : ''].filter(Boolean);
+    titul.textContent = casti.length ? casti.join(' · ') : 'Všechna videa';
+    popis.textContent = info && !slova.length && !tema ? info.popis ?? '' : '';
+    pocet.textContent = videi(vyhovuje.size);
+    nic.hidden = vyhovuje.size > 0;
   }
 
   function zapisAdresu() {
-    const h = filtr ? filtr : dotaz.trim() ? `q=${encodeURIComponent(dotaz.trim())}` : '';
+    const h = serie ? serie : tema ? `t=${tema}` : dotaz.trim() ? `q=${encodeURIComponent(dotaz.trim())}` : '';
     history.replaceState(null, '', h ? `#${h}` : location.pathname + location.search);
   }
 
-  function nastavFiltr(f: string, posun: boolean) {
-    filtr = filtr === f ? '' : f;
-    // Série od prvního dílu, ostatní od nejnovějšího
-    razeni = filtr && !filtr.startsWith('t=') && filtr !== 'ostatni' ? 'stare' : 'nove';
-    razeniTl.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.razeni === razeni)));
+  krouzky.forEach((k) => k.addEventListener('click', () => {
+    const f = k.dataset.filtr ?? '';
+    serie = serie === f ? '' : f;
+    // Série se čte od prvního dílu, ostatní od nejnovějšího
+    razeni = serie && serie !== 'ostatni' ? 'stare' : 'nove';
     zapisAdresu();
-    vykresli(posun);
-  }
-
-  chipy.forEach((c) => c.addEventListener('click', () => nastavFiltr(c.dataset.filtr ?? '', false)));
-  document.querySelectorAll<HTMLAnchorElement>('a[data-filtr]').forEach((a) => a.addEventListener('click', (e) => {
-    e.preventDefault();
-    nastavFiltr(a.dataset.filtr!, false);
-    window.scrollTo({ top: 0, behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
-  }));
-  razeniTl.forEach((b) => b.addEventListener('click', () => {
-    razeni = b.dataset.razeni as 'nove' | 'stare';
-    razeniTl.forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
     vykresli();
+    k.scrollIntoView({ behavior: klidne ? 'auto' : 'smooth', block: 'nearest', inline: 'center' });
   }));
-  $<HTMLButtonElement>('[data-vi-zrusit]').addEventListener('click', () => {
-    filtr = ''; dotaz = ''; vstup.value = '';
-    zapisAdresu(); vykresli();
-  });
-
+  razeniTl.addEventListener('click', () => { razeni = razeni === 'nove' ? 'stare' : 'nove'; vykresli(); });
+  vyberTema.addEventListener('change', () => { tema = vyberTema.value; zapisAdresu(); vykresli(); });
   let casovac = 0;
   vstup.addEventListener('input', () => {
     clearTimeout(casovac);
@@ -437,36 +377,34 @@ const filtry = JSON.stringify({
   });
   vstup.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') { vstup.value = ''; dotaz = ''; zapisAdresu(); vykresli(); }
-    if (e.key === 'Enter') { e.preventDefault(); vstup.blur(); vysledky.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+    if (e.key === 'Enter') { e.preventDefault(); vstup.blur(); }
   });
   smazat.addEventListener('click', () => { vstup.value = ''; dotaz = ''; zapisAdresu(); vykresli(); vstup.focus(); });
+  $<HTMLButtonElement>('[data-zrusit]').addEventListener('click', () => {
+    serie = ''; tema = ''; dotaz = ''; vstup.value = ''; razeni = 'nove';
+    zapisAdresu(); vykresli();
+  });
 
   // Filtr z adresy: #ceske-rody, #t=historie, #q=brno
   function zAdresy() {
     const h = decodeURIComponent(location.hash.slice(1));
-    filtr = ''; dotaz = '';
+    serie = ''; tema = ''; dotaz = '';
     if (h.startsWith('q=')) dotaz = h.slice(2);
-    else if (h.startsWith('t=') ? F.tema[h.slice(2)] : F.serie[h]) filtr = h;
+    else if (h.startsWith('t=') && F.tema[h.slice(2)]) tema = h.slice(2);
+    else if (F.serie[h]) serie = h;
     vstup.value = dotaz;
-    razeni = filtr && !filtr.startsWith('t=') && filtr !== 'ostatni' ? 'stare' : 'nove';
-    razeniTl.forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.razeni === razeni)));
-    vykresli(Boolean(filtr || dotaz) && location.hash.length > 1);
+    razeni = serie && serie !== 'ostatni' ? 'stare' : 'nove';
+    vykresli(false);
+    if (serie || tema || dotaz) document.querySelector(`.kr[data-filtr="${serie}"]`)?.scrollIntoView({ block: 'nearest', inline: 'center' });
   }
   window.addEventListener('hashchange', zAdresy);
   zAdresy();
 
-  // Šipky u řad sérií (jen když se řada nevejde)
-  document.querySelectorAll<HTMLElement>('[data-rada]').forEach((sekce) => {
-    const seznam = sekce.querySelector<HTMLElement>('[data-rada-seznam]')!;
-    const [zpet, dal] = [...sekce.querySelectorAll<HTMLButtonElement>('[data-posun]')];
-    const stav = () => {
-      const preteka = seznam.scrollWidth > seznam.clientWidth + 4;
-      zpet.hidden = dal.hidden = !preteka || matchMedia('(hover: none)').matches;
-      zpet.disabled = seznam.scrollLeft < 4;
-      dal.disabled = seznam.scrollLeft + seznam.clientWidth > seznam.scrollWidth - 4;
-    };
-    [zpet, dal].forEach((b) => b.addEventListener('click', () => seznam.scrollBy({ left: Number(b.dataset.posun) * seznam.clientWidth * 0.8 })));
-    seznam.addEventListener('scroll', stav, { passive: true });
-    new ResizeObserver(stav).observe(seznam);
-  });
+  // Lišta se lepí pod hlavičku: změříme její skutečnou výšku
+  const hlavicka = document.querySelector<HTMLElement>('.hlavicka');
+  if (hlavicka) {
+    const nastav = () => document.documentElement.style.setProperty('--vyska-hlavicky', `${hlavicka.offsetHeight}px`);
+    nastav();
+    new ResizeObserver(nastav).observe(hlavicka);
+  }
 </script>

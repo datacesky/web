@@ -57,6 +57,9 @@ const NAPOVEDA_VYVOJE: Record<string, string> = {
 
     <div class="detail" style="margin-top: 1.25rem;">
       <div class="sloupec" style="gap: 3rem;">
+        {graf.id === 'supermarkety-v-cesku' && <ObchodyNaMape />}
+        {graf.id === 'nejvetsi-ceske-firmy' && <FirmyNaMape polozky={data.polozky} jednotka={data.jednotka} />}
+
         <div class="karta sloupec" style="gap: 1.5rem;">
           <div class="sloupec" style="gap: 0.35rem; text-align: center; align-items: center;">
             <h2 class="nadpis-grafu" style="font-size: clamp(1.4rem, 3vw, 2rem);">{data.titul}</h2>
@@ -74,9 +77,6 @@ const NAPOVEDA_VYVOJE: Record<string, string> = {
             <span class="znacka">@data<span>.cesky</span></span>
           </div>
         </div>
-
-        {graf.id === 'supermarkety-v-cesku' && <ObchodyNaMape />}
-        {graf.id === 'nejvetsi-ceske-firmy' && <FirmyNaMape polozky={data.polozky} jednotka={data.jednotka} />}
 
         {data.porovnej && (
           <section class="karta sloupec porovnej" style="gap: 1.1rem;" id="porovnej">

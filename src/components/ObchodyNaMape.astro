@@ -1,6 +1,7 @@
 ---
-// Supermarkety na mapě: každá tečka je jedna prodejna podle OpenStreetMap (public/data/obchody.json,
-// vyrábí skripty/data_obchody.py). Nahoře loga řetězců jako přepínač, vpravo kraje podle počtu prodejen na obyvatele.
+// Supermarkety na mapě (public/data/obchody.json, vyrábí skripty/data_obchody.py z OpenStreetMap).
+// Dva pohledy: „Kdo vede v kraji“ (kraj v barvě řetězce s nejvíc prodejnami a jeho logem) a „Všechny prodejny“
+// (každá tečka je jedna prodejna, logem nahoře se vybere jeden řetězec). Pod mapou kraje podle prodejen na obyvatele.
 import fs from 'node:fs';
 import path from 'node:path';
 import geo from '../data/kraje.json';
@@ -14,31 +15,57 @@ type Data = { stav: string; zdroj: string; retezce: { id: string; nazev: string;
 const soubor = path.join(process.cwd(), 'public', 'data', 'obchody.json');
 const data: Data | null = fs.existsSync(soubor) ? JSON.parse(fs.readFileSync(soubor, 'utf-8')) : null;
 
-// Barvy teček: odlišné odstíny z palety webu, ne barvy značek (Penny i Kaufland jsou červené)
-const BARVY: Record<string, string> = { penny: '#D8473B', albert: '#2F7FC1', lidl: '#4361B0', billa: '#D9A21B', tesco: '#1E9E91', kaufland: '#9A520E', globus: '#F08829' };
+// Barvy řetězců: co nejblíž značce, ale navzájem odlišné (Penny i Kaufland jsou červené, Lidl i Albert modré)
+const BARVY: Record<string, string> = { penny: '#D8473B', albert: '#2F7FC1', lidl: '#24408E', billa: '#E3B20F', tesco: '#1E9E91', kaufland: '#8E2A1E', globus: '#F08829' };
 const obyvatele = vrstvy.find((v) => v.id === 'obyvatele')!.hodnoty as Record<string, number>;
 const nazvyKraju = Object.fromEntries(geo.kraje.map((k) => [k.id, k.nazev]));
 const celkem = data ? data.body.length : 0;
 const KRAJSKA = ['Praha', 'Brno', 'Ostrava', 'Plzeň', 'Liberec', 'Olomouc', 'České Budějovice', 'Hradec Králové', 'Pardubice', 'Ústí nad Labem', 'Zlín', 'Jihlava', 'Karlovy Vary'];
 const VLEVO = ['Hradec Králové', 'Ústí nad Labem', 'Karlovy Vary', 'Jihlava'];
 const mesta = mestaData.mesta.filter((m) => KRAJSKA.includes(m.n));
-const nastaveni = data ? JSON.stringify({ retezce: data.retezce.map((r) => r.id), kraje: data.kraje, obyvatele, nazvy: nazvyKraju, barvy: BARVY, nazvyRetezcu: Object.fromEntries(data.retezce.map((r) => [r.id, r.nazev])), formaty: data.formaty }) : '';
+const popisky = podklad.popisky as Record<string, [number, number]>;
+
+// Kdo vede v kraji: řetězec s nejvíc prodejnami
+const lidri = data ? Object.fromEntries(Object.entries(data.kraje).map(([k, v]) => {
+  const [r, n] = Object.entries(v).sort((a, b) => b[1] - a[1])[0];
+  return [k, { r, n }];
+})) as Record<string, { r: string; n: number }> : {};
+const kolikVede = Object.values(lidri).reduce<Record<string, number>>((m, l) => ({ ...m, [l.r]: (m[l.r] ?? 0) + 1 }), {});
+const poradiLidru = Object.entries(kolikVede).sort((a, b) => b[1] - a[1]);
+const nazevR = (id: string) => data?.retezce.find((r) => r.id === id)?.nazev ?? id;
+const kraju = (n: number) => (n === 1 ? 'kraji' : 'krajích');
+
+const nastaveni = data ? JSON.stringify({
+  retezce: data.retezce.map((r) => r.id), kraje: data.kraje, obyvatele, nazvy: nazvyKraju, barvy: BARVY, lidri,
+  nazvyRetezcu: Object.fromEntries(data.retezce.map((r) => [r.id, r.nazev])), formaty: data.formaty,
+  loga: Object.fromEntries(data.retezce.map((r) => [r.id, logo(r.nazev)?.src ?? ''])),
+}) : '';
 ---
 
 {data && (
-  <section class="karta sloupec on" id="mapa-prodejen" data-on data-nastaveni={nastaveni}>
+  <section class="on" id="mapa-prodejen" data-on data-nastaveni={nastaveni} data-rezim="lidri">
     <div class="on__hlava">
-      <div class="sloupec" style="gap: 0.35rem;">
-        <h2 style="font-size: clamp(1.4rem, 3vw, 1.9rem);">Kde jsou prodejny</h2>
-        <p class="drobne" style="max-width: 62ch;">Každá tečka je jedna prodejna, celkem {cislo(celkem)} podle OpenStreetMap. Klikni na logo a uvidíš jen jeden řetězec.</p>
+      <span class="nadhlavi">Mapa · {cislo(celkem)} prodejen</span>
+      <h2 class="on__titul">
+        {poradiLidru.map(([r, n], i) => (
+          <span class="on__vede">
+            {i > 0 && <span class="on__spojka">{i === poradiLidru.length - 1 ? ' a ' : ', '}</span>}
+            {logo(nazevR(r)) && <img class:list={['on__titul-logo', { 'on__titul-logo--tmave': logo(nazevR(r))!.tmave }]} src={logo(nazevR(r))!.src} alt="" />}
+            <span><span style={`color: ${BARVY[r]};`}>{nazevR(r)}</span> {i === 0 ? 'vede' : ''} v {n} {kraju(n)}</span>
+          </span>
+        ))}
+      </h2>
+      <p class="drobne on__perex">Který řetězec má v kraji nejvíc prodejen. Přepni na všechny prodejny a klikni na logo, uvidíš síť jednoho řetězce.</p>
+    </div>
+
+    <div class="on__ovladani">
+      <div class="segment on__rezim" role="group" aria-label="Pohled">
+        <button type="button" data-rezim-tl="lidri" aria-pressed="true">Kdo vede v kraji</button>
+        <button type="button" data-rezim-tl="body" aria-pressed="false">Všechny prodejny</button>
       </div>
     </div>
 
     <div class="on__loga" role="group" aria-label="Řetězce">
-      <button type="button" class="on__logo on__logo--vse" data-r="" aria-pressed="true">
-        <span class="on__vse">Vše</span>
-        <small>{cislo(celkem)}</small>
-      </button>
       {data.retezce.map((r) => {
         const l = logo(r.nazev);
         return (
@@ -46,85 +73,131 @@ const nastaveni = data ? JSON.stringify({ retezce: data.retezce.map((r) => r.id)
             <span class:list={['on__obr', { 'on__obr--tmave': l?.tmave }]}>
               {l ? <img src={l.src} alt="" loading="lazy" /> : <strong>{r.nazev}</strong>}
             </span>
-            <small><i aria-hidden="true"></i>{cislo(r.pocet)}</small>
+            <span class="on__logo-cislo">{cislo(r.pocet)}</span>
+            <span class="on__logo-pruh" aria-hidden="true"><i style={`width: ${(r.pocet / data.retezce[0].pocet) * 100}%;`}></i></span>
           </button>
         );
       })}
     </div>
 
-    <div class="on__telo">
-      <div class="on__mapa">
-        <svg viewBox={`0 0 ${geo.sirka} ${geo.vyska}`} class="on-svg" data-on-svg role="img" aria-label="Mapa prodejen supermarketů v Česku">
-          <path class="on-podstin" d={podklad.obrys} />
-          <g class="on-kraje">{geo.kraje.map((k) => <path d={k.d} fill-rule="evenodd" data-kraj={k.id} />)}</g>
-          <path class="on-obrys" d={podklad.obrys} />
-          <g class="on-body" data-on-body>
-            {data.body.map(([x, y, r, f], i) => (
-              <circle cx={x} cy={y} r={f === -1 ? 2.6 : 2} data-i={i} data-r={data.retezce[r].id} style={`fill: ${BARVY[data.retezce[r].id]};`} />
-            ))}
-          </g>
-          <g class="on-mesta" aria-hidden="true">
-            {mesta.map((m) => (
-              <text x={m.x + (VLEVO.includes(m.n) ? -8 : 8)} y={m.y - 8} text-anchor={VLEVO.includes(m.n) ? 'end' : 'start'}>{m.n}</text>
-            ))}
-          </g>
-        </svg>
-        <div class="on__tip" data-on-tip hidden></div>
-        <script is:inline type="application/json" data-on-body-data set:html={JSON.stringify(data.body.map((b) => [b[2], b[3], b[4]]))} />
-      </div>
+    <div class="on__mapa">
+      <svg viewBox={`0 0 ${geo.sirka} ${geo.vyska}`} class="on-svg" data-on-svg role="img" aria-label="Mapa supermarketů v Česku">
+        <defs>
+          <filter id="on-stin" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="2" stdDeviation="2.5" flood-color="#1B2A4A" flood-opacity="0.28" /></filter>
+        </defs>
+        <path class="on-podstin" d={podklad.obrys} />
+        <g class="on-kraje">
+          {geo.kraje.map((k) => (
+            <path d={k.d} fill-rule="evenodd" data-kraj={k.id} style={`--lidr: ${BARVY[lidri[k.id]?.r] ?? 'var(--zeme)'};`} />
+          ))}
+        </g>
+        <path class="on-obrys" d={podklad.obrys} />
+        <g class="on-body" data-on-body>
+          {data.body.map(([x, y, r, f], i) => (
+            <circle cx={x} cy={y} r={f === -1 ? 2.8 : 2.2} data-i={i} data-r={data.retezce[r].id} style={`fill: ${BARVY[data.retezce[r].id]};`} />
+          ))}
+        </g>
+        <g class="on-mesta" aria-hidden="true">
+          {mesta.map((m) => (
+            <text x={m.x + (VLEVO.includes(m.n) ? -8 : 8)} y={m.y - 8} text-anchor={VLEVO.includes(m.n) ? 'end' : 'start'}>{m.n}</text>
+          ))}
+        </g>
+        <g class="on-lidri" aria-hidden="true">
+          {Object.entries(lidri).map(([k, l]) => {
+            const [x, y] = popisky[k] ?? [0, 0];
+            const lg = logo(nazevR(l.r));
+            const male = k === 'praha';
+            const w = male ? 54 : 70, h = male ? 26 : 32;
+            return (
+              <g class="on-lidr" transform={`translate(${x} ${y})`} data-kraj={k}>
+                <g class:list={['on-lidr__vnitrek', { 'on-lidr__vnitrek--praha': male }]}>
+                  <rect x={-w / 2} y={-h / 2} width={w} height={h} rx="8" class:list={['on-lidr__podklad', { 'on-lidr__podklad--tmave': lg?.tmave }]} filter="url(#on-stin)" />
+                  {lg ? <image href={lg.src} x={-w / 2 + 5} y={-h / 2 + 4} width={w - 10} height={h - 8} preserveAspectRatio="xMidYMid meet" /> : <text y="4" text-anchor="middle">{nazevR(l.r)}</text>}
+                  <text class="on-lidr__cislo" y={h / 2 + 15} text-anchor="middle">{l.n}</text>
+                </g>
+              </g>
+            );
+          })}
+        </g>
+      </svg>
+      <div class="on__tip" data-on-tip hidden></div>
+      <script is:inline type="application/json" data-on-body-data set:html={JSON.stringify(data.body.map((b) => [b[2], b[3], b[4]]))} />
+    </div>
 
-      <div class="on__kraje">
-        <h3 data-on-titul>Prodejen na 100 tisíc obyvatel</h3>
-        <ol class="on__seznam" data-on-seznam></ol>
-        <p class="drobne" data-on-souhrn></p>
-      </div>
+    <div class="on__kraje">
+      <h3 data-on-titul>Prodejen na 100 tisíc obyvatel</h3>
+      <ol class="on__seznam" data-on-seznam></ol>
+      <p class="drobne" data-on-souhrn></p>
     </div>
 
     <p class="drobne on__zdroj">
       Zdroj: <a href="https://www.openstreetmap.org/copyright">© přispěvatelé OpenStreetMap</a> (ODbL), stav k {datum(new Date(data.stav))}.
-      Mapa nemusí obsahovat úplně všechny prodejny, oficiální počty jsou v grafu nahoře. Obyvatelé krajů: ČSÚ k 31. 12. 2025.
+      Mapa nemusí obsahovat úplně všechny prodejny, oficiální počty řetězců jsou v grafu níž. Obyvatelé krajů: ČSÚ k 31. 12. 2025.
     </p>
   </section>
 )}
 
 <style>
-  .on { gap: 1.25rem; scroll-margin-top: 80px; }
-  .on__loga { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  .on {
+    position: relative; display: flex; flex-direction: column; gap: 1.1rem; scroll-margin-top: 80px;
+    padding: clamp(1.25rem, 3.5vw, 2.25rem); border-radius: 28px; background: var(--paper); box-shadow: 0 0 0 1px var(--line), var(--stin);
+    overflow: hidden; isolation: isolate;
+  }
+  .on::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('/vrstevnice.svg') center top / 140% auto no-repeat; opacity: calc(0.45 * var(--vrstevnice-sila)); pointer-events: none; }
+  .on__hlava { display: flex; flex-direction: column; gap: 0.5rem; }
+  .on__titul { font-size: clamp(1.35rem, 3vw, 2.05rem); line-height: 1.3; text-wrap: balance; }
+  .on__vede { white-space: nowrap; }
+  .on__vede > span:last-child { white-space: normal; }
+  .on__titul-logo { display: inline-block; height: 1.15em; width: auto; max-width: 2.6em; object-fit: contain; vertical-align: -0.22em; margin-right: 0.3em; padding: 0.08em 0.18em; border-radius: 0.25em; background: #FFFFFF; box-shadow: 0 0 0 1px rgba(27, 42, 74, 0.12); }
+  .on__titul-logo--tmave { background: #1B2A4A; }
+  .on__spojka { font-weight: 700; color: var(--muted); }
+  .on__perex { margin: 0; max-width: 64ch; }
+  .on__ovladani { display: flex; flex-wrap: wrap; gap: 0.6rem; align-items: center; }
+
+  .on__loga { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 0.45rem; }
+  @media (max-width: 760px) { .on__loga { display: flex; overflow-x: auto; margin-inline: calc(-1 * clamp(1.25rem, 3.5vw, 2.25rem)); padding: 0.2rem clamp(1.25rem, 3.5vw, 2.25rem) 0.5rem; scrollbar-width: none; } .on__loga::-webkit-scrollbar { display: none; } .on__logo { flex: 0 0 92px; } }
   .on__logo {
-    display: flex; flex-direction: column; align-items: center; gap: 0.35rem; min-width: 76px; padding: 0.45rem 0.45rem 0.4rem;
+    display: flex; flex-direction: column; align-items: stretch; gap: 0.35rem; padding: 0.5rem 0.5rem 0.55rem;
     border: 1.5px solid var(--line); border-radius: 16px; background: var(--paper); color: var(--navy); font-family: inherit; cursor: pointer;
-    transition: transform var(--stisk) var(--ease-out), border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    transition: transform var(--stisk) var(--ease-out), border-color 0.2s ease, box-shadow 0.2s ease, opacity 0.25s ease;
   }
   .on__logo:active { transform: scale(0.96); }
-  .on__logo[aria-pressed='true'] { border-color: var(--navy); box-shadow: 0 0 0 2px var(--navy); }
-  @media (hover: hover) and (pointer: fine) { .on__logo:hover { border-color: var(--navy); } }
-  .on__obr { display: grid; place-items: center; width: 64px; height: 34px; padding: 3px 6px; border-radius: 9px; background: #FFFFFF; overflow: hidden; }
+  .on__logo[aria-pressed='true'] { border-color: var(--barva); box-shadow: 0 0 0 2px var(--barva), 0 8px 18px -10px var(--barva); }
+  [data-rezim='body'] .on__loga.je-filtr .on__logo[aria-pressed='false'] { opacity: 0.45; }
+  @media (hover: hover) and (pointer: fine) { .on__logo:hover { border-color: var(--barva); transform: translateY(-2px); } }
+  .on__obr { display: grid; place-items: center; height: 38px; padding: 4px 6px; border-radius: 10px; background: #FFFFFF; overflow: hidden; }
   .on__obr--tmave { background: #1B2A4A; }
-  .on__obr img { display: block; width: 100%; height: 28px; object-fit: contain; }
-  @media (max-width: 560px) { .on__obr img { height: 24px; } }
+  .on__obr img { display: block; width: 100%; height: 30px; object-fit: contain; }
   .on__obr strong { font-size: 0.85rem; color: #1B2A4A; }
-  .on__vse { display: grid; place-items: center; width: 64px; height: 34px; font-weight: 900; font-size: 0.95rem; }
-  .on__logo small { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.8rem; font-weight: 800; font-variant-numeric: tabular-nums; color: var(--muted); }
-  .on__logo small i { width: 9px; height: 9px; border-radius: 50%; background: var(--barva); }
-  @media (max-width: 560px) {
-    .on__loga { flex-wrap: nowrap; overflow-x: auto; margin-inline: -1rem; padding: 0.2rem 1rem 0.5rem; scrollbar-width: none; }
-    .on__loga::-webkit-scrollbar { display: none; }
-    .on__logo { flex: 0 0 auto; min-width: 76px; }
-    .on__obr, .on__vse { width: 60px; height: 30px; }
-  }
+  .on__logo-cislo { font-size: 1.05rem; font-weight: 900; font-variant-numeric: tabular-nums; text-align: center; }
+  .on__logo-pruh { display: block; height: 5px; border-radius: 999px; background: var(--draha); overflow: hidden; }
+  .on__logo-pruh i { display: block; height: 100%; border-radius: 999px; background: var(--barva); }
 
-  .on__telo { display: flex; flex-direction: column; gap: 1.25rem; }
-  .on__mapa { position: relative; border-radius: 18px; background: var(--plocha-2); padding: 0.5rem; }
+  .on__mapa { position: relative; border-radius: 20px; background: color-mix(in srgb, var(--plocha-2) 85%, transparent); padding: 0.5rem; }
   .on-svg { display: block; width: 100%; height: auto; overflow: visible; }
   .on-podstin { fill: none; stroke: rgba(27, 42, 74, 0.12); stroke-width: 7; stroke-linejoin: round; transform: translate(0, 3px); }
-  .on-kraje path { fill: var(--zeme); stroke: var(--obrys); stroke-width: 1.4; stroke-linejoin: round; transition: fill 0.3s ease; }
-  .on-kraje path.je-vybrany { fill: color-mix(in srgb, var(--orange) 22%, var(--zeme)); }
+  .on-kraje path { fill: var(--zeme); stroke: var(--obrys); stroke-width: 1.6; stroke-linejoin: round; transition: fill 0.45s ease, opacity 0.3s ease; }
+  [data-rezim='lidri'] .on-kraje path { fill: color-mix(in srgb, var(--lidr) 62%, var(--paper)); cursor: default; }
+  [data-rezim='lidri'] .on-kraje path.je-vybrany { fill: color-mix(in srgb, var(--lidr) 85%, var(--paper)); }
+  [data-rezim='body'] .on-kraje path.je-vybrany { fill: color-mix(in srgb, var(--orange) 22%, var(--zeme)); }
   .on-obrys { fill: none; stroke: var(--line-2); stroke-width: 1.4; }
-  .on-mesta text { font-size: 19px; font-weight: 800; fill: var(--navy); paint-order: stroke; stroke: var(--halo); stroke-width: 5px; stroke-linejoin: round; pointer-events: none; }
   .on-body circle { stroke: rgba(255, 255, 255, 0.85); stroke-width: 0.6; transition: opacity 0.35s ease, r 0.35s var(--ease-out); cursor: pointer; }
-  .on-body.je-filtr circle:not(.je-videt) { opacity: 0.08; pointer-events: none; }
-  .on-body.je-filtr circle.je-videt { r: 3.4; }
-  .on__tip { position: absolute; z-index: 5; pointer-events: none; padding: 0.35rem 0.6rem; border-radius: 10px; background: var(--panel); color: var(--na-panelu); font-size: 0.82rem; font-weight: 700; white-space: nowrap; transform: translate(-50%, calc(-100% - 10px)); box-shadow: var(--stin-maly); }
+  [data-rezim='lidri'] .on-body { opacity: 0; pointer-events: none; }
+  .on-body { transition: opacity 0.4s ease; }
+  .on-body.je-filtr circle:not(.je-videt) { opacity: 0.07; pointer-events: none; }
+  .on-body.je-filtr circle.je-videt { r: 3.6; }
+  .on-mesta text { font-size: 19px; font-weight: 800; fill: var(--navy); paint-order: stroke; stroke: var(--halo); stroke-width: 5px; stroke-linejoin: round; pointer-events: none; transition: opacity 0.3s ease; }
+  [data-rezim='lidri'] .on-mesta { opacity: 0; }
+  .on-lidri { transition: opacity 0.35s ease, transform 0.45s var(--ease-out); transform-origin: center; }
+  [data-rezim='body'] .on-lidri { opacity: 0; pointer-events: none; }
+  /* Na telefonu jsou loga v krajích větší, jinak by byla nečitelná */
+  @media (max-width: 600px) { .on-lidr__vnitrek { transform: scale(1.55); } .on-lidr__vnitrek--praha { transform: scale(1.25); } .on-mesta text { font-size: 26px; stroke-width: 6px; } }
+  .on-lidr__podklad { fill: #FFFFFF; stroke: rgba(27, 42, 74, 0.12); stroke-width: 1; }
+  .on-lidr__podklad--tmave { fill: #1B2A4A; }
+  .on-lidr__cislo { font-size: 15px; font-weight: 900; fill: #1B2A4A; paint-order: stroke; stroke: rgba(255, 255, 255, 0.85); stroke-width: 4px; stroke-linejoin: round; }
+  .on__tip { position: absolute; z-index: 5; pointer-events: none; display: flex; align-items: center; gap: 0.45rem; padding: 0.4rem 0.65rem; border-radius: 12px; background: var(--panel); color: var(--na-panelu); font-size: 0.82rem; font-weight: 700; white-space: nowrap; transform: translate(-50%, calc(-100% - 12px)); box-shadow: var(--stin-maly); }
+  .on__tip img { height: 18px; width: auto; max-width: 44px; object-fit: contain; padding: 2px 4px; border-radius: 5px; background: #FFFFFF; }
+  .on__tip small { display: block; font-size: 0.74rem; font-weight: 600; color: var(--na-panelu-2); }
 
   .on__kraje { display: flex; flex-direction: column; gap: 0.75rem; }
   .on__kraje h3 { font-size: 1.05rem; }
@@ -136,8 +209,9 @@ const nastaveni = data ? JSON.stringify({ retezce: data.retezce.map((r) => r.id)
   :global(.on__seznam .d) { height: 10px; border-radius: 999px; background: var(--draha); overflow: hidden; }
   :global(.on__seznam .b) { display: block; height: 100%; border-radius: 999px; transition: width 0.5s var(--ease-out); }
   :global(.on__seznam .h) { text-align: right; font-variant-numeric: tabular-nums; font-weight: 900; }
+  .on__zdroj { margin: 0; }
   .on__zdroj a { color: inherit; }
-  @media (prefers-reduced-motion: reduce) { .on-body circle, :global(.on__seznam .b) { transition: none; } }
+  @media (prefers-reduced-motion: reduce) { .on-body circle, .on-body, .on-lidri, .on-kraje path, :global(.on__seznam .b) { transition: none; } }
 </style>
 
 <script>
@@ -145,7 +219,8 @@ const nastaveni = data ? JSON.stringify({ retezce: data.retezce.map((r) => r.id)
   if (koren) {
     const N = JSON.parse(koren.dataset.nastaveni!) as {
       retezce: string[]; kraje: Record<string, Record<string, number>>; obyvatele: Record<string, number>; nazvy: Record<string, string>;
-      barvy: Record<string, string>; nazvyRetezcu: Record<string, string>; formaty: string[];
+      barvy: Record<string, string>; nazvyRetezcu: Record<string, string>; formaty: string[]; loga: Record<string, string>;
+      lidri: Record<string, { r: string; n: number }>;
     };
     const body = JSON.parse(koren.querySelector('[data-on-body-data]')!.textContent!) as [number, number, string][];
     const svg = koren.querySelector<SVGSVGElement>('[data-on-svg]')!;
@@ -155,30 +230,48 @@ const nastaveni = data ? JSON.stringify({ retezce: data.retezce.map((r) => r.id)
     const seznam = koren.querySelector<HTMLElement>('[data-on-seznam]')!;
     const titul = koren.querySelector<HTMLElement>('[data-on-titul]')!;
     const souhrn = koren.querySelector<HTMLElement>('[data-on-souhrn]')!;
+    const loga = koren.querySelector<HTMLElement>('.on__loga')!;
     const cislo = (v: number, d = 0) => new Intl.NumberFormat('cs-CZ', { minimumFractionDigits: d, maximumFractionDigits: d }).format(v);
     let vybrany = '';
+    let rezim: 'lidri' | 'body' = 'lidri';
+
+    function ukazTip(x: number, y: number, logo: string, text: string, pod = '') {
+      tip.replaceChildren();
+      if (logo) { const i = document.createElement('img'); i.src = logo; i.alt = ''; tip.append(i); }
+      const s = document.createElement('span');
+      s.textContent = text;
+      if (pod) { const m = document.createElement('small'); m.textContent = pod; s.append(m); }
+      tip.append(s);
+      const obal = tip.parentElement!.getBoundingClientRect();
+      tip.style.left = `${x - obal.left}px`;
+      tip.style.top = `${y - obal.top}px`;
+      tip.hidden = false;
+    }
 
     function vykresli() {
-      skupina.classList.toggle('je-filtr', !!vybrany);
-      for (const k of kruhy) k.classList.toggle('je-videt', !vybrany || k.dataset.r === vybrany);
-      // vybraný řetězec nahoru, ať ho ostatní nepřekrývají
-      if (vybrany) for (const k of kruhy) if (k.dataset.r === vybrany) skupina.append(k);
-      for (const b of koren!.querySelectorAll<HTMLButtonElement>('[data-r]')) b.setAttribute('aria-pressed', String((b.dataset.r ?? '') === vybrany));
+      koren!.dataset.rezim = rezim;
+      for (const b of koren!.querySelectorAll<HTMLButtonElement>('[data-rezim-tl]')) b.setAttribute('aria-pressed', String(b.dataset.rezimTl === rezim));
+      const filtr = rezim === 'body' && !!vybrany;
+      skupina.classList.toggle('je-filtr', filtr);
+      loga.classList.toggle('je-filtr', filtr);
+      for (const k of kruhy) k.classList.toggle('je-videt', !filtr || k.dataset.r === vybrany);
+      if (filtr) for (const k of kruhy) if (k.dataset.r === vybrany) skupina.append(k);
+      for (const b of koren!.querySelectorAll<HTMLButtonElement>('[data-r]')) b.setAttribute('aria-pressed', String(filtr && b.dataset.r === vybrany));
 
       const radky = Object.keys(N.obyvatele).map((k) => {
-        const p = vybrany ? (N.kraje[k]?.[vybrany] ?? 0) : Object.values(N.kraje[k] ?? {}).reduce((a, b) => a + b, 0);
+        const p = filtr ? (N.kraje[k]?.[vybrany] ?? 0) : Object.values(N.kraje[k] ?? {}).reduce((a, b) => a + b, 0);
         return { k, p, na100: (p / N.obyvatele[k]) * 1e5 };
       }).sort((a, b) => b.na100 - a.na100);
       const max = Math.max(...radky.map((r) => r.na100), 0.001);
-      titul.textContent = vybrany ? `${N.nazvyRetezcu[vybrany]}: prodejen na 100 tisíc obyvatel` : 'Prodejen na 100 tisíc obyvatel';
-      const barva = vybrany ? N.barvy[vybrany] : 'var(--navy)';
+      titul.textContent = filtr ? `${N.nazvyRetezcu[vybrany]}: prodejen na 100 tisíc obyvatel` : 'Prodejen na 100 tisíc obyvatel';
+      const barva = filtr ? N.barvy[vybrany] : 'var(--navy)';
       seznam.replaceChildren(...radky.map((r, i) => {
         const li = document.createElement('li');
         li.title = `${N.nazvy[r.k]}: ${r.p} prodejen`;
         li.innerHTML = `<span class="p">${i + 1}.</span><span class="j"></span><span class="d"><span class="b" style="width:${(r.na100 / max) * 100}%;background:${barva}"></span></span><span class="h">${cislo(r.na100, 1)}</span>`;
         li.querySelector('.j')!.textContent = N.nazvy[r.k];
-        li.addEventListener('mouseenter', () => svg.querySelector(`[data-kraj="${r.k}"]`)?.classList.add('je-vybrany'));
-        li.addEventListener('mouseleave', () => svg.querySelector(`[data-kraj="${r.k}"]`)?.classList.remove('je-vybrany'));
+        li.addEventListener('mouseenter', () => svg.querySelector(`path[data-kraj="${r.k}"]`)?.classList.add('je-vybrany'));
+        li.addEventListener('mouseleave', () => svg.querySelector(`path[data-kraj="${r.k}"]`)?.classList.remove('je-vybrany'));
         return li;
       }));
       const celkem = radky.reduce((s, r) => s + r.p, 0);
@@ -186,22 +279,37 @@ const nastaveni = data ? JSON.stringify({ retezce: data.retezce.map((r) => r.id)
       souhrn.textContent = `V celém Česku ${cislo(celkem)} prodejen, tedy jedna na ${cislo(Math.round(lidi / celkem / 100) * 100)} obyvatel.`;
     }
 
+    for (const b of koren.querySelectorAll<HTMLButtonElement>('[data-rezim-tl]')) {
+      b.addEventListener('click', () => { rezim = b.dataset.rezimTl as 'lidri' | 'body'; if (rezim === 'lidri') vybrany = ''; vykresli(); });
+    }
     for (const b of koren.querySelectorAll<HTMLButtonElement>('[data-r]')) {
-      b.addEventListener('click', () => { vybrany = vybrany === b.dataset.r ? '' : b.dataset.r ?? ''; vykresli(); });
+      b.addEventListener('click', () => {
+        // Logo vždy přepne na prodejny daného řetězce, druhé klepnutí výběr zruší
+        vybrany = rezim === 'body' && vybrany === b.dataset.r ? '' : b.dataset.r ?? '';
+        rezim = 'body';
+        vykresli();
+      });
     }
     skupina.addEventListener('pointerover', (e) => {
       const k = (e.target as Element).closest('circle') as SVGCircleElement | null;
-      if (!k) return;
+      if (!k || rezim !== 'body') return;
       const [r, f, mesto] = body[Number(k.dataset.i)];
-      const nazev = f >= 0 ? N.formaty[f] : N.nazvyRetezcu[N.retezce[Number(r)]];
-      tip.textContent = mesto ? `${nazev} · ${mesto}` : nazev;
+      const id = N.retezce[Number(r)];
       const box = k.getBoundingClientRect();
-      const obal = tip.parentElement!.getBoundingClientRect();
-      tip.style.left = `${box.left + box.width / 2 - obal.left}px`;
-      tip.style.top = `${box.top - obal.top}px`;
-      tip.hidden = false;
+      ukazTip(box.left + box.width / 2, box.top, N.loga[id], f >= 0 ? N.formaty[f] : N.nazvyRetezcu[id], mesto);
     });
     skupina.addEventListener('pointerout', () => { tip.hidden = true; });
+    // Kraj v pohledu „Kdo vede“: první tři řetězce
+    svg.querySelector('.on-kraje')!.addEventListener('pointermove', (e) => {
+      if (rezim !== 'lidri') return;
+      const p = (e.target as Element).closest('path') as SVGPathElement | null;
+      if (!p?.dataset.kraj) return;
+      const k = p.dataset.kraj;
+      const top = Object.entries(N.kraje[k] ?? {}).sort((a, b) => b[1] - a[1]).slice(0, 3);
+      const ev = e as PointerEvent;
+      ukazTip(ev.clientX, ev.clientY - 6, N.loga[top[0]?.[0]] ?? '', N.nazvy[k], top.map(([r, n]) => `${N.nazvyRetezcu[r]} ${n}`).join(' · '));
+    });
+    svg.querySelector('.on-kraje')!.addEventListener('pointerleave', () => { tip.hidden = true; });
     vykresli();
   }
 </script>

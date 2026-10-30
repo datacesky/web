@@ -9,10 +9,20 @@ export const slugLoga = (nazev: string) =>
 // Světlé logo (žlutý nápis), potřebuje tmavý podklad
 const TMAVY_PODKLAD = new Set(['billa']);
 
-export function logo(nazev: string): { src: string; tmave: boolean } | null {
+// Poměr stran loga (šířka / výška) z hlavičky PNG; u ostatních formátů 2 : 1
+function pomer(soubor: string): number {
+  try {
+    const b = fs.readFileSync(soubor);
+    if (b.toString('ascii', 1, 4) === 'PNG') return b.readUInt32BE(16) / b.readUInt32BE(20);
+  } catch {}
+  return 2;
+}
+
+export function logo(nazev: string): { src: string; tmave: boolean; pomer: number } | null {
   const slug = slugLoga(nazev);
   for (const p of ['svg', 'png', 'webp']) {
-    if (fs.existsSync(path.join(process.cwd(), 'public', 'loga', `${slug}.${p}`))) return { src: `/loga/${slug}.${p}`, tmave: TMAVY_PODKLAD.has(slug) };
+    const soubor = path.join(process.cwd(), 'public', 'loga', `${slug}.${p}`);
+    if (fs.existsSync(soubor)) return { src: `/loga/${slug}.${p}`, tmave: TMAVY_PODKLAD.has(slug), pomer: pomer(soubor) };
   }
   return null;
 }

@@ -97,8 +97,9 @@ Samotný model je v `src/lib/cesko3d.ts` (three.js) a `src/components/Cesko3D.as
 
 ## Videa a náhledovky
 
-Stránka Videa (`/videa/`, stará adresa `/serie/` na ni přesměruje) ukazuje všechna videa: nejnovější nahoře,
-série jako vodorovné řady a pod nimi ostatní videa. Nahoře je hledání a filtr podle série nebo tématu.
+Stránka Videa (`/videa/`, stará adresa `/serie/` na ni přesměruje) vypadá jako profil na Instagramu: nahoře profil,
+pod ním série jako kroužky a hustá mřížka všech videí od nejnovějšího. Klik na kroužek ukáže jen jednu sérii,
+nad mřížkou je hledání, téma a řazení.
 Filtr jde poslat odkazem: `/videa/#ceske-rody`, `/videa/#t=historie`, `/videa/#q=brno`.
 
 - Nový díl Česko vs. svět přidáš do `src/data/epizody.ts`, ostatní videa do `src/data/serie.ts` (u série do `dily`,
