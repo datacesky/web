@@ -12,5 +12,5 @@ export const web = {
   google: '',
   seznam: '',
   goatcounter: '',
-  trasy: '',
+  trasy: 'https://datacesky-trasy.reporting-annicka.workers.dev',
 };
