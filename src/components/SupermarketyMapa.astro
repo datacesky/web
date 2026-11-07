@@ -3,20 +3,13 @@
 // vyrábí skripty/data_obchody.py z OpenStreetMap), hledání obce (public/data/obce.json), nejbližší prodejny
 // podle polohy, filtr řetězců, otevírací doba a vzdálenost. Po silnici (pěšky, autem) přes Mapy.com, když je
 // v src/data/web.ts vyplněná adresa Workeru „trasy“, jinak vzdušnou čarou. Podklad: OpenFreeMap (src/lib/mapa-styl.ts).
-import fs from 'node:fs';
-import path from 'node:path';
 import { web } from '../data/web';
 import { logo } from '../lib/loga';
 import { datum, cislo } from '../lib/format';
+import { nactiObchody, BARVY_RETEZCU as BARVY } from '../lib/obchody';
 
-interface Props { celkem: number; zdrojCelkem: string }
-const { celkem, zdrojCelkem } = Astro.props;
-
-type Data = { stav: string; retezce: { id: string; nazev: string; pocet: number }[]; formaty: string[] };
-const data: Data = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public', 'data', 'obchody.json'), 'utf-8'));
-
-// Barvy řetězců: co nejblíž značce, ale navzájem odlišné (Penny i Kaufland jsou červené, Lidl i Albert modré)
-const BARVY: Record<string, string> = { penny: '#D8473B', albert: '#2F7FC1', lidl: '#24408E', billa: '#E3B20F', tesco: '#1E9E91', kaufland: '#8E2A1E', globus: '#F08829' };
+const data = nactiObchody();
+const celkem = data.body.length;
 const loga = Object.fromEntries(data.retezce.map((r) => [r.id, logo(r.nazev)]));
 
 const nastaveni = JSON.stringify({
@@ -43,7 +36,7 @@ const nastaveni = JSON.stringify({
         <span class="nadhlavi">Mapa · OpenStreetMap, {datum(new Date(data.stav))}</span>
         <h1 class="sm__titul">Supermarkety v Česku</h1>
         <p class="sm__fakt">
-          Sedm největších řetězců má v Česku <strong>{cislo(celkem)} prodejen</strong>. Najdi tu nejbližší podle polohy nebo obce.
+          Na mapě je <strong>{cislo(celkem)} prodejen</strong> sedmi největších řetězců. Najdi tu nejbližší podle polohy nebo obce.
         </p>
       </header>
 
@@ -82,13 +75,13 @@ const nastaveni = JSON.stringify({
 
       <p class="sm__pata drobne">
         Prodejny: © přispěvatelé <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, stav {datum(new Date(data.stav))}.
-        Celkový počet prodejen: {zdrojCelkem}. <a href="#supermarkety-v-cislech">Fakta a metodika</a>
+        <a href="#supermarkety-v-cislech">Kolik jich je a metodika</a>
       </p>
     </div>
   </aside>
 
-  <a href="#supermarkety-v-cislech" class="sm__dolu" aria-label="Fakta, tržby a metodika pod mapou">
-    <span>Fakta a metodika</span>
+  <a href="#supermarkety-v-cislech" class="sm__dolu" aria-label="Kolik supermarketů je v Česku, přehled pod mapou">
+    <span>Kolik jich je</span>
     <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
   </a>
 </section>

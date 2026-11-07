@@ -1,61 +1,168 @@
 ---
-// Fakta pod mapou supermarketů: kolik prodejen sedm řetězců má (podle řetězců) a kdo vede v kolika krajích
-// (podle mapy z OpenStreetMap). Graf s počty nahradila mapa, číslo zůstává tady.
-import fs from 'node:fs';
-import path from 'node:path';
+// Přehled pod mapou supermarketů: kolik prodejen má každý řetězec a kolik jich je v každém kraji.
+// Čísla jsou spočítaná z mapy (public/data/obchody.json z OpenStreetMap), takže sedí s tím, co je na mapě.
+import geo from '../data/kraje.json';
+import { vrstvy } from '../data/vrstvy';
 import { logo } from '../lib/loga';
-import { cislo } from '../lib/format';
+import { cislo, datum } from '../lib/format';
+import { nactiObchody, BARVY_RETEZCU, BARVY_RETEZCU_TMAVE } from '../lib/obchody';
+const barvy = (id: string) => `--barva: ${BARVY_RETEZCU[id]}; --barva-tmava: ${BARVY_RETEZCU_TMAVE[id]};`;
 
-interface Props { polozky: { nazev: string; hodnota: number }[]; zdroj: string }
-const { polozky, zdroj } = Astro.props;
-const celkem = polozky.reduce((s, p) => s + p.hodnota, 0);
-const serazene = [...polozky].sort((a, b) => b.hodnota - a.hodnota);
+const data = nactiObchody();
+const celkem = data.body.length;
+const retezce = [...data.retezce].sort((a, b) => b.pocet - a.pocet);
+const maxRetezec = retezce[0].pocet;
+const fmt1 = new Intl.NumberFormat('cs-CZ', { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+const podil = (n: number) => fmt1.format((n / celkem) * 100);
 
-const data = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public', 'data', 'obchody.json'), 'utf-8')) as { retezce: { id: string; nazev: string }[]; kraje: Record<string, Record<string, number>> };
-const kolikVede: Record<string, number> = {};
-for (const v of Object.values(data.kraje)) {
-  const [r] = Object.entries(v).sort((a, b) => b[1] - a[1])[0];
-  kolikVede[r] = (kolikVede[r] ?? 0) + 1;
-}
-const nazev = (id: string) => data.retezce.find((r) => r.id === id)?.nazev ?? id;
+// Kraje: krátký název, počty po řetězcích, prodejny na 100 000 obyvatel (ČSÚ, stejná vrstva jako Mapa Česka)
+const obyvatele = vrstvy.find((v) => v.id === 'obyvatele')!.hodnoty as Record<string, number>;
+const kratce = (n: string) => (n === 'Hlavní město Praha' ? 'Praha' : n.replace(/^Kraj /, '').replace(/ kraj$/, ''));
+const kraje = geo.kraje
+  .map((k) => {
+    const pocty = data.kraje[k.id] ?? {};
+    const soucet = Object.values(pocty).reduce((s, n) => s + n, 0);
+    const [lidr] = Object.entries(pocty).sort((a, b) => b[1] - a[1])[0] ?? [''];
+    return { id: k.id, nazev: kratce(k.nazev), pocty, soucet, lidr, naSto: (soucet / obyvatele[k.id]) * 100000 };
+  })
+  .sort((a, b) => b.soucet - a.soucet);
+const maxKraj = kraje[0].soucet;
+
 // „Penny má nejvíc prodejen v 9 krajích, Albert v 5.“
+const kolikVede: Record<string, number> = {};
+for (const k of kraje) kolikVede[k.lidr] = (kolikVede[k.lidr] ?? 0) + 1;
+const nazev = (id: string) => data.retezce.find((r) => r.id === id)?.nazev ?? id;
 const kraju = (n: number) => (n === 1 ? 'kraji' : 'krajích');
-const vede = Object.entries(kolikVede).sort((a, b) => b[1] - a[1]);
-const vetaVede = vede.map(([r, n], i) => (i === 0 ? `${nazev(r)} má nejvíc prodejen v ${n} ${kraju(n)}` : `${nazev(r)} v ${n}`)).join(', ');
+const vetaVede = Object.entries(kolikVede).sort((a, b) => b[1] - a[1])
+  .map(([r, n], i) => (i === 0 ? `${nazev(r)} má nejvíc prodejen v ${n} ${kraju(n)}` : `${nazev(r)} v ${n}`)).join(', ');
+const nejhustsi = [...kraje].sort((a, b) => b.naSto - a.naSto)[0];
+const nejridsi = [...kraje].sort((a, b) => a.naSto - b.naSto)[0];
+const posledni = retezce[retezce.length - 1];
 ---
 
-<section class="sf" id="supermarkety-v-cislech">
-  <div class="sf__cislo">
-    <span class="sf__hodnota">{cislo(celkem)}</span>
-    <span class="sf__popis">prodejen sedmi největších řetězců supermarketů v Česku</span>
+<section class="sf" id="supermarkety-v-cislech" data-sf>
+  <header class="sf__hlava">
+    <span class="nadhlavi">Podle mapy · stav {datum(new Date(data.stav))}</span>
+    <h2>Kolik supermarketů je v Česku</h2>
+    <div class="sf__souhrn">
+      <p class="sf__velke"><span>{cislo(celkem)}</span> prodejen sedmi největších řetězců</p>
+      <p class="sf__perex">
+        Nejvíc jich má {retezce[0].nazev} ({cislo(retezce[0].pocet)}), nejméně {posledni.nazev} ({cislo(posledni.pocet)}).{' '}
+        {vetaVede}. Nejhustší síť má {nejhustsi.nazev} ({fmt1.format(nejhustsi.naSto)} prodejny na 100 000 lidí), nejřidší {nejridsi.nazev} ({fmt1.format(nejridsi.naSto)}).
+      </p>
+    </div>
+  </header>
+
+  <div class="sf__mrizka">
+    <section class="karta sf__blok" aria-labelledby="sf-retezce">
+      <h3 id="sf-retezce">Podle řetězců</h3>
+      <ol class="sf__seznam">
+        {retezce.map((r, i) => {
+          const l = logo(r.nazev);
+          return (
+            <li class="sf__radek" style={`--i: ${i}; ${barvy(r.id)}`}>
+              <span class:list={['sf__logo', { 'sf__logo--tmave': l?.tmave }]}>{l ? <img src={l.src} alt="" loading="lazy" /> : null}</span>
+              <span class="sf__stred">
+                <span class="sf__nazev">{r.nazev}</span>
+                <span class="sf__draha" aria-hidden="true"><span class="sf__vypln" style={`width: ${(r.pocet / maxRetezec) * 100}%;`}></span></span>
+              </span>
+              <span class="sf__cislo"><strong>{cislo(r.pocet)}</strong><span>{podil(r.pocet)} %</span></span>
+            </li>
+          );
+        })}
+      </ol>
+    </section>
+
+    <section class="karta sf__blok" aria-labelledby="sf-kraje">
+      <h3 id="sf-kraje">Podle krajů</h3>
+      <ul class="sf__legenda" aria-label="Barvy řetězců">
+        {retezce.map((r) => <li style={barvy(r.id)}><i></i>{r.nazev}</li>)}
+      </ul>
+      <ol class="sf__seznam sf__seznam--kraje">
+        {kraje.map((k, i) => (
+          <li class="sf__radek sf__radek--kraj" style={`--i: ${i};`}>
+            <span class="sf__stred">
+              <span class="sf__nazev">{k.nazev}</span>
+              <span class="sf__draha" role="img" aria-label={retezce.filter((r) => k.pocty[r.id]).map((r) => `${r.nazev} ${k.pocty[r.id]}`).join(', ')}>
+                <span class="sf__vypln sf__vypln--skladana" style={`width: ${(k.soucet / maxKraj) * 100}%;`}>
+                  {retezce.filter((r) => k.pocty[r.id]).map((r) => (
+                    <i style={`flex-grow: ${k.pocty[r.id]}; ${barvy(r.id)}`} title={`${r.nazev}: ${k.pocty[r.id]}`}></i>
+                  ))}
+                </span>
+              </span>
+            </span>
+            <span class="sf__cislo"><strong>{cislo(k.soucet)}</strong><span>{fmt1.format(k.naSto)} na 100 tis.</span></span>
+          </li>
+        ))}
+      </ol>
+    </section>
   </div>
-  <div class="sf__text">
-    <h2>Supermarkety v číslech</h2>
-    <p>
-      Nejvíc prodejen má {serazene[0].nazev} ({cislo(serazene[0].hodnota)}), nejméně {serazene[serazene.length - 1].nazev} ({cislo(serazene[serazene.length - 1].hodnota)}).
-      Podle mapy {vetaVede}.
-    </p>
-    <ul class="sf__loga" aria-label="Řetězce na mapě">
-      {serazene.map((p) => {
-        const l = logo(p.nazev);
-        return <li class:list={['sf__logo', { 'sf__logo--tmave': l?.tmave }]} title={p.nazev}>{l ? <img src={l.src} alt={p.nazev} loading="lazy" /> : p.nazev}</li>;
-      })}
-    </ul>
-    <p class="drobne">Počty prodejen: {zdroj}. Mapa: OpenStreetMap, proto se počty na mapě mohou o pár prodejen lišit.</p>
-  </div>
+
+  <p class="drobne sf__zdroj">
+    Spočítáno z mapy výše: prodejny z OpenStreetMap, stav {datum(new Date(data.stav))}, obnovuje se jednou měsíčně.
+    Počet obyvatel krajů: ČSÚ, k 31. 12. 2025. OpenStreetMap nemusí mít úplně všechny prodejny, porovnání s čísly řetězců je v metodice.
+  </p>
 </section>
 
+<script>
+  // Pruhy se rozrostou, až přehled doroluje na obrazovku
+  for (const el of document.querySelectorAll<HTMLElement>('[data-sf]')) {
+    if (!('IntersectionObserver' in window)) { el.classList.add('je-videt'); continue; }
+    const pozorovatel = new IntersectionObserver((zaznamy) => {
+      for (const z of zaznamy) if (z.isIntersecting) { el.classList.add('je-videt'); pozorovatel.disconnect(); }
+    }, { threshold: 0.15 });
+    pozorovatel.observe(el);
+  }
+</script>
+
 <style>
-  .sf { display: grid; grid-template-columns: auto 1fr; gap: clamp(1.25rem, 4vw, 3rem); align-items: center; scroll-margin-top: 6rem; }
-  .sf__cislo { display: flex; flex-direction: column; gap: 0.25rem; max-width: 15rem; }
-  .sf__hodnota { font-size: clamp(3rem, 8vw, 4.75rem); font-weight: 900; line-height: 1; letter-spacing: -0.04em; color: var(--orange); font-variant-numeric: tabular-nums; }
-  .sf__popis { font-weight: 700; color: var(--text-2); line-height: 1.4; }
-  .sf__text { display: flex; flex-direction: column; gap: 0.75rem; }
-  .sf__text h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); }
-  .sf__text > p:not(.drobne) { line-height: 1.75; color: var(--text-clanku); max-width: 62ch; }
-  .sf__loga { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .sf__logo { display: flex; align-items: center; justify-content: center; box-sizing: border-box; overflow: hidden; width: 64px; height: 40px; padding: 5px 8px; border-radius: 10px; background: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(27, 42, 74, 0.1); }
+  .sf { display: flex; flex-direction: column; gap: 1.5rem; scroll-margin-top: 5.5rem; }
+  .sf__hlava { display: flex; flex-direction: column; gap: 0.5rem; }
+  .sf__hlava h2 { font-size: clamp(1.6rem, 3.4vw, 2.3rem); line-height: 1.15; }
+  .sf__souhrn { display: grid; grid-template-columns: auto 1fr; gap: 0.5rem clamp(1.25rem, 4vw, 3rem); align-items: center; margin-top: 0.5rem; }
+  .sf__velke { display: flex; flex-direction: column; max-width: 14rem; font-weight: 700; color: var(--text-2); line-height: 1.35; }
+  .sf__velke span { font-size: clamp(3rem, 8vw, 4.5rem); font-weight: 900; line-height: 1; letter-spacing: -0.04em; color: var(--orange); font-variant-numeric: tabular-nums; }
+  .sf__perex { line-height: 1.75; color: var(--text-clanku); max-width: 64ch; }
+
+  .sf__mrizka { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.25rem; align-items: start; }
+  .sf__blok { display: flex; flex-direction: column; gap: 1rem; }
+  .sf__blok h3 { font-size: 1.15rem; }
+  .sf__seznam { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.85rem; }
+  .sf__seznam--kraje { gap: 0.6rem; }
+  .sf__radek { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.75rem; }
+  .sf__radek--kraj { grid-template-columns: 1fr auto; }
+  .sf__logo {
+    display: flex; align-items: center; justify-content: center; box-sizing: border-box; overflow: hidden;
+    width: 56px; height: 36px; padding: 3px 6px; border-radius: 10px; background: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(27, 42, 74, 0.1);
+  }
   .sf__logo--tmave { background: #1B2A4A; }
   .sf__logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
-  @media (max-width: 640px) { .sf { grid-template-columns: 1fr; } }
+  .sf__stred { display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+  .sf__nazev { font-weight: 800; font-size: 0.9rem; color: var(--navy); }
+  .sf__radek--kraj .sf__nazev { font-weight: 700; font-size: 0.85rem; }
+  .sf__draha { display: block; height: 12px; border-radius: 999px; background: var(--draha); overflow: hidden; }
+  .sf__radek--kraj .sf__draha { height: 10px; }
+  .sf__vypln {
+    display: flex; height: 100%; border-radius: 999px; background: var(--barva, var(--navy)); overflow: hidden;
+    transform-origin: left center; transition: transform 1.3s cubic-bezier(0.22, 1, 0.36, 1) calc(var(--i, 0) * 90ms);
+  }
+  .sf__vypln--skladana { background: none; }
+  .sf__vypln--skladana i { display: block; height: 100%; min-width: 2px; background: var(--barva); }
+  .sf__vypln--skladana i + i { box-shadow: inset 1.5px 0 0 var(--paper); }
+  :global(html.js) .sf:not(.je-videt) .sf__vypln { transform: scaleX(0); }
+  /* V tmavém režimu světlejší Lidl a Kaufland (inline proměnná --barva-tmava) */
+  :global(html[data-tema='tmavy']) .sf__vypln:not(.sf__vypln--skladana),
+  :global(html[data-tema='tmavy']) .sf__vypln--skladana i,
+  :global(html[data-tema='tmavy']) .sf__legenda i { background: var(--barva-tmava); }
+  .sf__cislo { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.2; font-variant-numeric: tabular-nums; min-width: 4.5rem; }
+  .sf__cislo strong { font-size: 1.05rem; color: var(--navy); }
+  .sf__cislo span { font-size: 0.78rem; color: var(--muted); white-space: nowrap; }
+  .sf__legenda { list-style: none; margin: -0.25rem 0 0.25rem; padding: 0; display: flex; flex-wrap: wrap; gap: 0.35rem 0.9rem; font-size: 0.8rem; font-weight: 700; color: var(--text-2); }
+  .sf__legenda li { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .sf__legenda i { width: 10px; height: 10px; border-radius: 3px; background: var(--barva); }
+  .sf__zdroj { line-height: 1.6; max-width: 90ch; }
+
+  @media (max-width: 860px) { .sf__mrizka { grid-template-columns: 1fr; } }
+  @media (max-width: 560px) { .sf__souhrn { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) { .sf__vypln { transition: none; } :global(html.js) .sf:not(.je-videt) .sf__vypln { transform: none; } }
 </style>

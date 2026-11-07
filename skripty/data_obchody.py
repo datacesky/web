@@ -145,6 +145,21 @@ def stahni(cil):
     sys.exit(f'Stažení selhalo: {posledni}')
 
 
+GRAF = os.path.join(KOREN, 'src', 'content', 'grafy', 'supermarkety-v-cesku.md')
+
+
+def aktualizuj_graf(pocty):
+    """Počty z mapy přepíše i do grafu Supermarkety v Česku (karta na Žebříčcích, Porovnej se), ať všude sedí stejná čísla."""
+    if not os.path.exists(GRAF):
+        return
+    text = open(GRAF, encoding='utf-8').read()
+    poradi = sorted(RETEZCE, key=lambda r: -pocty[r])
+    radky = [f'  - {{ nazev: "{NAZVY[r]}", hodnota: {pocty[r]}{", kategorie: \"Nejvíc prodejen\"" if i == 0 else ""} }}' for i, r in enumerate(poradi)]
+    novy = re.sub(r'(?m)^polozky:\n(?:  - .*\n)+', 'polozky:\n' + '\n'.join(radky) + '\n', text, count=1)
+    if novy != text:
+        open(GRAF, 'w', encoding='utf-8').write(novy)
+
+
 def main():
     if len(sys.argv) < 2:
         sys.exit('Použití: python3 skripty/data_obchody.py export.json   nebo   python3 skripty/data_obchody.py --stahnout')
@@ -264,6 +279,7 @@ def main():
     os.makedirs(os.path.dirname(VYSTUP), exist_ok=True)
     with open(VYSTUP, 'w', encoding='utf-8') as f:
         json.dump(vystup, f, ensure_ascii=False, separators=(',', ':'))
+    aktualizuj_graf(pocty)
 
     for o in obce:
         o['k'] = poradi_kraju.index(kraj_bodu(o['lon'], o['lat']))

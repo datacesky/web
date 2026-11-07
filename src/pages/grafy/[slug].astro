@@ -31,8 +31,6 @@ const souvisejici = [...stejneTema, ...ostatni].slice(0, 3);
 
 // Supermarkety: mapa přes celou obrazovku hned pod hlavičkou, graf s počty nahradila fakta pod mapou
 const plnaMapa = graf.id === 'supermarkety-v-cesku';
-const celkem = data.polozky.reduce((s, p) => s + p.hodnota, 0);
-const zdrojPoctu = `${data.zdroj} (${new Date(data.datum).getFullYear()})`;
 
 const RADY = { vysokoskolaci, turiste } as const;
 const rada = data.vyvoj ? (RADY[data.vyvoj] as any) : null;
@@ -43,7 +41,7 @@ const NAPOVEDA_VYVOJE: Record<string, string> = {
 ---
 
 <Base titul={`${data.titul} — data.cesky`} popis={data.perex} obrazek={data.obrazek}>
-  {plnaMapa && <SupermarketyMapa celkem={celkem} zdrojCelkem={zdrojPoctu} />}
+  {plnaMapa && <SupermarketyMapa />}
   <article class="obal sekce--mala sloupec" style="gap: 1.25rem;">
     <nav class="drobecky" aria-label="Drobečková navigace">
       <a href="/zebricky/#grafy">Žebříčky</a>
@@ -54,7 +52,7 @@ const NAPOVEDA_VYVOJE: Record<string, string> = {
     </nav>
 
     {plnaMapa ? (
-      <SupermarketyFakta polozky={data.polozky} zdroj={zdrojPoctu} />
+      <SupermarketyFakta />
     ) : (
       <>
         <h1>{data.titul}</h1>

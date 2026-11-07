@@ -33,7 +33,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           STAV: ${{ steps.obchody.outputs.stav }}
         run: |
-          if [ -z "$(git status --porcelain public/data/obchody.json public/data/obce.json)" ]; then
+          if [ -z "$(git status --porcelain public/data/obchody.json public/data/obce.json src/content/grafy/supermarkety-v-cesku.md)" ]; then
             echo "Od minula se nic nezměnilo."
             exit 0
           fi
@@ -41,7 +41,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git checkout -B "$VETEV"
-          git add public/data/obchody.json public/data/obce.json
+          git add public/data/obchody.json public/data/obce.json src/content/grafy/supermarkety-v-cesku.md
           git commit -m "Supermarkety z OpenStreetMap: stav $STAV (návrh)"
           git push --force origin "$VETEV"
           OTEVRENY="$(gh pr list --head "$VETEV" --state open --json number --jq '.[].number' | head -n 1)"
