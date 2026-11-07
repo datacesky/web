@@ -1,0 +1,8 @@
+# Cloudflare Worker pro trasy na mapě supermarketů (navody/trasy/README.md)
+name = "datacesky-trasy"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+[vars]
+# Weby, ze kterých se smí ptát. Pro náhled na počítači přidej ,http://localhost:4321
+POVOLENE = "https://datacesky.cz,https://www.datacesky.cz"

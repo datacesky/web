@@ -1,0 +1,52 @@
+# Supermarkety z OpenStreetMap: jednou měsíčně stáhne čerstvé polohy, adresy a otevírací doby prodejen
+# (skripty/data_obchody.py) a pošle je jako návrh ke schválení (pull request). Na web se dostanou, až návrh schválíš (Merge).
+# Ručně: záložka Actions → Supermarkety z OpenStreetMap → Run workflow.
+name: Supermarkety z OpenStreetMap
+
+on:
+  schedule:
+    # 3. den v měsíci v 5:00 UTC
+    - cron: '0 5 3 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  navrh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Stáhnout repozitář
+        uses: actions/checkout@v7
+
+      - name: Stáhnout prodejny z OpenStreetMap
+        id: obchody
+        env:
+          NAVRH_POPIS: ${{ runner.temp }}/navrh.md
+        run: |
+          pip install --quiet shapely
+          python3 skripty/data_obchody.py --stahnout
+
+      - name: Poslat jako návrh ke schválení
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STAV: ${{ steps.obchody.outputs.stav }}
+        run: |
+          if [ -z "$(git status --porcelain public/data/obchody.json public/data/obce.json)" ]; then
+            echo "Od minula se nic nezměnilo."
+            exit 0
+          fi
+          VETEV="obchody/$STAV"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git checkout -B "$VETEV"
+          git add public/data/obchody.json public/data/obce.json
+          git commit -m "Supermarkety z OpenStreetMap: stav $STAV (návrh)"
+          git push --force origin "$VETEV"
+          OTEVRENY="$(gh pr list --head "$VETEV" --state open --json number --jq '.[].number' | head -n 1)"
+          if [ -n "$OTEVRENY" ]; then
+            gh pr edit "$OTEVRENY" --body-file "$RUNNER_TEMP/navrh.md"
+          else
+            gh pr create --base main --head "$VETEV" --title "Supermarkety z OpenStreetMap: stav $STAV" --body-file "$RUNNER_TEMP/navrh.md"
+          fi

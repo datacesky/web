@@ -1,0 +1,61 @@
+---
+// Fakta pod mapou supermarketů: kolik prodejen sedm řetězců má (podle řetězců) a kdo vede v kolika krajích
+// (podle mapy z OpenStreetMap). Graf s počty nahradila mapa, číslo zůstává tady.
+import fs from 'node:fs';
+import path from 'node:path';
+import { logo } from '../lib/loga';
+import { cislo } from '../lib/format';
+
+interface Props { polozky: { nazev: string; hodnota: number }[]; zdroj: string }
+const { polozky, zdroj } = Astro.props;
+const celkem = polozky.reduce((s, p) => s + p.hodnota, 0);
+const serazene = [...polozky].sort((a, b) => b.hodnota - a.hodnota);
+
+const data = JSON.parse(fs.readFileSync(path.join(process.cwd(), 'public', 'data', 'obchody.json'), 'utf-8')) as { retezce: { id: string; nazev: string }[]; kraje: Record<string, Record<string, number>> };
+const kolikVede: Record<string, number> = {};
+for (const v of Object.values(data.kraje)) {
+  const [r] = Object.entries(v).sort((a, b) => b[1] - a[1])[0];
+  kolikVede[r] = (kolikVede[r] ?? 0) + 1;
+}
+const nazev = (id: string) => data.retezce.find((r) => r.id === id)?.nazev ?? id;
+// „Penny má nejvíc prodejen v 9 krajích, Albert v 5.“
+const kraju = (n: number) => (n === 1 ? 'kraji' : 'krajích');
+const vede = Object.entries(kolikVede).sort((a, b) => b[1] - a[1]);
+const vetaVede = vede.map(([r, n], i) => (i === 0 ? `${nazev(r)} má nejvíc prodejen v ${n} ${kraju(n)}` : `${nazev(r)} v ${n}`)).join(', ');
+---
+
+<section class="sf" id="supermarkety-v-cislech">
+  <div class="sf__cislo">
+    <span class="sf__hodnota">{cislo(celkem)}</span>
+    <span class="sf__popis">prodejen sedmi největších řetězců supermarketů v Česku</span>
+  </div>
+  <div class="sf__text">
+    <h2>Supermarkety v číslech</h2>
+    <p>
+      Nejvíc prodejen má {serazene[0].nazev} ({cislo(serazene[0].hodnota)}), nejméně {serazene[serazene.length - 1].nazev} ({cislo(serazene[serazene.length - 1].hodnota)}).
+      Podle mapy {vetaVede}.
+    </p>
+    <ul class="sf__loga" aria-label="Řetězce na mapě">
+      {serazene.map((p) => {
+        const l = logo(p.nazev);
+        return <li class:list={['sf__logo', { 'sf__logo--tmave': l?.tmave }]} title={p.nazev}>{l ? <img src={l.src} alt={p.nazev} loading="lazy" /> : p.nazev}</li>;
+      })}
+    </ul>
+    <p class="drobne">Počty prodejen: {zdroj}. Mapa: OpenStreetMap, proto se počty na mapě mohou o pár prodejen lišit.</p>
+  </div>
+</section>
+
+<style>
+  .sf { display: grid; grid-template-columns: auto 1fr; gap: clamp(1.25rem, 4vw, 3rem); align-items: center; scroll-margin-top: 6rem; }
+  .sf__cislo { display: flex; flex-direction: column; gap: 0.25rem; max-width: 15rem; }
+  .sf__hodnota { font-size: clamp(3rem, 8vw, 4.75rem); font-weight: 900; line-height: 1; letter-spacing: -0.04em; color: var(--orange); font-variant-numeric: tabular-nums; }
+  .sf__popis { font-weight: 700; color: var(--text-2); line-height: 1.4; }
+  .sf__text { display: flex; flex-direction: column; gap: 0.75rem; }
+  .sf__text h2 { font-size: clamp(1.4rem, 3vw, 1.9rem); }
+  .sf__text > p:not(.drobne) { line-height: 1.75; color: var(--text-clanku); max-width: 62ch; }
+  .sf__loga { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .sf__logo { display: grid; place-items: center; width: 64px; height: 40px; padding: 5px 8px; border-radius: 10px; background: #FFFFFF; box-shadow: inset 0 0 0 1px rgba(27, 42, 74, 0.1); }
+  .sf__logo--tmave { background: #1B2A4A; }
+  .sf__logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+  @media (max-width: 640px) { .sf { grid-template-columns: 1fr; } }
+</style>

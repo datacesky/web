@@ -18,6 +18,7 @@ export const epizody: Epizoda[] = [
   { a3: 'KHM', dil: 9, nazev: 'Kambodža', popis: '23 Pražských hradů v jednom chrámu, jezero, které se zvětší šestkrát, a král, který mluví česky.', datum: '2026-10-07', instagram: 'https://www.instagram.com/reel/DeMkb8GhUvM/' },
   { a3: 'POL', dil: 10, nazev: 'Polsko', popis: 'Skoro 5 000 km dálnic za 23 let, letiště pro 34 milionů cestujících a skoro 5 % HDP na armádu.', datum: '2026-10-17', instagram: 'https://www.instagram.com/reel/DemRih9hWZP/' },
   { a3: 'JPN', dil: 11, nazev: 'Japonsko', popis: 'Vlaky 320 km/h, nejdéle žijící ženy na světě a 9 milionů prázdných domů a bytů.', datum: '2026-10-25', instagram: '' },
+  { a3: 'HUN', dil: 12, nazev: 'Maďarsko', popis: 'O pětinu větší než Česko, o 1,4 milionu lidí méně a metro jezdí o 78 let déle než pražské.', datum: '2026-11-06', instagram: 'https://www.instagram.com/reel/DfZyZrpIeNU/' },
 ];
 
 export const posledniDil = epizody[epizody.length - 1];

@@ -24,7 +24,9 @@ Po `git push` do větve main se web sám nasadí.
 | Ostatní série a samostatná videa | `src/data/serie.ts` (série, díly, témata, odkazy na reely), stránka `src/pages/videa.astro` |
 | Náhledovky videí | `public/videa/{id}.webp` (id videa ze `serie.ts`, díly Česko vs. svět `cesko-vs-svet-11.webp`) |
 | Konflikty na glóbusu | `src/data/konflikty.ts` (návod na aktualizaci je nahoře v souboru) |
-| Supermarkety na mapě | `public/data/obchody.json`, vyrobí ho `python3 skripty/data_obchody.py export.geojson` (postup v hlavičce skriptu) |
+| Mapa supermarketů | `src/components/SupermarketyMapa.astro` (podklad OpenFreeMap v barvách webu: `src/lib/mapa-styl.ts`, otevírací doba: `src/lib/oteviraci.ts`) |
+| Prodejny a obce na mapě | `public/data/obchody.json` a `public/data/obce.json` z OpenStreetMap. Obnovuje je jednou měsíčně Action „Supermarkety z OpenStreetMap“ jako návrh ke schválení, ručně `python3 skripty/data_obchody.py export.json` (postup v hlavičce skriptu) |
+| Trasy pěšky a autem (Mapy.com) | Cloudflare Worker v `navody/trasy/` (návod v README tam), jeho adresu vlož do `src/data/web.ts` jako `trasy` |
 | Sídla největších firem | tabulka `SIDLA` v `src/components/FirmyNaMape.astro` |
 | Loga firem a obchodů | `public/loga/{název bez diakritiky}.png`, třeba `penny.png`, `skoda-auto.png`; v grafech a mapách se ukážou samy |
 | Hlasování o dalším dílu | `src/data/hlasovani.ts`, skript `navody/hlasovani-apps-script.gs` |

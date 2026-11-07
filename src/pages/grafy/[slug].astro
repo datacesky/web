@@ -8,7 +8,8 @@ import PorovnejMzdu from '../../components/PorovnejMzdu.astro';
 import Piktogramy from '../../components/Piktogramy.astro';
 import NaObyvatele from '../../components/NaObyvatele.astro';
 import GrafCard from '../../components/GrafCard.astro';
-import ObchodyNaMape from '../../components/ObchodyNaMape.astro';
+import SupermarketyMapa from '../../components/SupermarketyMapa.astro';
+import SupermarketyFakta from '../../components/SupermarketyFakta.astro';
 import FirmyNaMape from '../../components/FirmyNaMape.astro';
 import vysokoskolaci from '../../data/grafy/vysokoskolaci.json';
 import turiste from '../../data/grafy/turiste.json';
@@ -28,6 +29,11 @@ const stejneTema = vsechny.filter((g) => g.id !== graf.id && g.data.tema === dat
 const ostatni = vsechny.filter((g) => g.id !== graf.id && g.data.tema !== data.tema);
 const souvisejici = [...stejneTema, ...ostatni].slice(0, 3);
 
+// Supermarkety: mapa přes celou obrazovku hned pod hlavičkou, graf s počty nahradila fakta pod mapou
+const plnaMapa = graf.id === 'supermarkety-v-cesku';
+const celkem = data.polozky.reduce((s, p) => s + p.hodnota, 0);
+const zdrojPoctu = `${data.zdroj} (${new Date(data.datum).getFullYear()})`;
+
 const RADY = { vysokoskolaci, turiste } as const;
 const rada = data.vyvoj ? (RADY[data.vyvoj] as any) : null;
 const NAPOVEDA_VYVOJE: Record<string, string> = {
@@ -37,6 +43,7 @@ const NAPOVEDA_VYVOJE: Record<string, string> = {
 ---
 
 <Base titul={`${data.titul} — data.cesky`} popis={data.perex} obrazek={data.obrazek}>
+  {plnaMapa && <SupermarketyMapa celkem={celkem} zdrojCelkem={zdrojPoctu} />}
   <article class="obal sekce--mala sloupec" style="gap: 1.25rem;">
     <nav class="drobecky" aria-label="Drobečková navigace">
       <a href="/zebricky/#grafy">Žebříčky</a>
@@ -46,8 +53,14 @@ const NAPOVEDA_VYVOJE: Record<string, string> = {
       <span aria-current="page" style="color: var(--navy);">{data.titul}</span>
     </nav>
 
-    <h1>{data.titul}</h1>
-    <p class="perex" style="max-width: 62ch;">{data.perex}</p>
+    {plnaMapa ? (
+      <SupermarketyFakta polozky={data.polozky} zdroj={zdrojPoctu} />
+    ) : (
+      <>
+        <h1>{data.titul}</h1>
+        <p class="perex" style="max-width: 62ch;">{data.perex}</p>
+      </>
+    )}
 
     <div class="rada">
       <span class="chip chip--info">Publikováno {datum(data.datum)}</span>
@@ -57,10 +70,9 @@ const NAPOVEDA_VYVOJE: Record<string, string> = {
 
     <div class="detail" style="margin-top: 1.25rem;">
       <div class="sloupec" style="gap: 3rem;">
-        {graf.id === 'supermarkety-v-cesku' && <ObchodyNaMape />}
         {graf.id === 'nejvetsi-ceske-firmy' && <FirmyNaMape polozky={data.polozky} jednotka={data.jednotka} />}
 
-        <div class="karta sloupec" style="gap: 1.5rem;">
+        {!plnaMapa && <div class="karta sloupec" style="gap: 1.5rem;">
           <div class="sloupec" style="gap: 0.35rem; text-align: center; align-items: center;">
             <h2 class="nadpis-grafu" style="font-size: clamp(1.4rem, 3vw, 2rem);">{data.titul}</h2>
             {data.popisGrafu && <p class="stitek" style="font-size: 0.95rem;">{data.popisGrafu}</p>}
@@ -76,7 +88,7 @@ const NAPOVEDA_VYVOJE: Record<string, string> = {
             <span class="drobne">Zdroj: {data.zdroj}</span>
             <span class="znacka">@data<span>.cesky</span></span>
           </div>
-        </div>
+        </div>}
 
         {data.porovnej && (
           <section class="karta sloupec porovnej" style="gap: 1.1rem;" id="porovnej">

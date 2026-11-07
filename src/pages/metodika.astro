@@ -119,13 +119,19 @@ const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
       <li><strong>Můj kraj na Mapě Česka:</strong> který kraj sis vybral(a), aby ho mapa příště rovnou ukázala.</li>
     </ul>
     <p>Obojí smažeš tím, že v prohlížeči vymažeš data tohoto webu.</p>
+    <p>
+      <strong>Mapa supermarketů</strong> se tě na polohu zeptá, jen když klikneš na Najít nejbližší. Poloha se nikam neukládá a nejbližší prodejny
+      spočítá přímo tvůj prohlížeč.{web.trasy && ' Kvůli času a vzdálenosti cesty pošle mapa polohu zaokrouhlenou asi na 10 m a polohy nejbližších prodejen přes server webu (Cloudflare) do Mapy.com.'}
+    </p>
     <p>Kdo při návštěvě něco vidí:</p>
     <ul>
       <li><strong>GitHub Pages</strong>, kde web běží. Jako každý server zpracovává tvou IP adresu, aby ti mohl stránku poslat.</li>
       <li><strong>Google</strong>, přes který běží hlasování (Apps Script a tabulka). Při načtení výsledků a při hlasování uvidí tvou IP adresu. Cookies ani adresa stránky se mu neposílají.</li>
       {web.goatcounter && <li><strong>GoatCounter</strong> měří návštěvnost bez cookies a bez ukládání čehokoli do prohlížeče. Vidí jen souhrnná čísla, ne jednotlivé lidi.</li>}
+      <li><strong>OpenFreeMap</strong>, odkud se načítá podklad mapy supermarketů (ulice, řeky, názvy). Uvidí tvou IP adresu a kterou část mapy si prohlížíš. Cookies nepoužívá.</li>
+      {web.trasy && <li><strong>Cloudflare a Mapy.com (Seznam.cz)</strong>, jen když na mapě supermarketů hledáš nejbližší prodejny: Cloudflare vidí tvou IP adresu, Mapy.com jen zaokrouhlenou polohu, ze které počítají trasu.</li>}
     </ul>
-    <p>Písma, vlajky, mapy i data grafů jsou uložené přímo na webu, nic dalšího se odjinud nenačítá. Odkazy na Instagram, TikTok a Facebook jsou obyčejné odkazy, jejich obsah se sem nevkládá.</p>
+    <p>Písma, vlajky, mapy i data grafů jsou uložené přímo na webu, nic dalšího se odjinud nenačítá. Jedinou výjimkou je podklad mapy supermarketů. Odkazy na Instagram, TikTok a Facebook jsou obyčejné odkazy, jejich obsah se sem nevkládá.</p>
 
     <h2 id="opravy">Opravy</h2>
     <p>

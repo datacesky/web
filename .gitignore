@@ -23,3 +23,7 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 __pycache__/
+
+# Cloudflare Worker pro trasy (navody/trasy)
+.wrangler/
+.dev.vars
