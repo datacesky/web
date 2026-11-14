@@ -45,6 +45,8 @@ export function sklonuj(n: number, jeden: string, dva: string, pet: string): str
 export function nezalomit(text: string): string {
   return text
     .replace(/(\d) (?=%|‰|Kč|p\. b\.|kWh|mil\.|tis\.|mld\.|dolar|eur|dět|host|zem|milion|korun|lidí|litr)/g, '$1\u00a0')
+    // tisíce v čísle zůstanou pohromadě: „3 000 kWh“, „51 966 Kč“
+    .replace(/(\d) (?=\d{3}(?!\d))/g, '$1\u00a0')
     // řadová číslovka se nerozdělí od slova za ní: „2. čtvrtletí“, „45. týden“
     .replace(/(\d\.) (?=[a-zěščřžýáíéůúó])/g, '$1\u00a0')
     .replace(/(?<=^|[\s(„\u00a0])([vVkKsSzZoOuUaAiI]) /g, '$1\u00a0');

@@ -5,6 +5,7 @@
 import { geoOrthographic, geoPath, geoGraticule10, geoDistance, geoCentroid, geoInterpolate, geoBounds, geoContains } from 'd3-geo';
 import { feature } from 'topojson-client';
 import svet from '../data/svet.json';
+import detail from '../data/globus-detail.json';
 import { barva as cssBarva, priZmeneTematu } from './tema';
 
 export type Pohled = { lon: number; lat: number; k: number };
@@ -33,8 +34,13 @@ function rgb(c: string): [number, number, number] {
 export function spustGlobus(platno: HTMLCanvasElement, volby: { oblouky?: string[]; priSnimku?: () => void; zacatek?: number } = {}) {
   const ctx = platno.getContext('2d')!;
   const topo = svet.topo as any;
-  const prvky: Prvek[] = (feature(topo, topo.objects.countries) as any).features
-    .filter((f: any) => f.id && f.geometry)
+  // Světová mapa je hrubá (Natural Earth 110m). Česko a okolí mají podrobné obrysy (10m, src/data/globus-detail.json),
+  // ať je Česko i při přiblížení hezky tvarované; společné hranice sousedů na sebe přesně sedí.
+  const podrobne = detail as Record<string, any>;
+  const zakladni = (feature(topo, topo.objects.countries) as any).features.filter((f: any) => f.id && f.geometry)
+    .map((f: any) => (podrobne[f.id] ? { ...f, geometry: podrobne[f.id] } : f));
+  const navic = Object.keys(podrobne).filter((a3) => !zakladni.some((f: any) => f.id === a3)).map((a3) => ({ type: 'Feature', id: a3, geometry: podrobne[a3] }));
+  const prvky: Prvek[] = [...zakladni, ...navic]
     .map((f: any) => {
       const c = geoCentroid(f) as [number, number];
       let r = 0;
@@ -51,12 +57,14 @@ export function spustGlobus(platno: HTMLCanvasElement, volby: { oblouky?: string
         });
         return a;
       };
+      // podrobné obrysy (Česko a okolí) se pro malý glóbus zjednoduší jen málo, ať Česko není šišaté
+      const prah = podrobne[f.id] ? 0.08 : 0.45;
       const zjednodus = (ring: [number, number][]) => {
         if (ring.length <= 8) return ring;
         const out = [ring[0]];
         for (let k = 1; k < ring.length - 1; k++) {
           const [a, b] = out[out.length - 1], [c, d] = ring[k];
-          if (Math.abs(c - a) * Math.cos((d * Math.PI) / 180) + Math.abs(d - b) >= 0.45) out.push(ring[k]);
+          if (Math.abs(c - a) * Math.cos((d * Math.PI) / 180) + Math.abs(d - b) >= prah) out.push(ring[k]);
         }
         out.push(ring[ring.length - 1]);
         return out.length >= 4 ? out : ring;

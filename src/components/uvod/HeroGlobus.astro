@@ -5,9 +5,12 @@
 import { geoOrthographic, geoPath, geoGraticule10, geoCentroid, geoInterpolate } from 'd3-geo';
 import { feature } from 'topojson-client';
 import svet from '../../data/svet.json';
+import detail from '../../data/globus-detail.json';
 import { epizody } from '../../data/epizody';
 
-const zeme = (feature(svet.topo as any, (svet.topo as any).objects.countries) as any).features;
+// Česko a okolí s podrobnými obrysy jako na živém glóbusu (src/data/globus-detail.json)
+const podrobne = detail as Record<string, any>;
+const zeme = (feature(svet.topo as any, (svet.topo as any).objects.countries) as any).features.map((f: any) => (podrobne[f.id] ? { ...f, geometry: podrobne[f.id] } : f));
 const proj = geoOrthographic().rotate([-17, -36]).fitExtent([[20, 20], [580, 580]], { type: 'Sphere' } as any);
 const cesta = geoPath(proj);
 const sfera = cesta({ type: 'Sphere' } as any) ?? '';

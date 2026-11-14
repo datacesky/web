@@ -4,24 +4,22 @@ import Base from '../layouts/Base.astro';
 import BarChart from '../components/BarChart.astro';
 import Cesta from '../components/uvod/Cesta.astro';
 import MapaMini from '../components/uvod/MapaMini.astro';
-import SouhrnUvod from '../components/uvod/SouhrnUvod.astro';
 import Rozcestnik from '../components/uvod/Rozcestnik.astro';
 import NovinkaKarta from '../components/NovinkaKarta.astro';
 import VideoKarta from '../components/VideoKarta.astro';
-import { posledniNovinky, posledniSouhrn, nazevVydani } from '../lib/novinky';
+import { posledniNovinky } from '../lib/novinky';
 import { nactiVidea } from '../lib/dily';
 import { datum } from '../lib/format';
 
 // Úvodní stránka je jeden souvislý příběh: nahoře glóbus, který se při scrollování otáčí a přibližuje
-// (Svět → Žebříčky → Evropa → Česko, src/components/uvod/Cesta.astro), pod ním plynule navazují
-// novinky z dat, Česko v číslech (graf týdne a mapa krajů) a pás s videi. Žádné samostatné boxy:
+// (souhrn měsíce → Svět → Žebříčky → Evropa → Česko, src/components/uvod/Cesta.astro), pod ním plynule
+// navazují novinky z dat, Česko v číslech (graf týdne a mapa krajů) a pás s videi. Žádné samostatné boxy:
 // sekce se střídají jako pásy přes celou šířku a vpravo je rozcestník, kde právě jsi.
 const grafy = (await getCollection('grafy')).sort((a, b) => b.data.datum.valueOf() - a.data.datum.valueOf());
 const tydne = grafy[0];
 const videa = await nactiVidea();
 const nejnovejsiVidea = videa.vse.filter((d) => !d.brzy).slice(0, 10);
 const novinky = await posledniNovinky(6);
-const souhrn = await posledniSouhrn();
 const aktualizovano = novinky.length ? new Date(Math.max(...novinky.map((n) => n.datumVydani.valueOf()))) : null;
 
 // V grafu týdne ukážeme až 10 řádků a Česko vždycky.
@@ -38,6 +36,7 @@ const TT = 'https://www.tiktok.com/@data.cesky';
 const FB = 'https://www.facebook.com/data.cesky';
 const ROZCESTNIK = [
   { id: 'nahoru', nazev: 'Úvod' },
+  { id: 'k-mesic', nazev: 'Tento měsíc' },
   { id: 'k-svet', nazev: 'Svět' },
   { id: 'k-zebricky', nazev: 'Žebříčky' },
   { id: 'k-evropa', nazev: 'Evropa' },
@@ -63,7 +62,6 @@ const ROZCESTNIK = [
         </div>
         <a class="tlacitko tlacitko--male" href="/novinky/">Všechny novinky</a>
       </div>
-      {souhrn && <SouhrnUvod souhrn={souhrn.souhrn} vydani={nazevVydani(souhrn.vydani)} />}
       <ul class="posuvnik odhal" data-posuvnik data-postupne>
         {novinky.slice(0, 6).map((p) => <NovinkaKarta p={p} hlavni={p.hlavni} />)}
       </ul>

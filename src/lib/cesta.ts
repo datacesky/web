@@ -50,6 +50,9 @@ export function spustCestu(koren: HTMLElement) {
   const tridaPalety = (pal: string[], i: number, n: number) => pal[n <= 1 ? pal.length - 1 : Math.round((i * (pal.length - 1)) / (n - 1))];
   const serie: Obarveni = (a3) => (a3 === 'CZE' ? 'orange' : ep.has(a3) ? 'navy' : 'zeme');
   const cesko: Obarveni = (a3) => (a3 === 'CZE' ? 'orange' : 'zeme');
+  // Tento měsíc: Česko a ostatní země EU
+  const EU = new Set(['AUT', 'BEL', 'BGR', 'HRV', 'CYP', 'DNK', 'EST', 'FIN', 'FRA', 'DEU', 'GRC', 'HUN', 'IRL', 'ITA', 'LVA', 'LTU', 'LUX', 'MLT', 'NLD', 'POL', 'PRT', 'ROU', 'SVK', 'SVN', 'ESP', 'SWE']);
+  const mesic: Obarveni = (a3) => (a3 === 'CZE' ? 'orange' : EU.has(a3) ? 'k2' : 'zeme');
   // Pod mapou krajů se Česko na glóbusu ztratí: hrubý obrys ze světové mapy by vykukoval zpod přesné mapy
   const ceskoPodMapou: Obarveni = () => 'zeme';
   let podMapou = false;
@@ -82,6 +85,7 @@ export function spustCestu(koren: HTMLElement) {
   let aktivni = '';
   const POHLEDY: Record<string, Pohled> = {
     uvod: { lon: 17, lat: 36, k: 1 },
+    mesic: { lon: 14, lat: 47, k: 1.55 },
     svet: { lon: -40, lat: 12, k: 1 },
     zebricky: { lon: -300, lat: 24, k: 1 },
     evropa: { lon: -345, lat: 51, k: 2.6 },
@@ -103,6 +107,9 @@ export function spustCestu(koren: HTMLElement) {
       g.obarvi(podleEu(euId)); g.oblouky(false);
       const s = data.eu.find((x) => x.id === euId);
       legenda.innerHTML = tecka('orange', 'Česko') + skala('k', `${s?.stitek ?? ''} v zemích EU: méně → víc`);
+    } else if (aktivni === 'mesic') {
+      g.obarvi(mesic); g.oblouky(false);
+      legenda.innerHTML = tecka('orange', 'Česko') + tecka('k2', 'ostatní země EU');
     } else if (aktivni === 'cesko') {
       g.obarvi(podMapou ? ceskoPodMapou : cesko); g.oblouky(false);
       legenda.innerHTML = '<span>Každá tečka je jeden supermarket. Klikni na řetězec a zůstane jen on.</span>';
@@ -120,7 +127,9 @@ export function spustCestu(koren: HTMLElement) {
     scena.dataset.kapitola = k;
   }
 
-  // --- scroll: kotvy kapitol (kdy je kapitola uprostřed čtecí plochy) a plynulý přechod mezi nimi
+  // --- scroll: každá kapitola má úsek, kdy je glóbus v klidu (čteš ji), mezi úseky se plynule přesune.
+  // U dlouhé kapitoly (souhrn měsíce) drží glóbus její pohled po celou dobu čtení.
+  let drz: [number, number][] = [];
   let kotvy: number[] = [];
   function zmer() {
     prepocitejCesko();
@@ -129,31 +138,39 @@ export function spustCestu(koren: HTMLElement) {
     const s = scena.getBoundingClientRect();
     const hv = parseFloat(getComputedStyle(scena).top) || 64;
     const stred = telefon() ? hv + s.height + (vh - hv - s.height) / 2 : vh / 2 + hv / 2;
-    kotvy = kroky.map((el, i) => {
-      if (i === 0) return 0;
+    drz = kroky.map((el, i) => {
       const r = el.getBoundingClientRect();
-      return Math.max(1, r.top + scrollY + r.height / 2 - stred);
+      const top = r.top + scrollY, okraj = Math.min(r.height / 2, vh * 0.32);
+      const a = i === 0 ? 0 : Math.max(1, top + okraj - stred);
+      return [a, Math.max(a, top + r.height - okraj - stred)];
     });
-    for (let i = 1; i < kotvy.length; i++) kotvy[i] = Math.max(kotvy[i], kotvy[i - 1] + 1);
+    for (let i = 1; i < drz.length; i++) {
+      drz[i][0] = Math.max(drz[i][0], drz[i - 1][1] + 1);
+      drz[i][1] = Math.max(drz[i][1], drz[i][0]);
+    }
+    kotvy = drz.map(([a]) => a);
     naScroll(true);
   }
   function naScroll(okamzite = false) {
     const y = scrollY;
+    // i = poslední kapitola, jejíž úsek už začal
     let i = 0;
-    while (i < kotvy.length - 1 && y >= kotvy[i + 1]) i++;
-    const a = kotvy[i], b = kotvy[i + 1] ?? a;
-    const f = b > a ? clamp((y - a) / (b - a)) : 0;
-    const k0 = kroky[i].dataset.krok!, k1 = kroky[i + 1]?.dataset.krok ?? k0;
+    while (i < drz.length - 1 && y >= drz[i + 1][0]) i++;
+    const k0 = kroky[i].dataset.krok!;
+    let k1 = k0, f = 0;
+    if (y > drz[i][1] && i < drz.length - 1) {
+      k1 = kroky[i + 1].dataset.krok!;
+      f = clamp((y - drz[i][1]) / (drz[i + 1][0] - drz[i][1]));
+    }
     const A = POHLEDY[k0], B = POHLEDY[k1];
-    // glóbus v klidu, dokud čteš kapitolu, a pohne se mezi nimi
-    const e = hladce(clamp((f - 0.16) / 0.68));
+    const e = hladce(f);
     const p: Pohled = klidne
       ? POHLEDY[f < 0.5 ? k0 : k1]
       : { lon: A.lon + (B.lon - A.lon) * e, lat: A.lat + (B.lat - A.lat) * e, k: Math.exp(Math.log(A.k) + (Math.log(B.k) - Math.log(A.k)) * e) };
     g.nastav(p, okamzite && aktivni === '');
     const nova = f < 0.5 ? k0 : k1;
     if (nova !== aktivni) nastavKapitolu(nova);
-    mapaVidet = k1 === 'cesko' && k0 !== 'cesko' ? (klidne ? (f < 0.5 ? 0 : 1) : hladce(clamp((f - 0.66) / 0.28))) : k0 === 'cesko' ? 1 : 0;
+    mapaVidet = k1 === 'cesko' && k0 !== 'cesko' ? (klidne ? (f < 0.5 ? 0 : 1) : hladce(clamp((f - 0.6) / 0.35))) : k0 === 'cesko' ? 1 : 0;
     if (mapaVidet > 0.5) skryjTip();
     const pod = mapaVidet > 0.3;
     if (pod !== podMapou) { podMapou = pod; if (aktivni === 'cesko') g.obarvi(pod ? ceskoPodMapou : cesko); }
@@ -237,7 +254,8 @@ export function spustCestu(koren: HTMLElement) {
     if (!g.kliknuti()) return;
     const r = platno.getBoundingClientRect();
     const a3 = mapaVidet > 0.5 ? null : g.statNa(e.clientX - r.left, e.clientY - r.top);
-    const url = aktivni === 'zebricky' ? `/zebricky/#z=${zebricekId}`
+    const url = aktivni === 'mesic' ? '/novinky/#souhrn'
+      : aktivni === 'zebricky' ? `/zebricky/#z=${zebricekId}`
       : aktivni === 'evropa' ? `/novinky/#n-${euId}`
       : aktivni === 'cesko' ? data.supermarkety
       : a3 && a3 !== 'CZE' ? `/svet/#z=${a3}` : '/svet/';

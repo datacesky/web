@@ -34,7 +34,7 @@ Po `git push` do větve main se web sám nasadí.
 | Ověření pro Google, Seznam a měření návštěvnosti | `src/data/web.ts` |
 | Náhledové obrázky pro sdílení | `public/og/` |
 | Vývoj v čase a „Porovnej se“ u grafů | `src/data/grafy/*.json`, obnoví je `python3 skripty/data_grafu.py` |
-| Novinky z dat | `src/content/novinky/RRRR-MM.md`, připravuje je `skripty/novinky.py`, stránka `src/pages/novinky.astro`, karta `src/components/NovinkaKarta.astro`, hlavní novinka `src/components/NovinkaHlavni.astro`, souhrn měsíce `src/components/SouhrnMesice.astro` (na úvodu `src/components/uvod/SouhrnUvod.astro`) |
+| Novinky z dat | `src/content/novinky/RRRR-MM.md`, připravuje je `skripty/novinky.py`, stránka `src/pages/novinky.astro`, karta `src/components/NovinkaKarta.astro`, hlavní novinka `src/components/NovinkaHlavni.astro`, souhrn měsíce `src/components/SouhrnMesice.astro` (na úvodu jako první kapitola v `src/components/uvod/Cesta.astro`) |
 | Náhledy novinek | `src/components/NahledNovinky.astro`, ilustrace podle ikony `src/lib/ilustrace.ts`, siluety map `public/novinky/mapy/` (vyrábí `skripty/mapy_novinek.py`) |
 | 3D model Česka | `public/data/cesko3d.json`, obnoví ho `python3 skripty/data_3d.py` |
 | Vlaky za 24 hodin (Mapa Česka) | `public/data/vlaky.json`, vyrobí ho `python3 skripty/data_vlaky.py` z GTFS jízdního řádu (postup je v hlavičce skriptu) |
@@ -80,8 +80,9 @@ hlavní novinka je první.
 
 **Souhrn měsíce** je shrnutí lidskou řečí: co se pro lidi změnilo a jak je na tom Česko proti Evropě a světu.
 Skript ho skládá z nejnovějších čísel všech ukazatelů (i těch, která už vyšla dřív) do bloku `souhrn:` v hlavičce
-vydání. Má titulek, perex (2–3 věty, ty jsou i na úvodní stránce) a šest oblastí: ceny, výplaty (reálně, po odečtení
-inflace), tankování, práce, bydlení a ekonomika. Každá oblast má:
+vydání. Má titulek, perex (2–3 věty, pro archiv), delší text o třech odstavcích (peněženka; práce a ekonomika; Česko
+v Evropě a ve světě) a osm oblastí: ceny, výplaty (reálně, po odečtení inflace), tankování, elektřina, práce, nákupy,
+bydlení a ekonomika. Na úvodní stránce je celý souhrn jako první kapitola hned pod úvodem. Každá oblast má:
 
 - `stav` a `ton` (dobre, spatne, neutralni): štítek a barva, jak zpráva vyznívá pro lidi;
 - `cislo` a `popisCisla`: velké číslo;
@@ -89,8 +90,7 @@ inflace), tankování, práce, bydlení a ekonomika. Každá oblast má:
 - `text`: čísla a souvislosti, `srovnani`: malé pruhy Česko / průměr EU (JSON na jednom řádku, pruhy vždy od nuly);
 - `zdroj`, `url` a `novinka` (id novinky, na jejíž graf vede odkaz „Graf a detail“).
 
-Věty jsou šablony, takže je v návrhu klidně přepiš po svém. Delší úvod jen pro stránku Novinky přidáš řádkem
-`text: "…"` pod `perex:`. Souhrn do už zveřejněného posledního vydání přepočítáš příkazem
+Věty jsou šablony, takže je v návrhu klidně přepiš po svém. Odstavce v řádku `text:` odděluje `\n\n`. Souhrn do už zveřejněného posledního vydání přepočítáš příkazem
 `python3 skripty/novinky.py --souhrn`. Otevřená data ČSÚ o mzdách (MZDQ1) občas vycházejí později než tisková
 zpráva: když jsou starší, návrh na to upozorní a nejnovější čtvrtletí najdeš na https://csu.gov.cz/statistika/zamestnanci-a-mzdy.
 

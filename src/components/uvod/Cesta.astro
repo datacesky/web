@@ -13,7 +13,8 @@ import podklad from '../../data/cesko-mapa.json';
 import { epizody, posledniDil, odkazDilu } from '../../data/epizody';
 import { noveNaWebu } from '../../data/nove-na-webu';
 import { ZEME, vlajka, vrstvaPodleId, pocet, poradiZeme, zebricek, jmeno } from '../../lib/svet';
-import { vydaniNovinek, posledniSouhrn } from '../../lib/novinky';
+import { vydaniNovinek, posledniSouhrn, nazevVydani } from '../../lib/novinky';
+import { nezalomit } from '../../lib/format';
 import { logo } from '../../lib/loga';
 import { cislo } from '../../lib/format';
 import { nactiObchody, BARVY_RETEZCU, BARVY_RETEZCU_TMAVE } from '../../lib/obchody';
@@ -84,6 +85,7 @@ const tecky = [...retezce].sort((a, b) => b.pocet - a.pocet).map((r) => ({
 const barvyRetezce = (id: string) => `--barva: ${BARVY_RETEZCU[id]}; --barva-tmava: ${BARVY_RETEZCU_TMAVE[id]};`;
 
 const KAPITOLY = [
+  ...(souhrn ? [{ id: 'mesic', nazev: 'Tento měsíc' }] : []),
   { id: 'svet', nazev: 'Svět' },
   { id: 'zebricky', nazev: 'Žebříčky' },
   { id: 'evropa', nazev: 'Evropa' },
@@ -91,6 +93,9 @@ const KAPITOLY = [
 ];
 const data = JSON.stringify({ epizody: epizody.map((e) => e.a3), eu: eu.map(({ id, hodnoty, desetinna, jednotka, stitek }) => ({ id, hodnoty, desetinna, jednotka, stitek })), supermarkety: SUPERMARKETY, projekce: P });
 const nove = (k: string) => noveNaWebu.filter((x) => x.kapitola === k);
+// číslo kapitoly v nadhlaví (souhrn měsíce je první, když existuje)
+const cislo_ = (id: string) => KAPITOLY.findIndex((k) => k.id === id) + 1;
+const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).split(/\n\s*\n/) : [];
 ---
 
 <section class="cesta" data-cesta data-json={data} aria-label="Úvod">
@@ -135,15 +140,43 @@ const nove = (k: string) => noveNaWebu.filter((x) => x.kapitola === k);
         </div>
       </div>
       <div class="uvod__hlasovani"><HlasovaniPozvanka mala /></div>
-      <a class="cesta__dolu" href="#k-svet">
+      <a class="cesta__dolu" href={`#k-${KAPITOLY[0].id}`}>
         <span class="cesta__dolu-ikona" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14 M6 13l6 6 6-6" /></svg></span>
         <span><strong>Projeď to celé</strong> od světa až k nejbližšímu supermarketu</span>
       </a>
     </div>
 
-    <!-- 1. Svět -->
+    {souhrn && (
+      <article class="krok krok--mesic" id="k-mesic" data-krok="mesic">
+        <span class="krok__nadhlavi"><b>{cislo_('mesic')}</b>Tento měsíc v datech</span>
+        <h2 class="mesic__titulek">{nezalomit(souhrn.souhrn.titulek)}</h2>
+        <p class="mesic__vydani">Souhrn měsíce · {nazevVydani(souhrn.vydani)} · z nejnovějších čísel ČSÚ, Eurostatu a Světové banky</p>
+        <div class="mesic__text">{odstavce.map((o) => <p>{o}</p>)}</div>
+        <ul class="mesic__body" role="list">
+          {souhrn.souhrn.body.map((b) => (
+            <li>
+              <a class:list={['md', `md--${b.ton}`]} href={`/novinky/#s-${b.id}`}>
+                <span class="md__hlava">
+                  <IkonaZare id={b.ikona} velikost={28} />
+                  <span class="md__tema">{b.tema}</span>
+                  <span class:list={['stav', `stav--${b.ton}`]}>{b.stav}</span>
+                </span>
+                <span class="md__cislo">{b.cislo}<small>{b.popisCisla}</small></span>
+                <span class="md__veta">{nezalomit(b.veta)}</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+        <div class="krok__akce">
+          <a class="tlacitko tlacitko--plny" href="/novinky/#souhrn">Celý souhrn s grafy</a>
+          <a class="krok__odkaz" href="/novinky/">Všechny novinky →</a>
+        </div>
+      </article>
+    )}
+
+    <!-- Svět -->
     <article class="krok" id="k-svet" data-krok="svet">
-      <span class="krok__nadhlavi"><b>1</b>Svět</span>
+      <span class="krok__nadhlavi"><b>{cislo_('svet')}</b>Svět</span>
       <h2>{epizody.length} zemí, které jsme postavili vedle Česka</h2>
       <p class="krok__perex">V sérii Česko vs. svět každý díl srovná Česko s jednou zemí. <span class="jen-mys">Najeď na vlajku</span><span class="jen-dotyk">Ťukni na vlajku</span> a glóbus ti ji ukáže.</p>
       <ul class="vlajky" role="list" data-vlajky>
@@ -165,9 +198,9 @@ const nove = (k: string) => noveNaWebu.filter((x) => x.kapitola === k);
       <div class="krok__akce"><a class="tlacitko tlacitko--plny" href="/svet/">Otevřít glóbus</a></div>
     </article>
 
-    <!-- 2. Žebříčky -->
+    <!-- Žebříčky -->
     <article class="krok" id="k-zebricky" data-krok="zebricky">
-      <span class="krok__nadhlavi"><b>2</b>Žebříčky</span>
+      <span class="krok__nadhlavi"><b>{cislo_('zebricky')}</b>Žebříčky</span>
       <h2>Kde je Česko ve světě</h2>
       <p class="krok__perex">Vyber žebříček a glóbus se přebarví. Čím tmavší země, tím výš je.</p>
       <div class="zeb" role="group" aria-label="Žebříček na glóbusu" data-zebricky>
@@ -190,9 +223,9 @@ const nove = (k: string) => noveNaWebu.filter((x) => x.kapitola === k);
       <div class="krok__akce"><a class="tlacitko tlacitko--plny" href="/zebricky/">Všechny žebříčky</a></div>
     </article>
 
-    <!-- 3. Evropa -->
+    <!-- Evropa -->
     <article class="krok" id="k-evropa" data-krok="evropa">
-      <span class="krok__nadhlavi"><b>3</b>Evropa</span>
+      <span class="krok__nadhlavi"><b>{cislo_('evropa')}</b>Evropa</span>
       <h2>Jak si Česko vede v Evropě</h2>
       <p class="krok__perex">Čerstvá čísla z novinek: Česko proti všem zemím EU. Přepni ukazatel a mapa se přebarví.</p>
       {eu.length > 0 && (
@@ -209,18 +242,12 @@ const nove = (k: string) => noveNaWebu.filter((x) => x.kapitola === k);
           ))}
         </div>
       )}
-      {souhrn && (
-        <a class="krok__souhrn" href="/novinky/#souhrn">
-          <span class="krok__stitek">Souhrn měsíce</span>
-          <strong>{souhrn.souhrn.titulek}</strong>
-        </a>
-      )}
       <div class="krok__akce"><a class="tlacitko tlacitko--plny" href="/novinky/">Novinky z dat</a></div>
     </article>
 
-    <!-- 4. Česko -->
+    <!-- Česko -->
     <article class="krok" id="k-cesko" data-krok="cesko">
-      <span class="krok__nadhlavi"><b>4</b>Česko</span>
+      <span class="krok__nadhlavi"><b>{cislo_('cesko')}</b>Česko</span>
       <h2>Kde je nejbližší supermarket?</h2>
       <p class="krok__perex">Všech <strong>{cislo(celkem)} prodejen</strong> {vycet} na jedné mapě. S otevírací dobou a cestou pěšky i autem.</p>
       <div class="smu__hledani" data-smu-hledani data-mapa={SUPERMARKETY}>
@@ -424,7 +451,28 @@ const nove = (k: string) => noveNaWebu.filter((x) => x.kapitola === k);
   :global(.je-zivy) .krok:not(.je-aktivni) { opacity: 0.45; }
   :global(.je-zivy) .krok:not(.je-aktivni):hover, :global(.je-zivy) .krok:not(.je-aktivni):focus-within { opacity: 1; }
 
-  /* 1. vlajky */
+  /* Tento měsíc: souhrn novinek lidskou řečí a osm oblastí bez rámečků */
+  .krok--mesic { gap: 0.9rem; }
+  .krok--mesic .mesic__titulek { font-size: clamp(1.55rem, 2.6vw, 2.1rem); line-height: 1.2; max-width: 26ch; text-wrap: balance; }
+  .mesic__vydani { font-size: 0.8rem; font-weight: 700; color: var(--muted); }
+  .mesic__text { display: flex; flex-direction: column; gap: 0.7rem; max-width: 60ch; font-size: 0.98rem; line-height: 1.7; color: var(--text-2); text-wrap: pretty; }
+  .mesic__body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 620px); list-style: none; margin: 0.3rem 0 0; padding: 0; border-top: 1px solid var(--line); }
+  .mesic__body > li { border-bottom: 1px solid var(--line); }
+  .mesic__body > li:nth-child(2n) { border-left: 1px solid var(--line); }
+  .md { position: relative; display: flex; flex-direction: column; gap: 0.25rem; height: 100%; padding: 0.85rem 0.9rem 0.9rem; color: var(--navy); text-decoration: none; transition: background-color 0.25s ease; }
+  .md::before { content: ''; position: absolute; left: 0.9rem; top: -1px; width: 24px; height: 3px; border-radius: 0 0 3px 3px; background: var(--line-2); transition: width 0.35s var(--ease-out); }
+  .md--dobre::before { background: var(--navy); }
+  .md--spatne::before { background: var(--valka); }
+  @media (hover: hover) and (pointer: fine) { .md:hover { background: var(--hover); color: var(--navy); } .md:hover::before { width: calc(100% - 1.8rem); } }
+  .md:focus-visible { outline: 3px solid var(--orange); outline-offset: -3px; }
+  .md__hlava { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
+  .md__tema { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-right: auto; }
+  .md .stav { font-size: 0.64rem; padding: 0.16rem 0.45rem; }
+  .md__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.1rem 0.4rem; margin-top: 0.2rem; font-size: 1.55rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }
+  .md__cislo small { font-size: 0.74rem; font-weight: 700; letter-spacing: 0; color: var(--muted); }
+  .md__veta { font-size: 0.84rem; line-height: 1.5; color: var(--text-2); text-wrap: pretty; }
+
+  /* vlajky */
   .vlajky { display: flex; flex-wrap: wrap; gap: 0.45rem; list-style: none; margin: 0.2rem 0 0; padding: 0; max-width: 560px; }
   .vlajky a {
     display: inline-flex; align-items: center; gap: 0.45rem; min-height: 40px; padding: 0 0.7rem 0 0.45rem; border-radius: 999px;
@@ -473,9 +521,6 @@ const nove = (k: string) => noveNaWebu.filter((x) => x.kapitola === k);
   .eu__detail { display: flex; flex-direction: column; gap: 0.75rem; animation: naskoc 0.35s var(--ease-out); }
   .eu__veta { font-size: 1.02rem; font-weight: 700; line-height: 1.5; color: var(--navy); }
   .eu__odkaz { font-size: 0.86rem; font-weight: 800; color: var(--orange-text); text-decoration: none; }
-  .krok__souhrn { display: flex; flex-direction: column; gap: 0.25rem; max-width: 52ch; padding: 0.85rem 1rem; border-radius: 16px; background: color-mix(in srgb, var(--paper) 70%, transparent); border: 1px solid var(--line-jemna); color: var(--navy); text-decoration: none; transition: transform 0.25s var(--ease-out), border-color 0.2s ease; }
-  .krok__souhrn strong { font-size: 1rem; line-height: 1.35; }
-  .krok__souhrn:hover { border-color: var(--orange); transform: translateY(-2px); color: var(--navy); }
   @keyframes naskoc { from { opacity: 0; transform: translateY(6px); } }
 
   /* 4. Česko */
@@ -514,6 +559,8 @@ const nove = (k: string) => noveNaWebu.filter((x) => x.kapitola === k);
     .krok { order: 2; min-height: 78svh; padding-block: 2.5rem 4rem; }
     .krok h2 { font-size: clamp(1.5rem, 6.5vw, 2rem); }
     .zeb { grid-template-columns: 1fr; }
+    .mesic__body { grid-template-columns: 1fr; }
+    .mesic__body > li:nth-child(2n) { border-left: 0; }
     .vlajky { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; width: calc(100% + 2.5rem); margin-inline: -1.25rem; padding: 0.2rem 1.25rem 0.5rem; scroll-snap-type: x proximity; }
     .vlajky::-webkit-scrollbar { display: none; }
     .vlajky li { flex-shrink: 0; scroll-snap-align: start; }

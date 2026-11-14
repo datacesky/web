@@ -427,6 +427,7 @@ def maloobchod() -> list[dict]:
             'body': _mesicni_index(rada, t, p),
         },
         'skore': z_skore(rada[t] - rada[p], zmeny) * 0.6 + 0.8,
+        '_s': {'z': z, 'zp': zp, 'obdobi': t, 'p': p},
     }]
 
 
@@ -604,6 +605,7 @@ def elektrina_eu() -> list[dict]:
         'url': 'https://ec.europa.eu/eurostat/databrowser/view/nrg_pc_204/default/table',
         'graf': graf_zemi(zeme, 'Kč/kWh', 2, f'Cena elektřiny pro domácnosti s daněmi, {pololeti_text(t)}, od nejlevnější', eu),
         'skore': 1.4 + (abs(zmena) / 10 if zmena is not None else 0),
+        '_s': {'cz': cz, 'cz_rok': k.get(('CZ', loni)), 'eu': eu, 'obdobi': t, 'drazsi': drazsi, 'n': len(zeme), 'nejdrazsi': [ZEME_EU[nv], vv]},
     }]
 
 
@@ -710,9 +712,9 @@ UKAZATELE = (inflace, narozeni, pohonne_hmoty, turiste, nezamestnanost, hdp, mzd
 
 
 # ---------- souhrn měsíce ----------
-# Krátké shrnutí lidskou řečí: co se za poslední data změnilo pro lidi (ceny, výplaty, tankování, práce, bydlení,
-# ekonomika) a jak je na tom Česko proti Evropě a světu. Na úvodní stránce je titulek a perex, nahoře na stránce
-# Novinky celý souhrn se šesti oblastmi. Skládá se ze stejných čísel jako novinky (vždy z nejnovějších dat
+# Shrnutí lidskou řečí: co se za poslední data změnilo pro lidi (ceny, výplaty, tankování, elektřina, práce,
+# nákupy, bydlení, ekonomika) a jak je na tom Česko proti Evropě a světu. Na úvodní stránce je první kapitolou
+# (titulek, tři odstavce textu a osm oblastí), nahoře na stránce Novinky celý souhrn s grafy. Skládá se ze stejných čísel jako novinky (vždy z nejnovějších dat
 # každého ukazatele, i když už dřív vyšla), věty jsou šablony. V návrhu ke schválení jde všechno přepsat.
 
 SLOVY = {1: 'jeden', 2: 'dva', 3: 'tři', 4: 'čtyři', 5: 'pět', 6: 'šest', 7: 'sedm', 8: 'osm', 9: 'devět', 10: 'deset',
@@ -738,6 +740,20 @@ def cnb_vztah(cz: float) -> str:
     if cz <= 2.5:
         return 'blízko cíle ČNB'
     return f'nad cílem ČNB, který je 2 %'
+
+
+def kolikrat(cz: float, eu: float) -> str:
+    """„skoro dvakrát rychleji“, „pomaleji“… pro srovnání růstu s průměrem EU"""
+    if eu > 0 and cz > 0:
+        r = cz / eu
+        if r >= 2.3: return 'víc než dvakrát rychleji'
+        if r >= 1.95: return 'zhruba dvakrát rychleji'
+        if r >= 1.75: return 'skoro dvakrát rychleji'
+        if r >= 1.25: return 'výrazně rychleji'
+        if r > 1.05: return 'o něco rychleji'
+        if r >= 0.95: return 'zhruba stejně rychle'
+        return 'pomaleji'
+    return 'rychleji' if cz > eu else 'pomaleji'
 
 
 def bod_ceny(s: dict) -> dict:
@@ -788,6 +804,10 @@ def bod_ceny(s: dict) -> dict:
         'id': 'ceny', 'tema': 'Ceny', 'ikona': 'cenovka', 'ton': ton, 'stav': stav,
         'cislo': f'{cislo(cz)} %', 'popisCisla': 'za rok', 'veta': veta, 'text': text, 'srovnani': srovnani,
         'zdroj': 'ČSÚ, Eurostat' if srovnani else 'ČSÚ', 'url': csu_url('CEN0101H'), 'novinka': 'inflace',
+        '_odstavec': (f'Ceny v obchodech a službách jsou o {cislo(cz)} % vyšší než před rokem, {cnb_vztah(cz)}.'
+                      + (' Zdražování proti minulému měsíci mírně zpomalilo.' if round(cz, 1) < round(cz_p, 1)
+                         else ' Zdražování proti minulému měsíci zrychlilo.' if round(cz, 1) > round(cz_p, 1) else '')),
+        '_eu': (('lepe' if s['hicp_cz'] < s['hicp_eu'] - 0.2 else 'hure' if s['hicp_cz'] > s['hicp_eu'] + 0.2 else None), 'inflací') if 'hicp_cz' in s else (None, ''),
         '_klauze': klauze, '_kratce': f'Ceny rostou o {cislo(cz)} % za rok, {cnb_vztah(cz)}.',
         '_vyraznost': abs(cz - 2) * 1.2 + (0.5 if abs(cz - cz_p) >= 0.5 else 0),
     }
@@ -828,6 +848,10 @@ def bod_vyplaty(s: dict, inflace_s: dict | None) -> dict | None:
         'srovnani': {'popis': f'Meziroční růst průměrné mzdy a cen, {ctvrtleti_text(q, "1")}', 'jednotka': '%', 'desetinna': 1,
                      'pruhy': [['Mzda', round(nom, 1), 'cz'], ['Ceny', round(ceny, 1), 'jine']]},
         'zdroj': 'ČSÚ', 'url': csu_url('MZDQ1'), 'novinka': 'mzdy',
+        '_odstavec': (f'Výplaty přitom rostou rychleji: průměrná mzda je reálně, tedy po odečtení zdražení, o {cislo(real)} % vyšší než o rok dřív, takže si za ni lidé koupí víc.' if real > 0.5
+                      else f'Výplaty ale nestačí: průměrná mzda je reálně, tedy po odečtení zdražení, o {cislo(-real)} % nižší než o rok dřív, takže si za ni lidé koupí méně.' if real < -0.5
+                      else 'Výplaty rostou zhruba stejně rychle jako ceny, takže si za průměrnou mzdu lidé koupí podobně jako před rokem.'),
+        '_eu': (None, ''),
         '_klauze': klauze, '_kratce': kratce, '_vyraznost': abs(real) / 2.5,
     }
     # otevřená data o mzdách vycházejí později než tisková zpráva ČSÚ (začátkem března, června, září a prosince)
@@ -871,6 +895,11 @@ def bod_tankovani(s: dict) -> dict | None:
         'srovnani': {'popis': f'Průměrná cena litru nafty, {int(tyden)}. týden', 'jednotka': 'Kč/l', 'desetinna': 2,
                      'pruhy': [[str(int(rok) - 1), round(loni, 2), 'jine'], [rok, round(nafta, 2), 'cz']]},
         'zdroj': 'ČSÚ', 'url': csu_url('CENPHMT'), 'novinka': 'pohonne-hmoty',
+        '_odstavec': (f'Nejvíc je znát tankování: litr nafty je o {cislo(p, 0)} % dražší než loni a plná nádrž vyjde o {kc(rozdil)} Kč víc.' if p >= 15
+                      else f'Tankování podražilo: litr nafty je o {cislo(p, 0)} % dražší než loni.' if p >= 5
+                      else f'Tankování naopak zlevnilo: litr nafty je o {cislo(-p, 0)} % levnější než loni a plná nádrž vyjde o {kc(-rozdil)} Kč méně.' if p <= -5
+                      else 'Nafta stojí skoro stejně jako loni.'),
+        '_eu': (None, ''),
         '_klauze': klauze,
         '_kratce': f'Plná nádrž nafty vyjde o {kc(abs(rozdil))} Kč {"dráž" if rozdil > 0 else "levněji"} než před rokem.',
         '_vyraznost': abs(p) / 8,
@@ -910,6 +939,10 @@ def bod_prace(s: dict) -> dict:
         'cislo': f'{cislo(cz)} %', 'popisCisla': 'nezaměstnanost', 'veta': veta, 'text': text,
         'srovnani': {'popis': f'Nezaměstnanost, {mesic_text(t)}', 'jednotka': '%', 'desetinna': 1, 'pruhy': pruhy},
         'zdroj': 'Eurostat', 'url': 'https://ec.europa.eu/eurostat/databrowser/view/une_rt_m/default/table', 'novinka': 'nezamestnanost',
+        '_odstavec': (f'Práce je dost: nezaměstnanost {cislo(cz)} % je nejnižší v celé EU.' if poradi == 1
+                      else f'Práce je dost: nezaměstnanost {cislo(cz)} % je pod průměrem EU ({cislo(eu)} %).' if cz < eu
+                      else f'Nezaměstnanost {cislo(cz)} % je nad průměrem EU ({cislo(eu)} %).'),
+        '_eu': ('lepe' if cz < eu - 0.3 else 'hure' if cz > eu + 0.3 else None, 'nezaměstnaností'),
         '_klauze': klauze, '_kratce': kratce,
         '_vyraznost': 0.8 + (0.4 if poradi == 1 else 0) + (abs(cz - s['cz_rok']) if s.get('cz_rok') is not None else 0),
     }
@@ -940,6 +973,8 @@ def bod_bydleni(s: dict) -> dict:
         'cislo': f'{se_znamenkem(cz)} %', 'popisCisla': 'ceny za rok', 'veta': veta, 'text': text,
         'srovnani': {'popis': f'Meziroční změna cen bytů a domů, {ctvrtleti_text(t, "1")}', 'jednotka': '%', 'desetinna': 1, 'pruhy': pruhy},
         'zdroj': 'Eurostat', 'url': 'https://ec.europa.eu/eurostat/databrowser/view/prc_hpi_q/default/table', 'novinka': 'bydleni-eu',
+        '_odstavec': f'Byty a domy zdražují o {cislo(cz)} % za rok, {kolikrat(cz, eu)} než v průměru EU ({cislo(eu)} %).',
+        '_eu': ('lepe' if cz < eu - 1 else 'hure' if cz > eu + 1 else None, 'cenami bydlení'),
         '_klauze': klauze, '_kratce': f'Byty a domy zdražují o {cislo(cz)} % za rok, v průměru EU o {cislo(eu)} %.',
         '_vyraznost': abs(cz - eu) / 4,
     }
@@ -979,10 +1014,107 @@ def bod_ekonomika(s: dict, bohatstvi: dict | None, svet: dict | None) -> dict:
         'srovnani': {'popis': f'Meziroční reálný růst HDP, {ctvrtleti_text(t, "1")}', 'jednotka': '%', 'desetinna': 1,
                      'pruhy': [['Česko', round(cz, 1), 'cz'], ['Průměr EU', round(eu, 1), 'eu']]},
         'zdroj': zdroj, 'url': 'https://ec.europa.eu/eurostat/databrowser/view/namq_10_gdp/default/table', 'novinka': 'hdp',
+        '_odstavec': (f'Ekonomika je o {cislo(cz)} % větší než před rokem, {srov.split(" (")[0]}.' if cz >= 0 else f'Ekonomika je o {cislo(-cz)} % menší než před rokem.'),
+        '_eu': ('lepe' if cz > eu + 0.3 else 'hure' if cz < eu - 0.3 else None, 'růstem ekonomiky'),
+        '_svet': (f'Ve světě je Česko podle HDP na obyvatele {bohatstvi["misto"]}. {z_ze(bohatstvi["n"])} {bohatstvi["n"]} zemí.' if bohatstvi else ''),
         '_klauze': klauze,
         '_kratce': (f'Ekonomika roste o {cislo(cz)} % za rok, {srov.split(" (")[0]}.' if cz >= 0 else f'Ekonomika je o {cislo(-cz)} % menší než před rokem.'),
         '_vyraznost': abs(cz - cz_p) * 0.8 + (1.5 if cz < 0 else 0),
     }
+
+
+def bod_energie(s: dict) -> dict:
+    cz, eu, t = s['cz'], s['eu'], s['obdobi']
+    sto = lambda v: kc(round(v / 100) * 100)
+    veta = (f'Domácnost, která spotřebuje 3 000 kWh za rok, zaplatí za elektřinu zhruba {sto(3000 * cz)} Kč. '
+            f'Při průměrné ceně v EU by to bylo {sto(3000 * eu)} Kč.')
+    text = f'Kilowatthodina elektřiny stála domácnosti v {pololeti_text(t)} v průměru {cislo(cz, 2)} Kč včetně daní a poplatků'
+    zmena = None
+    if s.get('cz_rok'):
+        zmena = (cz / s['cz_rok'] - 1) * 100
+        text += f', o rok dřív {cislo(s["cz_rok"], 2)} Kč ({se_znamenkem(zmena, 0)} %)'
+    text += f'. Průměr EU je {cislo(eu, 2)} Kč. '
+    text += (f'Dražší elektřinu {sloveso(s["drazsi"], "má", "mají", "má")} {zemi(s["drazsi"])} EU, nejdražší je {s["nejdrazsi"][0]} ({cislo(s["nejdrazsi"][1], 2)} Kč).'
+             if s['drazsi'] else 'Česko má nejdražší elektřinu v EU.')
+    pruhy = [['Česko', round(cz, 2), 'cz'], ['Průměr EU', round(eu, 2), 'eu']]
+    if s['drazsi']:
+        pruhy.append([s['nejdrazsi'][0], round(s['nejdrazsi'][1], 2), 'jine'])
+    # štítek: výrazná změna za rok má přednost před srovnáním s EU
+    if zmena is not None and zmena <= -5:
+        ton, stav, klauze = 'dobre', 'Levnější než loni', ('elektřina', f'zlevnila o {cislo(-zmena, 0)} %')
+    elif zmena is not None and zmena >= 5:
+        ton, stav, klauze = 'spatne', 'Dražší než loni', ('elektřina', f'podražila o {cislo(zmena, 0)} %')
+    elif cz < eu * 0.95:
+        ton, stav, klauze = 'dobre', 'Levnější než EU', ('elektřina', 'je levnější než v EU')
+    elif cz > eu * 1.05:
+        ton, stav, klauze = 'spatne', 'Dražší než EU', ('elektřina', 'je dražší než v EU')
+    else:
+        ton, stav, klauze = 'neutralni', 'Jako průměr EU', ('elektřina', 'stojí jako průměr EU')
+    vuci_eu = ('zhruba jako průměr EU' if abs(cz / eu - 1) < 0.05
+               else f'{"méně" if cz < eu else "víc"}, než je průměr EU ({cislo(eu, 2)} Kč)')
+    if zmena is not None and abs(zmena) >= 5:
+        odst = (f'Elektřina {"zlevnila" if zmena < 0 else "podražila"}: kilowatthodina stojí domácnosti {cislo(cz, 2)} Kč, '
+                f'o {cislo(abs(zmena), 0)} % {"méně" if zmena < 0 else "víc"} než před rokem, {vuci_eu}.')
+    else:
+        odst = f'Za elektřinu platí domácnosti {cislo(cz, 2)} Kč za kilowatthodinu, {vuci_eu}.'
+    return {
+        'id': 'energie', 'tema': 'Elektřina', 'ikona': 'blesk', 'ton': ton, 'stav': stav,
+        'cislo': f'{cislo(cz, 2)} Kč', 'popisCisla': 'za kWh', 'veta': veta, 'text': text,
+        'srovnani': {'popis': f'Cena elektřiny pro domácnosti s daněmi, {pololeti_text(t)}', 'jednotka': 'Kč/kWh', 'desetinna': 2, 'pruhy': pruhy},
+        'zdroj': 'Eurostat', 'url': 'https://ec.europa.eu/eurostat/databrowser/view/nrg_pc_204/default/table', 'novinka': 'elektrina-eu',
+        '_odstavec': odst,
+        '_eu': ('lepe' if cz < eu * 0.95 else 'hure' if cz > eu * 1.05 else None, 'cenou elektřiny'),
+        '_klauze': klauze, '_kratce': f'Elektřina pro domácnosti stojí {cislo(cz, 2)} Kč za kWh, v průměru EU {cislo(eu, 2)} Kč.',
+        '_vyraznost': abs(cz / eu - 1) * 3 + (abs(zmena) / 15 if zmena is not None else 0),
+    }
+
+
+def bod_nakupy(s: dict) -> dict:
+    z, zp, t = s['z'], s['zp'], s['obdobi']
+    if z > 0.5:
+        veta = f'Lidé v obchodech utrácejí víc než loni: tržby jsou po odečtení zdražení o {cislo(z)} % vyšší.'
+        ton, stav, klauze = ('dobre', 'Lidé utrácejí víc', ('lidé', 'víc nakupují')) if z > 1 else ('neutralni', 'O kousek víc než loni', ('lidé', 'nakupují o kousek víc'))
+        odst = f'Lidé také víc nakupují: obchody utržily po odečtení zdražení o {cislo(z)} % víc než loni.'
+    elif z < -0.5:
+        veta = f'Lidé v obchodech šetří: tržby jsou po odečtení zdražení o {cislo(-z)} % nižší než loni.'
+        ton, stav, klauze = ('spatne', 'Lidé šetří', ('lidé', 'v obchodech šetří')) if z < -1 else ('neutralni', 'O kousek méně než loni', ('lidé', 'nakupují o kousek méně'))
+        odst = f'Lidé ale v obchodech šetří: tržby jsou po odečtení zdražení o {cislo(-z)} % nižší než loni.'
+    else:
+        veta = 'Lidé utrácejí v obchodech zhruba stejně jako loni.'
+        ton, stav, klauze = 'neutralni', 'Jako loni', ('lidé', 'nakupují jako loni')
+        odst = 'V obchodech lidé utrácejí zhruba stejně jako loni.'
+    text = (f'Tržby maloobchodu byly {mesic_text(t, True)} po odečtení zdražení o {cislo(abs(z))} % {"vyšší" if z >= 0 else "nižší"} než před rokem, '
+            f'{predchozi(s["p"], t)} {se_znamenkem(zp)} %. Vyšší tržby obvykle znamenají, že domácnosti mají víc peněz a nebojí se je utratit. Jde o maloobchod bez prodeje aut.')
+    return {
+        'id': 'nakupy', 'tema': 'Nákupy', 'ikona': 'kosik', 'ton': ton, 'stav': stav,
+        'cislo': f'{se_znamenkem(z)} %', 'popisCisla': 'tržby obchodů', 'veta': veta, 'text': text,
+        'zdroj': 'ČSÚ', 'url': csu_url('OBC01'), 'novinka': 'maloobchod',
+        '_odstavec': odst, '_eu': (None, ''),
+        '_klauze': klauze, '_kratce': veta, '_vyraznost': abs(z) / 4,
+    }
+
+
+def odstavce_souhrnu(body: list[dict]) -> str:
+    """Delší text souhrnu: peněženka, práce a ekonomika, Česko v Evropě a ve světě"""
+    b = {x['id']: x for x in body}
+    vezmi = lambda ids: ' '.join(b[i]['_odstavec'] for i in ids if i in b and b[i].get('_odstavec'))
+    out = [vezmi(['ceny', 'vyplaty', 'tankovani', 'energie']), vezmi(['prace', 'ekonomika', 'nakupy'])]
+    lepe = [x['_eu'][1] for x in body if x.get('_eu') and x['_eu'][0] == 'lepe']
+    hure = [x['_eu'][1] for x in body if x.get('_eu') and x['_eu'][0] == 'hure']
+    spoj = lambda xs: xs[0] if len(xs) == 1 else ', '.join(xs[:-1]) + ' a ' + xs[-1]
+    tretí = ''
+    if lepe and hure:
+        tretí = f'Proti průměru EU je na tom Česko lépe s {spoj(lepe)}, hůř s {spoj(hure)}.'
+    elif lepe:
+        tretí = f'Proti průměru EU je na tom Česko lépe s {spoj(lepe)}.'
+    elif hure:
+        tretí = f'Proti průměru EU je na tom Česko hůř s {spoj(hure)}.'
+    if 'bydleni' in b and b['bydleni']['_eu'][0] == 'hure':
+        tretí += ' ' + b['bydleni']['_odstavec']
+    if 'ekonomika' in b and b['ekonomika'].get('_svet'):
+        tretí += ' ' + b['ekonomika']['_svet']
+    out.append(tretí.strip())
+    return '\n\n'.join(o for o in out if o)
 
 
 def souhrn(polozky: list[dict]) -> dict | None:
@@ -990,8 +1122,8 @@ def souhrn(polozky: list[dict]) -> dict | None:
     s = {p['id']: p['_s'] for p in polozky if p.get('_s')}
     body = []
     for f, args in ((bod_ceny, ('inflace',)), (bod_vyplaty, ('mzdy', 'inflace')), (bod_tankovani, ('pohonne-hmoty',)),
-                    (bod_prace, ('nezamestnanost',)), (bod_bydleni, ('bydleni-eu',)),
-                    (bod_ekonomika, ('hdp', 'hdp-na-obyvatele-svet', 'rust-hdp-svet'))):
+                    (bod_energie, ('elektrina-eu',)), (bod_prace, ('nezamestnanost',)), (bod_nakupy, ('maloobchod',)),
+                    (bod_bydleni, ('bydleni-eu',)), (bod_ekonomika, ('hdp', 'hdp-na-obyvatele-svet', 'rust-hdp-svet'))):
         if args[0] not in s:
             continue
         try:
@@ -1012,7 +1144,8 @@ def souhrn(polozky: list[dict]) -> dict | None:
     perex_body = [prvni, druhy] + [b for b in podle if b not in (prvni, druhy)][:1]
     perex = ' '.join(b['_kratce'] for b in perex_body)
     zkontroluj = [f'{b["tema"]}: {b["zkontroluj"]}' for b in body if b.get('zkontroluj')]
-    out = {'titulek': titulek, 'perex': perex, 'body': [{k: v for k, v in b.items() if not k.startswith('_')} for b in body]}
+    out = {'titulek': titulek, 'perex': perex, 'text': odstavce_souhrnu(body),
+           'body': [{k: v for k, v in b.items() if not k.startswith('_')} for b in body]}
     if zkontroluj:
         out['zkontroluj'] = ' '.join(zkontroluj)
     for b in out['body']:
@@ -1092,7 +1225,7 @@ def minula_hlavni() -> str | None:
 
 
 def yaml_text(s: str) -> str:
-    return '"' + s.replace('\\', '\\\\').replace('"', '\\"') + '"'
+    return '"' + s.replace('\\', '\\\\').replace('"', '\\"').replace('\n', '\\n') + '"'
 
 
 OBLASTI = {'cesko': 'Česko', 'evropa': 'Evropa', 'svet': 'Svět'}
@@ -1176,9 +1309,9 @@ def main() -> None:
              'Delší text jen pro hlavní novinku přidáš řádkem `pribeh: "…"` pod její `text:`, obrázek řádkem `obrazek: "/novinky/nazev.jpg"` (soubor dej do `public/novinky/`).', '']
     if sh:
         popis += ['### Souhrn měsíce', '',
-                  'Krátké shrnutí lidskou řečí nahoře v souboru (blok `souhrn:`). Titulek a perex jsou na úvodní stránce, '
-                  'celý souhrn se šesti oblastmi nahoře na stránce Novinky. Věty skládá automat z čísel, klidně je přepiš po svém.', '',
-                  f'**{sh["titulek"]}**', '', sh['perex'], '']
+                  'Krátké shrnutí lidskou řečí nahoře v souboru (blok `souhrn:`). Titulek, text a osm oblastí jsou '
+                  'jako první kapitola na úvodní stránce, celý souhrn s grafy nahoře na stránce Novinky. Věty skládá automat z čísel, klidně je přepiš po svém.', '',
+                  f'**{sh["titulek"]}**', '', sh['perex'], '', *[f'> {o}' for o in sh.get('text', '').split('\n\n') if o], '']
         for b in sh['body']:
             popis.append(f'- **{b["tema"]}** ({b["stav"]}, {b["cislo"]}): {b["veta"]}')
         if sh.get('zkontroluj'):
