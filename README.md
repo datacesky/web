@@ -25,7 +25,7 @@ Po `git push` do větve main se web sám nasadí.
 | Náhledovky videí | `public/videa/{id}.webp` (id videa ze `serie.ts`, díly Česko vs. svět `cesko-vs-svet-11.webp`) |
 | Konflikty na glóbusu | `src/data/konflikty.ts` (návod na aktualizaci je nahoře v souboru) |
 | Mapa supermarketů | `src/components/SupermarketyMapa.astro`, ovládání jako Google Maps: nahoře hledání (obec i řetězec, třeba „lidl brno“) a filtry, karta prodejny s trasou, oblíbenými (pamatuje si je prohlížeč), navigací a sdílením; na mobilu přes celou obrazovku bez hlavičky webu. Podklad OpenFreeMap v barvách webu: `src/lib/mapa-styl.ts`, otevírací doba: `src/lib/oteviraci.ts`. Odkazy `#obec=Brno`, `#poloha` a `#prodejna=n123` otevřou mapu rovnou na obci, u polohy nebo na prodejně |
-| Blok supermarketů na úvodu | `src/components/uvod/SupermarketyUpoutavka.astro` (hledání obce, poloha, všechny prodejny jako tečky na mapě Česka); v menu je mapa jako „Supermarkety“, v liště na telefonu „Obchody“ |
+| Úvod s glóbusem | `src/components/uvod/Cesta.astro`: příběh ve čtyřech kapitolách (Svět, Žebříčky, Evropa, Česko), glóbus se při scrollování otáčí a přibližuje až do Česka, kde se promění v mapu supermarketů (hledání obce, poloha, řetězce). Glóbus kreslí `src/lib/globus.ts`, podle scrollu ho řídí `src/lib/cesta.ts` (pohledy kapitol jsou nahoře v `POHLEDY`). Ukazatele EU v kapitole Evropa se berou z novinek. Bez JavaScriptu zůstane statický glóbus `src/components/uvod/HeroGlobus.astro`. V menu je mapa supermarketů jako „Supermarkety“, v liště na telefonu „Obchody“ |
 | Prodejny a obce na mapě | `public/data/obchody.json` a `public/data/obce.json` z OpenStreetMap. Obnovuje je jednou měsíčně Action „Supermarkety z OpenStreetMap“ jako návrh ke schválení, ručně `python3 skripty/data_obchody.py export.json` (postup v hlavičce skriptu) |
 | Trasy pěšky a autem (Mapy.com) | Cloudflare Worker v `navody/trasy/` (časy k prodejnám i čára trasy na mapu, návod v README tam), jeho adresu vlož do `src/data/web.ts` jako `trasy` |
 | Sídla největších firem | tabulka `SIDLA` v `src/components/FirmyNaMape.astro` |
@@ -39,12 +39,20 @@ Po `git push` do větve main se web sám nasadí.
 | 3D model Česka | `public/data/cesko3d.json`, obnoví ho `python3 skripty/data_3d.py` |
 | Vlaky za 24 hodin (Mapa Česka) | `public/data/vlaky.json`, vyrobí ho `python3 skripty/data_vlaky.py` z GTFS jízdního řádu (postup je v hlavičce skriptu) |
 | Cesta čápů (Svět) | `src/data/capi.json`, vyrobí ho `python3 skripty/data_capi.py` ze zamčených dat `skripty/capi_data.py` |
-| Upoutávka „Nově na webu“ na úvodu | `src/components/uvod/NoveNaWebu.astro`, náhledy v `public/nahledy/` |
+| „Nově na webu“ v kapitolách úvodu | `src/data/nove-na-webu.ts` (kapitola svet nebo cesko), náhledy v `public/nahledy/` |
+| Rozcestník na úvodu (tečky vpravo) | `src/components/uvod/Rozcestnik.astro`, seznam částí v `src/pages/index.astro` |
 | Odkaz z dílu série na interaktivní verzi | pole `web` u dílu v `src/data/serie.ts` |
 | Vrstevnice v úvodu | `public/vrstevnice.svg`, generuje `navody/vrstevnice.py` |
 | Hledání na webu (⌘K / Ctrl+K) | okno `src/components/Hledani.astro`, rejstřík `src/pages/hledani.json.ts` (skládá se sám ze zemí, krajů, měst, vrstev, žebříčků, grafů, novinek a dílů; přezdívky zemí jsou nahoře v souboru) |
 | Hlavička, spodní lišta na mobilu a patička | `src/layouts/Base.astro`, styly v `src/styles/global.css` |
 | Barvy a tmavý režim | proměnné nahoře v `src/styles/global.css` (světlé v `:root`, tmavé v bloku `:root[data-tema='tmavy']`); přepínač je v hlavičce a v patičce (`Base.astro`), skripty s canvasem berou barvy přes `src/lib/tema.ts` |
+
+## Pohyb na webu
+
+- **Přechody mezi stránkami:** hlavička a spodní lišta zůstanou na místě, obsah se prolne (View Transitions v `src/styles/global.css`, v prohlížečích, které to umí).
+- **Hlavička** se při scrollu o kousek zmenší, pod ní je oranžová čára, kolik ze stránky už máš za sebou (ne na úvodu a na mapě supermarketů).
+- **Naskakování:** třída `odhal` (prvek vyjede, až přijede do obrazu), atribut `data-postupne` na seznamu (položky naskočí jedna po druhé), `data-pocitej` (číslo naskočí od nuly).
+- Kdo má v systému zapnuté omezení pohybu, nic se nehýbe a glóbus jen přeskakuje mezi kapitolami.
 
 ## Novinky z dat
 

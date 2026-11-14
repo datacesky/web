@@ -1,0 +1,529 @@
+---
+// Úvod úvodní stránky jako příběh: vedle textu je přilepený glóbus, který se při scrollování otáčí
+// a přibližuje ze světa (Česko vs. svět) přes žebříčky a Evropu (novinky z dat) až do Česka,
+// kde se promění v mapu všech supermarketů. Glóbus jde roztočit prstem nebo myší a reaguje na to,
+// na co najedeš (vlajky, žebříčky, ukazatele EU). Kreslí ho src/lib/globus.ts, řídí src/lib/cesta.ts.
+// Bez JavaScriptu zůstane statický glóbus (HeroGlobus) a všechny texty a odkazy.
+import HeroGlobus from './HeroGlobus.astro';
+import HlasovaniPozvanka from '../HlasovaniPozvanka.astro';
+import IkonaZare from '../IkonaZare.astro';
+import SouhrnPruhy from '../SouhrnPruhy.astro';
+import geo from '../../data/kraje.json';
+import podklad from '../../data/cesko-mapa.json';
+import { epizody, posledniDil, odkazDilu } from '../../data/epizody';
+import { noveNaWebu } from '../../data/nove-na-webu';
+import { ZEME, vlajka, vrstvaPodleId, pocet, poradiZeme, zebricek, jmeno } from '../../lib/svet';
+import { vydaniNovinek, posledniSouhrn } from '../../lib/novinky';
+import { logo } from '../../lib/loga';
+import { cislo } from '../../lib/format';
+import { nactiObchody, BARVY_RETEZCU, BARVY_RETEZCU_TMAVE } from '../../lib/obchody';
+
+const SUPERMARKETY = '/grafy/supermarkety-v-cesku/';
+
+// --- úvod: vyhledání země pro srovnání
+const zemeHledani = JSON.stringify(Object.entries(ZEME).filter(([a3]) => a3 !== 'EUZ' && a3 !== 'CZE').map(([a3, [n, a2]]) => [a3, n, a2]));
+
+// --- 1. Svět: díly série od nejnovějšího
+const dily = [...epizody].reverse();
+
+// „z 27 zemí“, „ze 147 zemí“
+const zZe = (n: number) => { const s = String(n); if (n >= 100) return '1467'.includes(s[0]) ? 'ze' : 'z'; if (n >= 10 && n <= 19) return [14, 16, 17].includes(n) ? 'ze' : 'z'; return '467'.includes(s[0]) ? 'ze' : 'z'; };
+
+// --- 2. Žebříčky: pořadí Česka, glóbus se přebarví podle vybraného
+const ZEBRICKY = ['stesti', 'hdp', 'doziti', 'tisk', 'korupce', 'bm'];
+const zebricky = ZEBRICKY.map((id) => {
+  const v = vrstvaPodleId(id)!;
+  const z = zebricek(id);
+  return { id, nazev: v.nazev, slovo: v.poradiSlovo, ikona: v.ikona, r: poradiZeme(id, 'CZE')!, n: pocet(id), prvni: jmeno(z[0].a3), zdroj: v.zdroj };
+});
+
+// --- 3. Evropa: ukazatele z novinek, které mají srovnání zemí EU (nejnovější výskyt každého)
+const KRATKE: Record<string, string> = { nezamestnanost: 'Nezaměstnanost', 'inflace-eu': 'Inflace', 'bydleni-eu': 'Ceny bydlení', 'elektrina-eu': 'Elektřina', 'dluh-eu': 'Dluh státu' };
+const A2_NA_A3 = new Map(Object.entries(ZEME).map(([a3, [, a2]]) => [a2?.toUpperCase(), a3]));
+A2_NA_A3.set('EL', 'GRC');
+const videno = new Set<string>();
+const eu = (await vydaniNovinek()).flatMap((v) => v.data.polozky).filter((p) => {
+  if (!KRATKE[p.id] || p.graf?.typ !== 'zeme' || !p.graf.zeme?.length || videno.has(p.id)) return false;
+  videno.add(p.id);
+  return true;
+}).sort((a, b) => Object.keys(KRATKE).indexOf(a.id) - Object.keys(KRATKE).indexOf(b.id)).map((p) => {
+  const g = p.graf!;
+  const zeme = g.zeme!;
+  const i = zeme.findIndex(([k]) => k === 'CZ');
+  const n = zeme.length;
+  const nizsi = i + 1, vyssi = n - i;
+  const cz = zeme[i]?.[2];
+  const prumer = g.reference?.hodnota;
+  const nej = zeme[n - 1];
+  const jed = g.jednotka === '%' ? ' %' : ` ${g.jednotka}`;
+  const f = (x: number) => cislo(x, g.desetinna).replace('-', '−');
+  const poradi = nizsi <= vyssi ? `${nizsi}. nejnižší` : `${vyssi}. nejvyšší`;
+  return {
+    id: p.id, stitek: KRATKE[p.id], nadpis: p.nadpis, desetinna: g.desetinna, jednotka: g.jednotka,
+    hodnoty: Object.fromEntries(zeme.map(([k, , val]) => [A2_NA_A3.get(k) ?? k, val])),
+    veta: cz === undefined ? p.text : `Česko ${f(cz)}${jed}${prumer !== undefined ? `, průměr EU ${f(prumer)}${jed}` : ''}. ${nizsi === 1 ? 'Nejnižší' : vyssi === 1 ? 'Nejvyšší' : poradi.charAt(0).toUpperCase() + poradi.slice(1)} ${zZe(n)} ${n} zemí EU.`,
+    srovnani: cz === undefined ? null : {
+      popis: g.popis.replace(/, od nejni.*$/u, ''), jednotka: g.jednotka, desetinna: g.desetinna,
+      pruhy: [['Česko', cz, 'cz'], ...(prumer !== undefined ? [['Průměr EU', prumer, 'eu']] : []), ...(nej && nej[0] !== 'CZ' ? [[nej[1], nej[2], 'jine']] : [])] as [string, number, 'cz' | 'eu' | 'jine'][],
+    },
+  };
+});
+const souhrn = await posledniSouhrn();
+
+// --- 4. Česko: všechny supermarkety jako tečky na mapě krajů (stejně jako na mapě supermarketů)
+const obchody = nactiObchody();
+const celkem = obchody.body.length;
+const retezce = obchody.retezce.map((r, i) => ({ ...r, i, logo: logo(r.nazev) })).sort((a, b) => b.pocet - a.pocet);
+const vycet = `${retezce.slice(0, -1).map((r) => r.nazev).join(', ')} a ${retezce.at(-1)!.nazev}`;
+const P = podklad.projekce;
+const px = (lon: number) => P.tx + P.k * (lon * Math.PI) / 180;
+const py = (lat: number) => P.ty - P.k * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+const tecky = [...retezce].sort((a, b) => b.pocet - a.pocet).map((r) => ({
+  ...r, d: obchody.body.filter((b) => b[2] === r.i).map((b) => `M${px(b[0]).toFixed(1)} ${py(b[1]).toFixed(1)}h0`).join(''),
+}));
+const barvyRetezce = (id: string) => `--barva: ${BARVY_RETEZCU[id]}; --barva-tmava: ${BARVY_RETEZCU_TMAVE[id]};`;
+
+const KAPITOLY = [
+  { id: 'svet', nazev: 'Svět' },
+  { id: 'zebricky', nazev: 'Žebříčky' },
+  { id: 'evropa', nazev: 'Evropa' },
+  { id: 'cesko', nazev: 'Česko' },
+];
+const data = JSON.stringify({ epizody: epizody.map((e) => e.a3), eu: eu.map(({ id, hodnoty, desetinna, jednotka, stitek }) => ({ id, hodnoty, desetinna, jednotka, stitek })), supermarkety: SUPERMARKETY, projekce: P });
+const nove = (k: string) => noveNaWebu.filter((x) => x.kapitola === k);
+---
+
+<section class="cesta" data-cesta data-json={data} aria-label="Úvod">
+  <div class="cesta__scena" data-scena>
+    <div class="scena__plocha" data-plocha>
+      <div class="scena__staticky" aria-hidden="true"><HeroGlobus /></div>
+      <canvas class="scena__platno" data-platno aria-hidden="true"></canvas>
+      <div class="scena__mapa" data-cz-mapa aria-hidden="true">
+        <svg viewBox="0 0 1000 578" width="1000" height="578" data-cz-svg>
+          <g class="scena__obrys">{geo.kraje.map((k) => <path d={k.d} />)}</g>
+          <g class="scena__kraje">{geo.kraje.map((k) => <path d={k.d} />)}</g>
+          <g class="scena__tecky">{tecky.map((r, i) => <path class="scena__retezec" data-r={r.id} d={r.d} style={`${barvyRetezce(r.id)} --i: ${i};`} />)}</g>
+        </svg>
+      </div>
+      <div class="scena__tip" data-tip hidden></div>
+    </div>
+    <div class="scena__pata">
+      <div class="scena__legenda" data-legenda aria-live="polite">
+        <span><i style="background: var(--orange);"></i>Česko</span>
+        <span><i style="background: var(--navy);"></i>{epizody.length} zemí ze série Česko vs. svět</span>
+      </div>
+      <nav class="scena__kapitoly" aria-label="Kapitoly úvodu" data-kapitoly>
+        {KAPITOLY.map((k, i) => (
+          <a href={`#k-${k.id}`} data-kapitola={k.id}><span>{i + 1}</span>{k.nazev}</a>
+        ))}
+      </nav>
+    </div>
+  </div>
+
+  <div class="cesta__text">
+    <div class="cesta__uvod" data-krok="uvod">
+      <h1>Česko v mapách, grafech a&nbsp;číslech</h1>
+      <p class="perex">Data z ČSÚ, Eurostatu, Světové banky a dalších primárních zdrojů. Všechno, co tu vidíš, se dá rozkliknout.</p>
+      <div class="uvod__hledani" data-uvod-hledani data-zeme={zemeHledani}>
+        <label class="uvod__hledani-titul" for="uvod-hledani">Porovnej Česko s jakoukoli zemí</label>
+        <div class="hledani">
+          <div class="hledani__pole">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
+            <input id="uvod-hledani" type="search" enterkeyhint="search" placeholder="Napiš zemi, třeba Japonsko" />
+          </div>
+          <ul class="naseptavac" hidden></ul>
+        </div>
+      </div>
+      <div class="uvod__hlasovani"><HlasovaniPozvanka mala /></div>
+      <a class="cesta__dolu" href="#k-svet">
+        <span class="cesta__dolu-ikona" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14 M6 13l6 6 6-6" /></svg></span>
+        <span><strong>Projeď to celé</strong> od světa až k nejbližšímu supermarketu</span>
+      </a>
+    </div>
+
+    <!-- 1. Svět -->
+    <article class="krok" id="k-svet" data-krok="svet">
+      <span class="krok__nadhlavi"><b>1</b>Svět</span>
+      <h2>{epizody.length} zemí, které jsme postavili vedle Česka</h2>
+      <p class="krok__perex">V sérii Česko vs. svět každý díl srovná Česko s jednou zemí. <span class="jen-mys">Najeď na vlajku</span><span class="jen-dotyk">Ťukni na vlajku</span> a glóbus ti ji ukáže.</p>
+      <ul class="vlajky" role="list" data-vlajky>
+        {dily.map((e) => (
+          <li><a href={`/svet/#z=${e.a3}`} data-zeme={e.a3} title={e.popis}><img src={vlajka(e.a3)} alt="" width="28" height="20" loading="lazy" /><span>{e.nazev}</span><small>{e.dil}</small></a></li>
+        ))}
+      </ul>
+      <p class="krok__posledni">
+        <span class="krok__stitek">Nejnovější díl {posledniDil.dil}</span>
+        <a href={odkazDilu(posledniDil)}><strong>{posledniDil.nazev}:</strong> {posledniDil.popis}</a>
+      </p>
+      {nove('svet').length > 0 && (
+        <ul class="krok__nove" role="list">
+          {nove('svet').map((x) => (
+            <li><a href={x.href}><img src={x.obr} alt="" width="120" height="74" loading="lazy" /><span><small>Nově na webu</small><strong>{x.titul}</strong>{x.text}</span></a></li>
+          ))}
+        </ul>
+      )}
+      <div class="krok__akce"><a class="tlacitko tlacitko--plny" href="/svet/">Otevřít glóbus</a></div>
+    </article>
+
+    <!-- 2. Žebříčky -->
+    <article class="krok" id="k-zebricky" data-krok="zebricky">
+      <span class="krok__nadhlavi"><b>2</b>Žebříčky</span>
+      <h2>Kde je Česko ve světě</h2>
+      <p class="krok__perex">Vyber žebříček a glóbus se přebarví. Čím tmavší země, tím výš je.</p>
+      <div class="zeb" role="group" aria-label="Žebříček na glóbusu" data-zebricky>
+        {zebricky.map((z, i) => (
+          <button type="button" class="zeb__radek" data-zebricek={z.id} aria-pressed={i === 0 ? 'true' : 'false'}>
+            <IkonaZare cesta={z.ikona} velikost={30} />
+            <span class="zeb__nazev">{z.nazev}</span>
+            <span class="zeb__misto"><strong>{z.r}.</strong><small>{zZe(z.n)} {z.n}</small></span>
+          </button>
+        ))}
+      </div>
+      <div class="zeb__detail">
+        {zebricky.map((z, i) => (
+          <p data-zebricek-detail={z.id} hidden={i !== 0}>
+            Česko je <strong>{z.r}. {z.slovo}</strong> země {zZe(z.n)} {z.n}. Na prvním místě: {z.prvni}.{' '}
+            <a href={`/zebricky/#z=${z.id}`}>Celý žebříček →</a>
+          </p>
+        ))}
+      </div>
+      <div class="krok__akce"><a class="tlacitko tlacitko--plny" href="/zebricky/">Všechny žebříčky</a></div>
+    </article>
+
+    <!-- 3. Evropa -->
+    <article class="krok" id="k-evropa" data-krok="evropa">
+      <span class="krok__nadhlavi"><b>3</b>Evropa</span>
+      <h2>Jak si Česko vede v Evropě</h2>
+      <p class="krok__perex">Čerstvá čísla z novinek: Česko proti všem zemím EU. Přepni ukazatel a mapa se přebarví.</p>
+      {eu.length > 0 && (
+        <div class="eu" data-eu>
+          <div class="eu__chipy" role="group" aria-label="Ukazatel na mapě">
+            {eu.map((x, i) => <button type="button" class="chip eu__chip" data-eu-sada={x.id} aria-pressed={i === 0 ? 'true' : 'false'}>{x.stitek}</button>)}
+          </div>
+          {eu.map((x, i) => (
+            <div class="eu__detail" data-eu-detail={x.id} hidden={i !== 0}>
+              <p class="eu__veta">{x.veta}</p>
+              {x.srovnani && <SouhrnPruhy srovnani={x.srovnani} />}
+              <a class="eu__odkaz" href={`/novinky/#n-${x.id}`}>{x.nadpis}: graf a detail →</a>
+            </div>
+          ))}
+        </div>
+      )}
+      {souhrn && (
+        <a class="krok__souhrn" href="/novinky/#souhrn">
+          <span class="krok__stitek">Souhrn měsíce</span>
+          <strong>{souhrn.souhrn.titulek}</strong>
+        </a>
+      )}
+      <div class="krok__akce"><a class="tlacitko tlacitko--plny" href="/novinky/">Novinky z dat</a></div>
+    </article>
+
+    <!-- 4. Česko -->
+    <article class="krok" id="k-cesko" data-krok="cesko">
+      <span class="krok__nadhlavi"><b>4</b>Česko</span>
+      <h2>Kde je nejbližší supermarket?</h2>
+      <p class="krok__perex">Všech <strong>{cislo(celkem)} prodejen</strong> {vycet} na jedné mapě. S otevírací dobou a cestou pěšky i autem.</p>
+      <div class="smu__hledani" data-smu-hledani data-mapa={SUPERMARKETY}>
+        <label class="smu__popisek" for="smu-obec">Najdi supermarkety v obci</label>
+        <div class="hledani">
+          <div class="hledani__pole">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
+            <input id="smu-obec" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="Napiš obec, třeba Brno" />
+          </div>
+          <ul class="naseptavac" hidden></ul>
+        </div>
+      </div>
+      <div class="krok__akce">
+        <a class="tlacitko tlacitko--oranzovy" href={`${SUPERMARKETY}#poloha`}>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+          Najít nejbližší podle polohy
+        </a>
+        <a class="krok__odkaz" href={SUPERMARKETY}>Otevřít celou mapu →</a>
+      </div>
+      <ul class="retezce" aria-label="Řetězce na mapě" data-retezce>
+        {retezce.map((r) => (
+          <li>
+            <button type="button" class="retezce__chip" data-r={r.id} aria-pressed="false" style={barvyRetezce(r.id)} title={`Ukázat jen ${r.nazev}`}>
+              <span class:list={['retezce__logo', { 'retezce__logo--tmave': r.logo?.tmave }]}>{r.logo ? <img src={r.logo.src} alt={r.nazev} width="44" height="22" loading="lazy" /> : r.nazev}</span>
+              <span class="retezce__pocet">{cislo(r.pocet)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+      <p class="krok__dalsi">
+        Další mapy Česka: <a href="/mapa/">kraje v číslech</a>{nove('cesko').map((x) => <>, <a href={x.href}>{x.titul.toLowerCase()}</a></>)} a <a href="/mapa/#cesko3d">Česko ve 3D</a>.
+      </p>
+    </article>
+  </div>
+</section>
+
+<script>
+  import { naseptavac, type Polozka } from '../../lib/naseptavac';
+
+  const koren = document.querySelector<HTMLElement>('[data-cesta]');
+  if (koren) {
+    // Porovnání s jakoukoli zemí: vede na glóbus se srovnáním
+    const box = koren.querySelector<HTMLElement>('[data-uvod-hledani]');
+    if (box) {
+      const zeme = JSON.parse(box.dataset.zeme!) as [string, string, string][];
+      naseptavac(box.querySelector('input')!, box.querySelector('.naseptavac')!, zeme.map(([kod, nazev, a2]) => ({ kod, nazev, vlajka: `/vlajky/${a2}.svg` })), (p) => {
+        location.href = `/svet/#z=${p.kod}`;
+      });
+    }
+
+    // Supermarkety v obci: seznam obcí se stáhne až při prvním psaní, pak otevře mapu rovnou na té obci
+    const sbox = koren.querySelector<HTMLElement>('[data-smu-hledani]');
+    if (sbox) {
+      const vstup = sbox.querySelector('input')!;
+      const TYPY = ['město', 'město', 'obec', 'část obce'];
+      let nacteno: Promise<void> | null = null;
+      const nacti = () => (nacteno ??= fetch('/data/obce.json').then((r) => r.json()).then((d: { obce: [string, number, number, number, number, string][]; kraje: string[] }) => {
+        const polozky: Polozka[] = d.obce.map((o, i) => ({ kod: String(i), nazev: o[0], popis: o[3] === 3 && o[5] ? `část obce ${o[5]}` : `${TYPY[o[3]]} · ${d.kraje[o[4]] ?? ''}` }));
+        const { nabidni } = naseptavac(vstup, sbox.querySelector('.naseptavac')!, polozky, (p) => {
+          location.href = `${sbox.dataset.mapa}#obec=${encodeURIComponent(p.nazev)}&i=${p.kod}`;
+        });
+        if (document.activeElement === vstup && vstup.value.trim()) nabidni();
+      }));
+      vstup.addEventListener('focus', nacti, { once: true });
+      vstup.addEventListener('input', nacti, { once: true });
+    }
+
+    // Přepínače v kapitolách (fungují hned, glóbus se k nim připojí, až se načte)
+    const prepinac = (sel: string, attr: string, detail: string, udalost: string) => {
+      const tlacitka = koren.querySelectorAll<HTMLButtonElement>(sel);
+      for (const b of tlacitka) b.addEventListener('click', () => {
+        const id = b.getAttribute(attr)!;
+        for (const x of tlacitka) x.setAttribute('aria-pressed', String(x === b));
+        for (const d of koren.querySelectorAll<HTMLElement>(`[${detail}]`)) d.hidden = d.getAttribute(detail) !== id;
+        // pruhy v nově ukázaném detailu narostou znovu
+        for (const g of koren.querySelectorAll<HTMLElement>(`[${detail}="${id}"] .odhal-graf`)) { g.classList.remove('odhal--videt'); void g.offsetWidth; g.classList.add('odhal--videt'); }
+        koren.dispatchEvent(new CustomEvent(udalost, { detail: id }));
+      });
+    };
+    prepinac('[data-zebricek]', 'data-zebricek', 'data-zebricek-detail', 'cesta:zebricek');
+    prepinac('[data-eu-sada]', 'data-eu-sada', 'data-eu-detail', 'cesta:eu');
+
+    // Řetězce: klik zvýrazní jeden, další klik zase všechny
+    const chipy = koren.querySelectorAll<HTMLButtonElement>('.retezce__chip');
+    const teckyRetezcu = koren.querySelectorAll<SVGPathElement>('.scena__retezec');
+    let vybrany = '';
+    for (const chip of chipy) chip.addEventListener('click', () => {
+      vybrany = vybrany === chip.dataset.r ? '' : chip.dataset.r!;
+      koren.classList.toggle('je-vyber', !!vybrany);
+      for (const c of chipy) c.setAttribute('aria-pressed', String(c.dataset.r === vybrany));
+      for (const t of teckyRetezcu) t.classList.toggle('je-vybrany', t.dataset.r === vybrany);
+    });
+
+    // Texty kapitol naskočí, když přijedou do obrazu
+    const kroky = koren.querySelectorAll<HTMLElement>('.krok');
+    if ('IntersectionObserver' in window) {
+      const io = new IntersectionObserver((z) => { for (const x of z) if (x.isIntersecting) { x.target.classList.add('je-tu'); io.unobserve(x.target); } }, { rootMargin: '0px 0px -15% 0px' });
+      kroky.forEach((k) => io.observe(k));
+    } else kroky.forEach((k) => k.classList.add('je-tu'));
+
+    // Glóbus a pohyb podle scrollu: načte se hned po prvním vykreslení stránky
+    const spust = () => import('../../lib/cesta').then((m) => m.spustCestu(koren)).catch((e) => console.error('Glóbus se nenačetl', e));
+    if ('requestIdleCallback' in window) (window as any).requestIdleCallback(spust, { timeout: 500 });
+    else setTimeout(spust, 150);
+  }
+</script>
+
+<style>
+  /* ---------- rozvržení: text vlevo, glóbus vpravo přilepený ---------- */
+  .cesta {
+    --hv: var(--hlavicka-vyska, 64px);
+    position: relative; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr); gap: clamp(1.5rem, 4vw, 3.5rem);
+    width: min(100% - 2.5rem, var(--obal)); margin-inline: auto;
+  }
+  .cesta__text { grid-column: 1; grid-row: 1; min-width: 0; }
+  .cesta__scena {
+    grid-column: 2; grid-row: 1; align-self: start; position: sticky; top: var(--hv); height: calc(100svh - var(--hv));
+    display: flex; flex-direction: column; min-width: 0; z-index: 1;
+  }
+  /* okraje plochy se měkce ztratí do stránky, ať přiblížená mapa nemá rámeček */
+  .scena__plocha {
+    position: relative; flex: 1 1 auto; min-height: 0; container-type: size; touch-action: pan-y;
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+    -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
+    mask-composite: intersect;
+  }
+  .scena__staticky { position: absolute; left: 50%; top: 50%; width: calc(min(84cqw, 84cqh) * 600 / 560); transform: translate(-50%, -46.875%); transition: opacity 0.5s ease; pointer-events: none; }
+  .scena__platno { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s ease; cursor: grab; touch-action: pan-y; }
+  .scena__platno:active { cursor: grabbing; }
+  .je-zivy .scena__platno { opacity: 1; }
+  .je-zivy .scena__staticky { opacity: 0; }
+
+  /* mapa Česka s tečkami supermarketů: přesně na místě Česka na glóbusu, objeví se při přiblížení */
+  .scena__mapa { position: absolute; inset: 0; overflow: hidden; pointer-events: none; opacity: 0; }
+  .scena__mapa svg { position: absolute; left: 0; top: 0; width: 1000px; height: 578px; transform-origin: 0 0; overflow: visible; }
+  /* oranžový obrys Česka: tlustá čára pod kraji, vnitřní hranice zakryjí výplně krajů */
+  .scena__obrys path { fill: var(--orange); stroke: var(--orange); stroke-width: 6; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  .scena__kraje path { fill: var(--paper); stroke: var(--line-2); stroke-width: 1.2; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+  .scena__retezec { fill: none; stroke: var(--barva); stroke-width: 9; stroke-linecap: round; opacity: 0; transition: opacity 0.5s ease calc(var(--i) * 90ms); }
+  :global([data-tema='tmavy']) .scena__retezec { stroke: var(--barva-tmava); }
+  .scena__mapa.je-videt .scena__retezec { opacity: 1; }
+  .cesta.je-vyber .scena__mapa .scena__retezec:not(.je-vybrany) { opacity: 0.08; transition-delay: 0s; }
+
+  .scena__tip {
+    position: absolute; z-index: 3; left: 0; top: 0; pointer-events: none; padding: 0.35rem 0.65rem; border-radius: 10px;
+    background: var(--panel); color: var(--na-panelu); font-size: 0.8rem; font-weight: 700; white-space: nowrap; box-shadow: var(--stin-maly);
+    transform: translate(-50%, calc(-100% - 12px));
+  }
+  .scena__tip :global(b) { color: var(--na-panelu-akcent); font-weight: 800; }
+
+  .scena__pata { display: flex; flex-direction: column; align-items: center; gap: 0.7rem; padding: 0.4rem 0 1.1rem; }
+  .scena__legenda { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.35rem 1.1rem; min-height: 1.6rem; font-size: 0.8rem; font-weight: 700; color: var(--text-2); }
+  .scena__legenda :global(span) { display: inline-flex; align-items: center; gap: 0.4rem; }
+  .scena__legenda :global(i) { width: 11px; height: 11px; border-radius: 50%; display: inline-block; flex-shrink: 0; }
+  .scena__legenda :global(.skala) { width: 84px; height: 9px; border-radius: 999px; }
+  .scena__kapitoly { display: flex; gap: 0.3rem; padding: 0.3rem; border-radius: 999px; background: var(--sklo); border: 1px solid var(--line); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  .scena__kapitoly a { display: inline-flex; align-items: center; gap: 0.4rem; min-height: 34px; padding: 0 0.75rem 0 0.4rem; border-radius: 999px; font-size: 0.78rem; font-weight: 800; color: var(--muted); text-decoration: none; transition: background-color 0.3s ease, color 0.3s ease; }
+  .scena__kapitoly a span { display: grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--plocha-2); font-size: 0.7rem; color: var(--navy); transition: background-color 0.3s ease, color 0.3s ease; }
+  .scena__kapitoly a.je-aktivni { background: var(--navy); color: var(--cream); }
+  .scena__kapitoly a.je-aktivni span { background: var(--orange); color: var(--na-oranzove); }
+  @media (hover: hover) and (pointer: fine) { .scena__kapitoly a:not(.je-aktivni):hover { background: var(--hover); color: var(--navy); } }
+
+  /* ---------- úvod ---------- */
+  .cesta__uvod { min-height: calc(100svh - var(--hv)); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1.25rem; padding-block: 2rem 3rem; }
+  .cesta__uvod h1 { font-size: clamp(2.2rem, 4vw, 3.2rem); line-height: 1.12; }
+  .uvod__hledani { display: flex; flex-direction: column; gap: 0.45rem; width: min(100%, 420px); position: relative; z-index: 15; }
+  .uvod__hledani .hledani, .smu__hledani .hledani { width: 100%; }
+  .uvod__hledani-titul, .smu__popisek { font-size: 0.9rem; font-weight: 800; color: var(--navy); }
+  .uvod__hlasovani { width: min(100%, 420px); }
+  .uvod__hlasovani:empty { display: none; }
+  .cesta__dolu { display: inline-flex; align-items: center; gap: 0.7rem; margin-top: 0.6rem; font-size: 0.88rem; font-weight: 600; color: var(--text-2); text-decoration: none; }
+  .cesta__dolu strong { color: var(--navy); font-weight: 800; }
+  .cesta__dolu-ikona { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--navy); color: var(--cream); animation: dolu 2.2s ease-in-out infinite; flex-shrink: 0; }
+  @keyframes dolu { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(5px); } }
+  @media (hover: hover) and (pointer: fine) { .cesta__dolu:hover { color: var(--navy); } }
+
+  /* ---------- kapitoly ---------- */
+  .krok { min-height: 92svh; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1rem; padding-block: 12svh; scroll-margin-top: 0; }
+  .krok h2 { font-size: clamp(1.75rem, 3.3vw, 2.5rem); line-height: 1.12; letter-spacing: -0.025em; max-width: 18ch; }
+  .krok__nadhlavi { display: inline-flex; align-items: center; gap: 0.55rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange-text); }
+  .krok__nadhlavi b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--orange); color: var(--na-oranzove); font-size: 0.78rem; letter-spacing: 0; }
+  .krok__perex { font-size: clamp(1rem, 1.5vw, 1.08rem); line-height: 1.65; color: var(--text-2); max-width: 46ch; text-wrap: pretty; }
+  .krok__perex strong { color: var(--orange-text); font-weight: 800; }
+  .krok__akce { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.25rem; margin-top: 0.4rem; }
+  .krok__odkaz { font-size: 0.92rem; font-weight: 800; color: var(--orange-text); text-decoration: none; }
+  .krok__stitek { display: block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--orange-text); }
+  .jen-dotyk { display: none; }
+  @media (hover: none) { .jen-mys { display: none; } .jen-dotyk { display: inline; } }
+
+  /* texty kapitol naskočí, když přijedou */
+  /* jen na začátku (fill backwards), potom platí běžné styly prvků včetně najetí myší */
+  :global(.js) .krok:not(.je-tu) > * { opacity: 0; }
+  :global(.js) .krok.je-tu > * { animation: krok-naskoc 0.65s var(--ease-out) backwards; }
+  :global(.js) .krok.je-tu > *:nth-child(2) { animation-delay: 70ms; }
+  :global(.js) .krok.je-tu > *:nth-child(3) { animation-delay: 140ms; }
+  :global(.js) .krok.je-tu > *:nth-child(4) { animation-delay: 210ms; }
+  :global(.js) .krok.je-tu > *:nth-child(n + 5) { animation-delay: 280ms; }
+  @keyframes krok-naskoc { from { opacity: 0; transform: translateY(22px); } }
+  /* kapitola, kterou zrovna čteš, je plná, ostatní lehce ustoupí */
+  .krok { transition: opacity 0.5s ease; }
+  :global(.je-zivy) .krok:not(.je-aktivni) { opacity: 0.45; }
+  :global(.je-zivy) .krok:not(.je-aktivni):hover, :global(.je-zivy) .krok:not(.je-aktivni):focus-within { opacity: 1; }
+
+  /* 1. vlajky */
+  .vlajky { display: flex; flex-wrap: wrap; gap: 0.45rem; list-style: none; margin: 0.2rem 0 0; padding: 0; max-width: 560px; }
+  .vlajky a {
+    display: inline-flex; align-items: center; gap: 0.45rem; min-height: 40px; padding: 0 0.7rem 0 0.45rem; border-radius: 999px;
+    background: var(--paper); border: 1px solid var(--line); color: var(--navy); font-size: 0.84rem; font-weight: 700; text-decoration: none;
+    transition: transform 0.25s var(--ease-out), border-color 0.2s ease, box-shadow 0.25s ease;
+  }
+  .vlajky img { width: 26px; height: auto; border-radius: 4px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08); }
+  .vlajky small { font-size: 0.68rem; font-weight: 800; color: var(--muted); }
+  .vlajky a:hover, .vlajky a:focus-visible, .vlajky a.je-zamer { border-color: var(--orange); box-shadow: 0 6px 16px -10px rgba(var(--stin-barva), 0.5); transform: translateY(-2px); color: var(--navy); }
+  .vlajky a:active { transform: scale(0.96); }
+  .krok__posledni { display: flex; flex-direction: column; gap: 0.2rem; max-width: 52ch; padding-left: 0.9rem; border-left: 3px solid var(--orange); font-size: 0.92rem; line-height: 1.55; }
+  .krok__posledni a { color: var(--text-2); text-decoration: none; }
+  .krok__posledni a:hover { color: var(--navy); }
+  .krok__posledni strong { color: var(--navy); }
+  .krok__nove { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0.7rem; width: min(100%, 560px); list-style: none; margin: 0; padding: 0; }
+  .krok__nove a { display: flex; align-items: center; gap: 0.75rem; color: var(--navy); text-decoration: none; }
+  .krok__nove img { width: 84px; height: 52px; object-fit: cover; border-radius: 10px; flex-shrink: 0; transition: transform 0.4s var(--ease-out); }
+  :global([data-tema='tmavy']) .krok__nove img { filter: brightness(0.86); }
+  .krok__nove a:hover img { transform: scale(1.05) rotate(-1deg); }
+  .krok__nove span { display: flex; flex-direction: column; font-size: 0.8rem; line-height: 1.35; color: var(--text-2); }
+  .krok__nove small { font-size: 0.66rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--orange-text); }
+  .krok__nove strong { font-size: 0.92rem; color: var(--navy); }
+
+  /* 2. žebříčky */
+  .zeb { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.15rem 1.25rem; width: min(100%, 560px); }
+  .zeb__radek {
+    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.7rem; min-height: 54px; padding: 0.4rem 0.35rem;
+    border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--navy); font-family: inherit; text-align: left; cursor: pointer;
+    transition: background-color 0.2s ease;
+  }
+  .zeb__radek[aria-pressed='true'] { border-bottom-color: var(--orange); box-shadow: inset 0 -2px 0 var(--orange); }
+  @media (hover: hover) and (pointer: fine) { .zeb__radek:hover { background: var(--hover); } }
+  .zeb__nazev { font-size: 0.9rem; font-weight: 800; line-height: 1.25; }
+  .zeb__misto { display: flex; align-items: baseline; gap: 0.3rem; white-space: nowrap; }
+  .zeb__misto strong { font-size: 1.5rem; font-weight: 900; letter-spacing: -0.03em; color: var(--orange-text); font-variant-numeric: tabular-nums; }
+  .zeb__misto small { font-size: 0.72rem; font-weight: 700; color: var(--muted); }
+  .zeb__radek[aria-pressed='false'] .zeb__misto strong { color: var(--navy); }
+  .zeb__detail p { max-width: 52ch; font-size: 0.95rem; line-height: 1.6; color: var(--text-2); animation: naskoc 0.35s var(--ease-out); }
+  .zeb__detail strong { color: var(--navy); }
+  .zeb__detail a { font-weight: 800; color: var(--orange-text); text-decoration: none; white-space: nowrap; }
+
+  /* 3. Evropa */
+  .eu { display: flex; flex-direction: column; gap: 0.9rem; width: min(100%, 520px); }
+  .eu__chipy { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  .eu__chip { min-height: 38px; padding: 0 0.9rem; font-size: 0.86rem; }
+  .eu__detail { display: flex; flex-direction: column; gap: 0.75rem; animation: naskoc 0.35s var(--ease-out); }
+  .eu__veta { font-size: 1.02rem; font-weight: 700; line-height: 1.5; color: var(--navy); }
+  .eu__odkaz { font-size: 0.86rem; font-weight: 800; color: var(--orange-text); text-decoration: none; }
+  .krok__souhrn { display: flex; flex-direction: column; gap: 0.25rem; max-width: 52ch; padding: 0.85rem 1rem; border-radius: 16px; background: color-mix(in srgb, var(--paper) 70%, transparent); border: 1px solid var(--line-jemna); color: var(--navy); text-decoration: none; transition: transform 0.25s var(--ease-out), border-color 0.2s ease; }
+  .krok__souhrn strong { font-size: 1rem; line-height: 1.35; }
+  .krok__souhrn:hover { border-color: var(--orange); transform: translateY(-2px); color: var(--navy); }
+  @keyframes naskoc { from { opacity: 0; transform: translateY(6px); } }
+
+  /* 4. Česko */
+  .smu__hledani { display: flex; flex-direction: column; gap: 0.45rem; width: min(100%, 420px); position: relative; z-index: 5; }
+  .retezce { display: flex; flex-wrap: wrap; gap: 0.4rem; list-style: none; margin: 0.2rem 0 0; padding: 0; max-width: 560px; }
+  .retezce__chip {
+    display: inline-flex; align-items: center; gap: 0.4rem; min-height: 36px; padding: 0 0.65rem 0 0.35rem; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--paper); color: var(--navy); font-family: inherit; font-size: 0.8rem; font-weight: 800; cursor: pointer;
+    font-variant-numeric: tabular-nums; box-shadow: inset 0 -3px 0 var(--barva); transition: border-color 0.2s ease, transform var(--stisk) var(--ease-out), opacity 0.2s ease;
+  }
+  :global([data-tema='tmavy']) .retezce__chip { box-shadow: inset 0 -3px 0 var(--barva-tmava); }
+  .retezce__chip:active { transform: scale(0.96); }
+  .cesta.je-vyber .retezce__chip[aria-pressed='false'] { opacity: 0.55; }
+  .retezce__chip[aria-pressed='true'] { border-color: var(--navy); }
+  .retezce__logo { display: grid; place-items: center; height: 26px; min-width: 46px; padding: 0 0.3rem; border-radius: 8px; background: #fff; }
+  .retezce__logo img { display: block; max-width: 50px; max-height: 20px; width: auto; height: auto; }
+  .retezce__logo--tmave { background: #1B2A4A; }
+  .krok__dalsi { font-size: 0.88rem; color: var(--muted); max-width: 52ch; }
+  .krok__dalsi a { font-weight: 700; color: var(--navy); }
+
+  /* ---------- telefon a tablet: nahoře text úvodu, pak glóbus přilepený nahoře a kapitoly pod ním ---------- */
+  @media (max-width: 899px) {
+    .cesta { display: flex; flex-direction: column; gap: 0; }
+    .cesta__text { display: contents; }
+    .cesta__uvod { order: 0; min-height: auto; align-items: center; text-align: center; padding-block: 1.75rem 0.5rem; }
+    .uvod__hledani { text-align: left; }
+    /* glóbus přes celou šířku telefonu, text kapitol pod ním zajíždí pod krémovou plochu */
+    .cesta__scena { order: 1; align-self: stretch; height: 42svh; margin-inline: -1.25rem; z-index: 20; background: var(--cream); }
+    /* našeptávač zemí v úvodu musí být nad glóbusem, který je pod ním */
+    .uvod__hledani { z-index: 25; }
+    .cesta__scena::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 28px; pointer-events: none; background: linear-gradient(to bottom, var(--cream), color-mix(in srgb, var(--cream) 0%, transparent)); }
+    .scena__pata { padding: 0 0 0.6rem; gap: 0.4rem; }
+    .scena__legenda { font-size: 0.72rem; min-height: 1.2rem; }
+    .scena__kapitoly a { min-height: 30px; padding: 0 0.55rem 0 0.3rem; font-size: 0.7rem; }
+    .scena__kapitoly a span { width: 20px; height: 20px; }
+    .krok { order: 2; min-height: 78svh; padding-block: 2.5rem 4rem; }
+    .krok h2 { font-size: clamp(1.5rem, 6.5vw, 2rem); }
+    .zeb { grid-template-columns: 1fr; }
+    .vlajky { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; width: calc(100% + 2.5rem); margin-inline: -1.25rem; padding: 0.2rem 1.25rem 0.5rem; scroll-snap-type: x proximity; }
+    .vlajky::-webkit-scrollbar { display: none; }
+    .vlajky li { flex-shrink: 0; scroll-snap-align: start; }
+  }
+  @media (max-width: 899px) and (max-height: 700px) { .cesta__scena { height: 38svh; } .scena__legenda { display: none; } }
+  @media (max-width: 420px) { .scena__kapitoly a { font-size: 0; gap: 0; padding: 0 0.3rem; } .scena__kapitoly a span { font-size: 0.7rem; } .scena__kapitoly a.je-aktivni { font-size: 0.7rem; gap: 0.35rem; padding-right: 0.55rem; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .krok > * { opacity: 1 !important; animation: none !important; }
+    .cesta__dolu-ikona { animation: none; }
+    .scena__retezec, .scena__staticky, .scena__platno { transition: none; }
+  }
+</style>

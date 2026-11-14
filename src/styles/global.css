@@ -347,6 +347,27 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
   transition: box-shadow 0.25s ease, background-color 0.25s ease;
 }
 .hlavicka.je-pod { box-shadow: 0 1px 0 var(--line-jemna), 0 10px 24px -18px rgba(var(--stin-barva), 0.45); }
+/* Při scrollu se hlavička o kousek zmenší */
+.hlavicka__obsah { transition: padding 0.3s var(--ease-out); }
+.hlavicka.je-pod .hlavicka__obsah { padding-block: 0.5rem; }
+.logo { transition: font-size 0.3s var(--ease-out); }
+.hlavicka.je-pod .logo { font-size: 1.4rem; }
+/* Kolik ze stránky už máš za sebou */
+.postup { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; pointer-events: none; }
+.postup span { display: block; height: 100%; background: linear-gradient(90deg, var(--orange), var(--orange-hover)); transform: scaleX(0); transform-origin: 0 50%; border-radius: 0 3px 3px 0; }
+@media (prefers-reduced-motion: reduce) { .hlavicka__obsah, .logo { transition: none; } }
+
+/* Přechod mezi stránkami: hlavička a spodní lišta zůstanou na místě, obsah se prolne a jemně vyjede.
+   Funguje v prohlížečích, které umí View Transitions mezi stránkami (Chrome, Edge, Safari 18.2+), jinde se nic nemění. */
+@view-transition { navigation: auto; types: prechod; }
+.hlavicka { view-transition-name: hlavicka; }
+.dok { view-transition-name: dok; }
+.meni-tema .hlavicka, .meni-tema .dok { view-transition-name: none; }
+html:active-view-transition-type(prechod)::view-transition-old(root) { animation: 0.2s ease-in both vt-ven; }
+html:active-view-transition-type(prechod)::view-transition-new(root) { animation: 0.42s var(--ease-out) both vt-dovnitr; }
+@keyframes vt-ven { to { opacity: 0; transform: translateY(-10px); } }
+@keyframes vt-dovnitr { from { opacity: 0; transform: translateY(16px); } }
+@media (prefers-reduced-motion: reduce) { @view-transition { navigation: none; } }
 @media (prefers-reduced-transparency: reduce) { .hlavicka { background: var(--cream); backdrop-filter: none; -webkit-backdrop-filter: none; } }
 @media (prefers-contrast: more) { .hlavicka { background: var(--cream); box-shadow: 0 1px 0 var(--line-2); } }
 .hlavicka__obsah { display: flex; align-items: center; justify-content: space-between; gap: 1rem 1.5rem; padding-block: 0.75rem; }
@@ -547,6 +568,12 @@ label { font-size: 0.9rem; font-weight: 700; }
 
 /* Odhalení obsahu při scrollu */
 .js .odhal { opacity: 0; transform: translateY(12px); transition: opacity 0.5s var(--ease-out), transform 0.5s var(--ease-out); }
+/* Položky mřížky naskočí jedna po druhé ([data-postupne]). Animace jen na začátku (fill backwards),
+   potom platí běžné styly položky, takže najetí myší a stisk fungují jako dřív. */
+.js [data-postupne]:not(.odhal--videt) > * { opacity: 0; }
+.js [data-postupne].odhal--videt > * { animation: naskoc-postupne 0.6s var(--ease-out) backwards; animation-delay: calc(var(--i, 0) * 70ms + 80ms); }
+@keyframes naskoc-postupne { from { opacity: 0; transform: translateY(18px) scale(0.985); } }
+@media (prefers-reduced-motion: reduce) { .js [data-postupne] > * { opacity: 1 !important; animation: none !important; } }
 .js .odhal--videt { opacity: 1; transform: none; }
 @media (prefers-reduced-motion: reduce) { .js .odhal { opacity: 1; transform: none; transition: none; } }
 

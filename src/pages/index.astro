@@ -2,31 +2,27 @@
 import { getCollection } from 'astro:content';
 import Base from '../layouts/Base.astro';
 import BarChart from '../components/BarChart.astro';
-import HeroGlobus from '../components/uvod/HeroGlobus.astro';
-import ZebrickyUpoutavka from '../components/ZebrickyUpoutavka.astro';
-import { posledniNovinky, posledniSouhrn, nazevVydani } from '../lib/novinky';
-import SouhrnUvod from '../components/uvod/SouhrnUvod.astro';
+import Cesta from '../components/uvod/Cesta.astro';
 import MapaMini from '../components/uvod/MapaMini.astro';
-import NoveNaWebu from '../components/uvod/NoveNaWebu.astro';
-import SupermarketyUpoutavka from '../components/uvod/SupermarketyUpoutavka.astro';
-import HlasovaniPozvanka from '../components/HlasovaniPozvanka.astro';
+import SouhrnUvod from '../components/uvod/SouhrnUvod.astro';
+import Rozcestnik from '../components/uvod/Rozcestnik.astro';
 import NovinkaKarta from '../components/NovinkaKarta.astro';
-import { nactiVidea } from '../lib/dily';
 import VideoKarta from '../components/VideoKarta.astro';
-import { ZEME } from '../lib/svet';
-import { epizody } from '../data/epizody';
+import { posledniNovinky, posledniSouhrn, nazevVydani } from '../lib/novinky';
+import { nactiVidea } from '../lib/dily';
 import { datum } from '../lib/format';
 
+// Úvodní stránka je jeden souvislý příběh: nahoře glóbus, který se při scrollování otáčí a přibližuje
+// (Svět → Žebříčky → Evropa → Česko, src/components/uvod/Cesta.astro), pod ním plynule navazují
+// novinky z dat, Česko v číslech (graf týdne a mapa krajů) a pás s videi. Žádné samostatné boxy:
+// sekce se střídají jako pásy přes celou šířku a vpravo je rozcestník, kde právě jsi.
 const grafy = (await getCollection('grafy')).sort((a, b) => b.data.datum.valueOf() - a.data.datum.valueOf());
 const tydne = grafy[0];
-// Nejnovější videa, která už vyšla (karta bez odkazu na reel by vedla jen na profil)
 const videa = await nactiVidea();
-const nejnovejsiVidea = videa.vse.filter((d) => !d.brzy).slice(0, 5);
+const nejnovejsiVidea = videa.vse.filter((d) => !d.brzy).slice(0, 10);
 const novinky = await posledniNovinky(6);
 const souhrn = await posledniSouhrn();
 const aktualizovano = novinky.length ? new Date(Math.max(...novinky.map((n) => n.datumVydani.valueOf()))) : null;
-// Seznam zemí pro vyhledávání v úvodu (jen název a vlajka, ať je stránka lehká)
-const zemeHledani = JSON.stringify(Object.entries(ZEME).filter(([a3]) => a3 !== 'EUZ' && a3 !== 'CZE').map(([a3, [n, a2]]) => [a3, n, a2]));
 
 // V grafu týdne ukážeme až 10 řádků a Česko vždycky.
 const polozkyTydne = (() => {
@@ -40,43 +36,26 @@ const polozkyTydne = (() => {
 const IG = 'https://www.instagram.com/data.cesky/';
 const TT = 'https://www.tiktok.com/@data.cesky';
 const FB = 'https://www.facebook.com/data.cesky';
+const ROZCESTNIK = [
+  { id: 'nahoru', nazev: 'Úvod' },
+  { id: 'k-svet', nazev: 'Svět' },
+  { id: 'k-zebricky', nazev: 'Žebříčky' },
+  { id: 'k-evropa', nazev: 'Evropa' },
+  { id: 'k-cesko', nazev: 'Supermarkety' },
+  { id: 'novinky-uvod', nazev: 'Novinky z dat' },
+  { id: 'cisla', nazev: 'Česko v číslech' },
+  { id: 'videa', nazev: 'Videa' },
+];
 ---
 
 <Base titul="data.cesky — Česko v mapách, grafech a číslech" obrazek="/og/uvod.png">
-  <div class="vrstevnice">
-  <section class="uvod obal">
-    <div class="uvod__text">
-      <h1>Česko v mapách, grafech a&nbsp;číslech</h1>
-      <p class="perex">Data z ČSÚ, Eurostatu, Světové banky a dalších primárních zdrojů. Všechno, co tu vidíš, se dá rozkliknout.</p>
-      <div class="uvod__hledani" data-uvod-hledani data-zeme={zemeHledani}>
-        <label class="uvod__hledani-titul" for="uvod-hledani">Porovnej Česko s jakoukoli zemí</label>
-        <div class="hledani">
-          <div class="hledani__pole">
-            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
-            <input id="uvod-hledani" type="search" enterkeyhint="search" placeholder="Napiš zemi, třeba Japonsko" />
-          </div>
-          <ul class="naseptavac" hidden></ul>
-        </div>
-      </div>
-      <div class="uvod__hlasovani"><HlasovaniPozvanka mala /></div>
-      <div class="uvod__legenda">
-        <span><i style="background: var(--orange);"></i>Česko</span>
-        <span><i style="background: var(--navy);"></i>{epizody.length} zemí ze série Česko vs. svět</span>
-      </div>
-    </div>
-    <a href="/svet/" class="uvod__globus" aria-label="Otevřít glóbus">
-      <HeroGlobus />
-    </a>
-  </section>
+  <div class="uvod-pozadi" id="nahoru">
+    <Cesta />
   </div>
 
-  <SupermarketyUpoutavka />
-
-  <NoveNaWebu />
-
   {novinky.length > 0 && (
-    <section class="obal sekce--mala novinky-uvod">
-      <div class="nadpis-sekce">
+    <section class="obal uvod-novinky" id="novinky-uvod">
+      <div class="nadpis-sekce odhal">
         <div class="nadpis">
           <span class="nadhlavi nadhlavi--zive">Nová data{aktualizovano && ` · ${datum(aktualizovano)}`}</span>
           <h2>Novinky z dat</h2>
@@ -85,148 +64,178 @@ const FB = 'https://www.facebook.com/data.cesky';
         <a class="tlacitko tlacitko--male" href="/novinky/">Všechny novinky</a>
       </div>
       {souhrn && <SouhrnUvod souhrn={souhrn.souhrn} vydani={nazevVydani(souhrn.vydani)} />}
-      <ul class="posuvnik" data-posuvnik>
+      <ul class="posuvnik odhal" data-posuvnik data-postupne>
         {novinky.slice(0, 6).map((p) => <NovinkaKarta p={p} hlavni={p.hlavni} />)}
       </ul>
       <div class="tecky" aria-hidden="true" data-tecky>{novinky.slice(0, 6).map((_, i) => <i class:list={{ 'je-aktivni': i === 0 }}></i>)}</div>
     </section>
   )}
 
-  <section class="obal sekce--mala">
-    <div class="nadpis-sekce">
-      <div class="nadpis">
-        <span class="nadhlavi">Žebříčky</span>
-        <h2>Kde je Česko ve světě</h2>
-      </div>
-      <a class="tlacitko tlacitko--male" href="/zebricky/">Všechny žebříčky</a>
-    </div>
-    <ZebrickyUpoutavka />
-  </section>
-
-  <section class="obal sekce--mala">
-    <div class="nadpis-sekce">
-      <div class="nadpis">
-        <span class="nadhlavi">Videa</span>
-        <h2>Nejnovější videa</h2>
-      </div>
-      <a class="tlacitko tlacitko--male" href="/videa/">Všechna videa</a>
-    </div>
-    <ul class="dily-uvod">
-      {nejnovejsiVidea.map((d) => (
-        <li><VideoKarta d={d} bezPopisu /></li>
-      ))}
-    </ul>
-  </section>
-
-  {tydne && (
-    <section class="obal sekce--mala">
-      <a class="tydne" href={`/grafy/${tydne.id}/`}>
-        <div class="tydne__text">
-          <span class="nadhlavi">Graf týdne</span>
-          <h2>{tydne.data.titul}</h2>
-          <p class="perex">{tydne.data.perex}</p>
-          <span class="drobne tydne__meta"><span>Zdroj: {tydne.data.zdroj}</span><span>Vyšlo {datum(tydne.data.datum)}</span></span>
+  <section class="pas-papir" id="cisla" aria-labelledby="cisla-titul">
+    <div class="obal pas-papir__obsah">
+      <div class="nadpis-sekce odhal">
+        <div class="nadpis">
+          <span class="nadhlavi">Česko v číslech</span>
+          <h2 id="cisla-titul">Graf týdne a kraje na jedné mapě</h2>
         </div>
-        <div class="tydne__graf">
-          <div class="sloupec" style="gap: 0.3rem; text-align: center;">
-            <span class="nadpis-grafu">{tydne.data.titul}</span>
-            {tydne.data.popisGrafu && <span class="stitek">{tydne.data.popisGrafu}</span>}
-          </div>
-          <BarChart polozky={polozkyTydne} barvy={tydne.data.barvy} desetinna={tydne.data.desetinna} legenda={true} />
-          <div class="rada rada--mezi">
-            <span class="drobne">Zdroj: {tydne.data.zdroj}</span>
-            <span class="znacka">@data<span>.cesky</span></span>
-          </div>
-        </div>
-      </a>
-    </section>
-  )}
-
-  <section class="obal sekce--mala">
-    <div class="nadpis-sekce">
-      <div class="nadpis">
-        <span class="nadhlavi">Mapa Česka</span>
-        <h2>Porovnej kraje na jedné mapě</h2>
-        <p class="drobne">Na celé mapě jsou i města, satelit, vlaky a vývoj v čase.</p>
+        <a class="tlacitko tlacitko--male" href="/zebricky/">Všechny žebříčky</a>
       </div>
-      <a class="tlacitko tlacitko--male" href="/mapa/">Otevřít celou mapu</a>
+
+      {tydne && (
+        <a class="tydne odhal" href={`/grafy/${tydne.id}/`}>
+          <div class="tydne__text">
+            <span class="nadhlavi">Graf týdne</span>
+            <h3 class="tydne__titul">{tydne.data.titul}</h3>
+            <p class="perex">{tydne.data.perex}</p>
+            <span class="drobne tydne__meta"><span>Zdroj: {tydne.data.zdroj}</span><span>Vyšlo {datum(tydne.data.datum)}</span></span>
+            <span class="tydne__dal">Celý graf a data →</span>
+          </div>
+          <div class="tydne__graf">
+            <div class="sloupec" style="gap: 0.3rem; text-align: center;">
+              <span class="nadpis-grafu">{tydne.data.titul}</span>
+              {tydne.data.popisGrafu && <span class="stitek">{tydne.data.popisGrafu}</span>}
+            </div>
+            <BarChart polozky={polozkyTydne} barvy={tydne.data.barvy} desetinna={tydne.data.desetinna} legenda={true} />
+            <div class="rada rada--mezi">
+              <span class="drobne">Zdroj: {tydne.data.zdroj}</span>
+              <span class="znacka">@data<span>.cesky</span></span>
+            </div>
+          </div>
+        </a>
+      )}
+
+      <div class="pas-papir__mapa">
+        <div class="nadpis odhal">
+          <span class="nadhlavi">Mapa Česka</span>
+          <h3 class="tydne__titul">Porovnej kraje</h3>
+          <p class="drobne">Na celé mapě jsou i města, satelit, vlaky za 24 hodin a vývoj v čase. <a href="/mapa/">Otevřít celou mapu →</a></p>
+        </div>
+        <MapaMini />
+      </div>
     </div>
-    <MapaMini />
   </section>
 
-  <section class="obal sekce--mala">
-    <div class="pas">
-      <div class="sloupec">
-        <h2>Nový graf každý týden</h2>
-        <p style="font-size: 1.1rem; max-width: 52ch;">
-          Animované verze grafů vycházejí nejdřív na sociálních sítích. Sleduj data.cesky, ať ti nic neuteče.
-        </p>
+  <section class="pas-tmavy" id="videa" aria-labelledby="videa-titul">
+    <div class="obal pas-tmavy__hlava">
+      <div class="sloupec odhal" style="gap: 0.6rem;">
+        <span class="nadhlavi pas-tmavy__nadhlavi">Videa</span>
+        <h2 id="videa-titul">Nový graf každý týden</h2>
+        <p class="pas-tmavy__perex">Animované verze grafů vycházejí nejdřív na sociálních sítích. Sleduj data.cesky, ať ti nic neuteče.</p>
       </div>
-      <div class="rada pas__site">
+      <div class="rada pas-tmavy__site odhal">
         <a class="tlacitko tlacitko--oranzovy" href={IG}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8a4 4 0 0 1 4-4h8a4 4 0 0 1 4 4v8a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z M9 12a3 3 0 1 0 6 0a3 3 0 0 0-6 0 M16.5 7.5v.01" /></svg>Instagram</a>
         <a class="tlacitko tlacitko--svetly" href={TT}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7.9v4a10 10 0 0 1-5-1.9v4.5a6.5 6.5 0 1 1-8-6.3v4.3a2.5 2.5 0 1 0 4 2V3h4.1A6 6 0 0 0 21 7.9z" /></svg>TikTok</a>
         <a class="tlacitko tlacitko--svetly" href={FB}><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 10v4h3v7h4v-7h3l1-4h-4V8a1 1 0 0 1 1-1h3V3h-3a5 5 0 0 0-5 5v2z" /></svg>Facebook</a>
       </div>
     </div>
+    <div class="kolej" data-kolej aria-label="Nejnovější videa">
+      <ul class="kolej__pas" data-kolej-pas>
+        {nejnovejsiVidea.map((d) => <li><VideoKarta d={d} bezPopisu /></li>)}
+      </ul>
+    </div>
+    <p class="obal pas-tmavy__vse"><a href="/videa/">Všechna videa a série →</a></p>
   </section>
+
+  <Rozcestnik polozky={ROZCESTNIK} />
 </Base>
 
 <script>
-  import { naseptavac } from '../lib/naseptavac';
-  const box = document.querySelector<HTMLElement>('[data-uvod-hledani]');
-  if (box) {
-    const zeme = JSON.parse(box.dataset.zeme!) as [string, string, string][];
-    naseptavac(box.querySelector('input')!, box.querySelector('.naseptavac')!, zeme.map(([kod, nazev, a2]) => ({ kod, nazev, vlajka: `/vlajky/${a2}.svg` })), (p) => {
-      location.href = `/svet/#z=${p.kod}`;
-    });
+  // Pás s videi: sám pomalu jede do strany, zastaví se, když na něj sáhneš nebo najedeš myší.
+  // Jde i normálně posouvat prstem. Na konci plynule naváže znovu od začátku.
+  const kolej = document.querySelector<HTMLElement>('[data-kolej]');
+  const pas = kolej?.querySelector<HTMLElement>('[data-kolej-pas]');
+  if (kolej && pas && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    // kopie videí za původními, ať pás nemá konec
+    const puvodni = Array.from(pas.children);
+    for (const li of puvodni) {
+      const k = li.cloneNode(true) as HTMLElement;
+      k.setAttribute('aria-hidden', 'true');
+      k.querySelectorAll('a').forEach((a) => a.setAttribute('tabindex', '-1'));
+      pas.append(k);
+    }
+    let pauza = 0, videt = false, id = 0, pred = 0, x = 0;
+    const zastav = () => { pauza = performance.now() + 3500; };
+    for (const ud of ['pointerdown', 'wheel', 'touchstart', 'focusin']) kolej.addEventListener(ud, zastav, { passive: true });
+    kolej.addEventListener('mouseenter', () => { pauza = Infinity; });
+    kolej.addEventListener('mouseleave', () => { pauza = performance.now() + 800; });
+    const krok = (t: number) => {
+      const dt = Math.min(50, t - pred); pred = t;
+      if (t > pauza) {
+        const pul = pas.scrollWidth / 2;
+        if (Math.abs(kolej.scrollLeft - x) > 2) x = kolej.scrollLeft; // posunul uživatel
+        x += dt * 0.035;
+        if (x >= pul) x -= pul;
+        kolej.scrollLeft = x;
+      } else x = kolej.scrollLeft;
+      id = videt ? requestAnimationFrame(krok) : 0;
+    };
+    new IntersectionObserver(([z]) => { videt = z.isIntersecting; if (videt && !id) { pred = performance.now(); id = requestAnimationFrame(krok); } }).observe(kolej);
   }
 </script>
 
 <style>
-  /* Vrstevnice jako na titulních slidech: jen v úvodu, dole se ztratí do stránky */
-  .vrstevnice { position: relative; isolation: isolate; }
-  .vrstevnice::before {
-    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  /* vrstevnice jako na titulních slidech: jen nahoře, dolů se ztratí do stránky */
+  .uvod-pozadi { position: relative; isolation: isolate; }
+  .uvod-pozadi::before {
+    content: ''; position: absolute; inset: 0 0 auto; height: min(1400px, 160svh); z-index: -1; pointer-events: none;
     background: url('/vrstevnice.svg') center top / cover no-repeat;
     opacity: calc(0.8 * var(--vrstevnice-sila));
-    -webkit-mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
-    mask-image: linear-gradient(to bottom, #000 55%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
+    mask-image: linear-gradient(to bottom, #000 45%, transparent 100%);
   }
-  .uvod { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(1.5rem, 4vw, 4rem); align-items: center; padding-block: clamp(2rem, 5vw, 4rem) clamp(0.5rem, 2vw, 1.5rem); }
-  @media (max-width: 860px) { .uvod { grid-template-columns: 1fr; text-align: center; } .uvod__text { align-items: center; } }
-  .uvod__text { display: flex; flex-direction: column; gap: 1.3rem; align-items: flex-start; }
-  .uvod h1 { font-size: clamp(2.2rem, 4vw, 3.1rem); line-height: 1.14; }
-  .uvod__hledani { display: flex; flex-direction: column; gap: 0.45rem; width: min(100%, 420px); position: relative; z-index: 15; }
-  .uvod__hledani .hledani { width: 100%; }
-  .uvod__hledani-titul { font-size: 0.92rem; font-weight: 800; color: var(--navy); }
-  @media (max-width: 860px) { .uvod__hledani { margin-inline: auto; text-align: left; } }
-  .uvod__hlasovani { width: min(100%, 420px); }
-  .uvod__hlasovani:empty { display: none; }
-  .uvod__legenda { display: flex; flex-wrap: wrap; gap: 0.5rem 1.2rem; font-size: 0.85rem; font-weight: 700; color: var(--text-2); }
-  .uvod__legenda span { display: inline-flex; align-items: center; gap: 0.45rem; }
-  .uvod__legenda i { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
-  .uvod__globus { display: block; max-width: 560px; justify-self: center; width: 100%; -webkit-touch-callout: none; transition: transform 0.2s var(--ease-out); }
-  @media (max-width: 860px) { .uvod__globus { max-width: 340px; } }
-  /* Na telefonu menší glóbus, ať jsou novinky blíž nahoře */
-  @media (max-width: 560px) { .uvod { padding-block: 1.75rem 0.5rem; gap: 1.25rem; } .uvod__globus { max-width: 250px; } .uvod__text { gap: 1rem; } }
-  .uvod__globus:active { transform: scale(0.985); }
 
-  .tydne { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center; text-decoration: none; color: var(--navy); }
+  /* vrstevnice jedou při scrollu pomaleji než obsah (hloubka), jen kde to prohlížeč umí bez skriptu */
+  @supports (animation-timeline: scroll()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .uvod-pozadi::before { animation: vrstevnice-posun linear both; animation-timeline: scroll(root); animation-range: 0 120svh; }
+      @keyframes vrstevnice-posun { to { transform: translateY(30svh); } }
+    }
+  }
+
+  .uvod-novinky { padding-block: clamp(3rem, 7vw, 5.5rem); }
+
+  /* ---------- Česko v číslech: bílý pás přes celou šířku s měkkými okraji ---------- */
+  .pas-papir { position: relative; isolation: isolate; background: var(--paper); padding-block: clamp(3.5rem, 8vw, 6rem); margin-top: 90px; }
+  .pas-papir::before, .pas-papir::after { content: ''; position: absolute; left: 0; right: 0; height: 90px; pointer-events: none; }
+  .pas-papir::before { top: -90px; background: linear-gradient(to bottom, color-mix(in srgb, var(--paper) 0%, transparent), var(--paper)); }
+  .pas-papir::after { bottom: -90px; background: linear-gradient(to top, color-mix(in srgb, var(--paper) 0%, transparent), var(--paper)); }
+  .pas-papir__obsah { display: flex; flex-direction: column; gap: clamp(2.5rem, 6vw, 4.5rem); }
+  .pas-papir__obsah > .nadpis-sekce { margin-bottom: -1rem; }
+  .pas-papir__mapa { display: flex; flex-direction: column; gap: 1.25rem; }
+
+  .tydne { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: clamp(1.5rem, 5vw, 4rem); align-items: center; text-decoration: none; color: var(--navy); }
   .tydne:hover { color: var(--navy); }
-  @media (hover: hover) and (pointer: fine) { .tydne:hover .tydne__graf { box-shadow: var(--stin-velky); } }
-  .tydne:active .tydne__graf { transform: scale(0.99); }
   @media (max-width: 880px) { .tydne { grid-template-columns: 1fr; } }
-  .tydne__text { display: flex; flex-direction: column; gap: 1rem; align-items: flex-start; }
-  .tydne__graf { background: var(--paper); border: 1px solid var(--line); border-radius: 22px; box-shadow: var(--stin); padding: clamp(1.25rem, 3vw, 2.25rem); display: flex; flex-direction: column; gap: 1.2rem; transition: box-shadow 0.25s var(--ease-out), transform 0.2s var(--ease-out); }
-  :global(.tydne__graf .legenda) { justify-content: center; }
+  .tydne__text { display: flex; flex-direction: column; gap: 0.9rem; align-items: flex-start; }
+  .tydne__titul { font-size: clamp(1.45rem, 2.6vw, 2rem); font-weight: 900; line-height: 1.18; letter-spacing: -0.02em; }
   .tydne__meta { display: flex; flex-direction: column; gap: 0.15rem; }
-  .dily-uvod { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1rem; list-style: none; margin: 0; padding: 0; }
-  @media (max-width: 900px) {
-    .dily-uvod { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: -1.25rem; padding: 0.25rem 1.25rem 0.75rem; scroll-padding-inline: 1.25rem; gap: 0.8rem; }
-    .dily-uvod::-webkit-scrollbar { display: none; }
-    .dily-uvod > li { flex: 0 0 min(40vw, 190px); scroll-snap-align: start; }
+  .tydne__dal { font-size: 0.92rem; font-weight: 800; color: var(--orange-text); transition: transform 0.25s var(--ease-out); }
+  @media (hover: hover) and (pointer: fine) { .tydne:hover .tydne__dal { transform: translateX(4px); } }
+  .tydne__graf { display: flex; flex-direction: column; gap: 1.2rem; padding-left: clamp(0rem, 3vw, 2.5rem); border-left: 1px solid var(--line-jemna); }
+  @media (max-width: 880px) { .tydne__graf { padding-left: 0; border-left: 0; } }
+  :global(.tydne__graf .legenda) { justify-content: center; }
+
+  /* ---------- videa: tmavý pás s pásem obálek, který sám jede ---------- */
+  .pas-tmavy { position: relative; overflow: hidden; background: var(--panel); color: var(--na-panelu); padding-block: clamp(3.5rem, 8vw, 6rem) clamp(2.5rem, 5vw, 3.5rem); margin-top: 90px; }
+  .pas-tmavy::before {
+    content: ''; position: absolute; inset: 0; pointer-events: none; opacity: 0.16;
+    background: url('/vrstevnice.svg') center / cover no-repeat; filter: invert(1);
   }
-  @media (max-width: 560px) {
-    .pas__site { display: grid; grid-template-columns: 1fr; width: 100%; }
-  }
+  .pas-tmavy__hlava { position: relative; display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1.5rem 3rem; margin-bottom: clamp(1.75rem, 4vw, 2.5rem); }
+  .pas-tmavy h2 { color: var(--na-panelu); font-size: clamp(1.8rem, 3.6vw, 2.6rem); }
+  .pas-tmavy__nadhlavi { color: var(--na-panelu-akcent); }
+  .pas-tmavy__perex { max-width: 52ch; font-size: 1.05rem; line-height: 1.65; color: var(--na-panelu-2); }
+  .pas-tmavy__vse { position: relative; margin-top: 1.5rem; font-size: 0.92rem; font-weight: 800; }
+  .pas-tmavy__vse a { color: var(--na-panelu-akcent); text-decoration: none; }
+  .pas-tmavy__vse a:hover { color: var(--na-panelu); }
+  @media (max-width: 560px) { .pas-tmavy__site { display: grid; grid-template-columns: 1fr; width: 100%; } }
+
+  .kolej { position: relative; overflow-x: auto; scrollbar-width: none; -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent); }
+  .kolej::-webkit-scrollbar { display: none; }
+  .kolej__pas { display: flex; gap: clamp(0.8rem, 1.6vw, 1.25rem); width: max-content; list-style: none; margin: 0; padding: 0.5rem max(1.25rem, calc((100vw - var(--obal)) / 2)); }
+  .kolej__pas > li { width: clamp(150px, 15vw, 200px); flex-shrink: 0; }
+  .pas-tmavy :global(.vk__nazev) { color: var(--na-panelu); }
+  .pas-tmavy :global(.vk__meta) { color: var(--na-panelu-3); }
+  .pas-tmavy :global(.vk__serie) { color: var(--na-panelu-akcent); }
+  @media (hover: hover) and (pointer: fine) { .pas-tmavy :global(.vk__odkaz:hover .vk__nazev) { color: var(--na-panelu-akcent); } }
 </style>

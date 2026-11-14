@@ -1,5 +1,5 @@
 ---
-// Krátký souhrn měsíce na úvodní stránce: titulek, pár vět lidskou řečí a šest oblastí jako dlaždice s číslem.
+// Krátký souhrn měsíce na úvodní stránce: titulek, pár vět lidskou řečí a šest oblastí jako pás čísel (bez rámečků).
 // Klik na dlaždici vede na celý souhrn na stránce Novinky (#s-id).
 import IkonaZare from '../IkonaZare.astro';
 import type { Souhrn } from '../../lib/novinky';
@@ -40,61 +40,53 @@ const { souhrn, vydani } = Astro.props;
 </div>
 
 <style>
+  /* bez rámečku: text vlevo, vpravo pás šesti čísel oddělených tenkými linkami */
   .su {
-    position: relative; isolation: isolate; overflow: hidden; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(1.25rem, 3.5vw, 2.75rem); align-items: center;
-    margin-bottom: clamp(1.25rem, 3vw, 1.75rem); padding: clamp(1.2rem, 3vw, 2rem); border-radius: 26px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin);
-  }
-  .su::before {
-    content: ''; position: absolute; z-index: -1; inset: -40% auto auto -12%; width: 55%; aspect-ratio: 1; pointer-events: none;
-    background: radial-gradient(circle, rgba(240, 136, 41, 0.15), rgba(240, 136, 41, 0) 62%);
-  }
-  .su::after {
-    content: ''; position: absolute; z-index: -2; inset: 0; pointer-events: none;
-    background: url('/vrstevnice.svg') left center / cover no-repeat; opacity: calc(0.32 * var(--vrstevnice-sila));
-    -webkit-mask-image: linear-gradient(to right, #000 30%, transparent 70%); mask-image: linear-gradient(to right, #000 30%, transparent 70%);
+    position: relative; display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(1.25rem, 4vw, 3.5rem); align-items: center;
+    margin-bottom: clamp(2rem, 4vw, 3rem); padding-block: clamp(0.5rem, 2vw, 1rem);
   }
   .su__text { display: flex; flex-direction: column; align-items: flex-start; gap: 0.8rem; min-width: 0; }
   .su__nadhlavi { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.34rem 0.75rem; border-radius: 999px; background: var(--navy); color: var(--cream); font-size: 0.7rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
-  .su__titulek { font-size: clamp(1.3rem, 2.5vw, 1.7rem); font-weight: 900; line-height: 1.22; letter-spacing: -0.018em; color: var(--navy); text-wrap: balance; }
-  .su__perex { font-size: 0.97rem; line-height: 1.65; color: var(--text-2); text-wrap: pretty; }
+  .su__titulek { font-size: clamp(1.4rem, 2.7vw, 1.95rem); font-weight: 900; line-height: 1.2; letter-spacing: -0.02em; color: var(--navy); text-wrap: balance; }
+  .su__perex { font-size: 0.98rem; line-height: 1.65; color: var(--text-2); text-wrap: pretty; }
   .su__tlacitko { gap: 0.45rem; margin-top: 0.2rem; }
   .su__tlacitko svg { transition: transform 0.2s var(--ease-out); }
   @media (hover: hover) and (pointer: fine) { .su__tlacitko:hover svg { transform: translateX(3px); } }
 
-  .su__body { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.7rem; list-style: none; margin: 0; padding: 0; }
+  .su__body { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .su__body > li { border-bottom: 1px solid var(--line); }
+  .su__body > li:not(:nth-child(3n + 1)) { border-left: 1px solid var(--line); }
   .sd {
-    position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; height: 100%; padding: 0.85rem 0.9rem 0.8rem;
-    border-radius: 18px; background: var(--plocha-2); border: 1px solid var(--line-jemna); color: var(--navy); text-decoration: none; overflow: hidden;
-    transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out), background-color 0.3s ease; -webkit-touch-callout: none;
+    position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 0.15rem; height: 100%; padding: 1rem 1.1rem 0.95rem;
+    color: var(--navy); text-decoration: none; transition: background-color 0.3s ease; -webkit-touch-callout: none;
   }
-  .sd::before { content: ''; position: absolute; inset: 0 0.9rem auto; height: 3px; border-radius: 0 0 3px 3px; background: var(--line-2); opacity: 0.7; }
+  /* proužek vlevo nahoře podle vyznění */
+  .sd::before { content: ''; position: absolute; left: 1.1rem; top: -1px; width: 28px; height: 3px; border-radius: 0 0 3px 3px; background: var(--line-2); transition: width 0.35s var(--ease-out); }
   .sd--dobre::before { background: var(--navy); }
   .sd--spatne::before { background: var(--valka); }
-  @media (hover: hover) and (pointer: fine) { .sd:hover { transform: translateY(-3px); box-shadow: var(--stin-maly); background: var(--paper); color: var(--navy); } }
-  .sd:active { transform: scale(0.98); }
-  .sd:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
+  @media (hover: hover) and (pointer: fine) { .sd:hover { background: var(--hover); color: var(--navy); } .sd:hover::before { width: calc(100% - 2.2rem); } }
+  .sd:active { background: var(--hover-silny); }
+  .sd:focus-visible { outline: 3px solid var(--orange); outline-offset: -3px; }
   .sd__hlava { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.35rem; }
   .sd__tema { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; }
-  .sd__cislo { font-size: clamp(1.35rem, 2.2vw, 1.6rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }
+  .sd__cislo { font-size: clamp(1.45rem, 2.3vw, 1.75rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }
   .sd__popis { font-size: 0.74rem; font-weight: 700; color: var(--muted); }
   .sd__stav { margin-top: 0.45rem; font-size: 0.66rem; padding: 0.18rem 0.5rem; }
 
-  /* dlaždice naskočí postupně */
+  /* čísla naskočí postupně */
   :global(.js) .su .su__body > li { opacity: 0; transform: translateY(8px); }
   :global(.js) .su:global(.odhal--videt) .su__body > li { opacity: 1; transform: none; transition: opacity 0.45s var(--ease-out) calc(var(--i) * 60ms + 200ms), transform 0.45s var(--ease-out) calc(var(--i) * 60ms + 200ms); }
 
-  @media (max-width: 960px) {
-    .su { grid-template-columns: 1fr; }
-    .su::after { -webkit-mask-image: linear-gradient(to bottom, #000 20%, transparent 60%); mask-image: linear-gradient(to bottom, #000 20%, transparent 60%); background-position: center top; }
-  }
+  @media (max-width: 960px) { .su { grid-template-columns: 1fr; } }
   @media (max-width: 560px) {
-    .su { border-radius: 22px; padding: 1.1rem; }
-    .su__body { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.55rem; }
-    .sd { padding: 0.75rem 0.75rem 0.7rem; }
+    .su__body { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .su__body > li:not(:nth-child(3n + 1)) { border-left: 0; }
+    .su__body > li:nth-child(2n) { border-left: 1px solid var(--line); }
+    .sd { padding: 0.85rem 0.8rem 0.8rem; }
+    .sd::before { left: 0.8rem; }
     .su__tlacitko { width: 100%; justify-content: center; }
   }
   @media (prefers-reduced-motion: reduce) {
     :global(.js) .su .su__body > li { opacity: 1; transform: none; transition: none; }
-    .sd, .sd:hover, .sd:active { transform: none; }
   }
 </style>

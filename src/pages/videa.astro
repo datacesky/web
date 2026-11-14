@@ -117,7 +117,7 @@ const filtry = JSON.stringify({
       <span class="pf__pocet" data-pocet>{vse.length} {sklonuj(vse.length, 'video', 'videa', 'videí').replace(/^\d+ /, '')}</span>
     </div>
 
-    <ul class="mr" data-mrizka>
+    <ul class="mr" data-mrizka data-postupne>
       {vse.map((d, i) => {
         const Obal = d.brzy ? 'div' : 'a';
         return (

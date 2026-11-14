@@ -30,6 +30,8 @@ const SUPERMARKETY = '/grafy/supermarkety-v-cesku/';
 const supermarkety = cesta.startsWith(SUPERMARKETY) ? 'page' : undefined;
 const KOSIK = 'M2.5 3.5h2.6l2.2 11.2a1.6 1.6 0 0 0 1.6 1.3h8.7a1.6 1.6 0 0 0 1.6-1.2l1.7-6.8H6.2 M9.6 20a1.6 1.6 0 1 0 0 .01 M17.2 20a1.6 1.6 0 1 0 0 .01';
 const rok = new Date().getFullYear();
+// Tenká čára pod hlavičkou ukazuje, kolik ze stránky už máš za sebou (úvodní stránka má vlastní rozcestník)
+const ukazatelPostupu = cesta !== '/' && !supermarkety;
 
 const IG = 'https://www.instagram.com/data.cesky/';
 const TT = 'https://www.tiktok.com/@data.cesky';
@@ -134,6 +136,7 @@ const VZHLED = [
           </div>
         </div>
       </div>
+      {ukazatelPostupu && <div class="postup" aria-hidden="true"><span data-postup></span></div>}
     </header>
 
     <main>
@@ -247,8 +250,9 @@ const VZHLED = [
         system.addEventListener('change', () => { if ((koren.dataset.temaVolba || 'auto') === 'auto') nastav('auto', false); });
       }
 
-      // Hlavička: stín jen ve chvíli, kdy pod ní jede obsah
-      const hlavicka = document.querySelector('.hlavicka');
+      // Hlavička: stín a o kousek nižší, jakmile pod ní jede obsah. Její výšku dostanou stránky
+      // jako --hlavicka-vyska (lepivé prvky pod ní, třeba glóbus na úvodu).
+      const hlavicka = document.querySelector<HTMLElement>('.hlavicka');
       if (hlavicka) {
         let pod = false;
         const zkontroluj = () => {
@@ -257,6 +261,23 @@ const VZHLED = [
         };
         addEventListener('scroll', zkontroluj, { passive: true });
         zkontroluj();
+        const vyska = () => document.documentElement.style.setProperty('--hlavicka-vyska', `${Math.round(hlavicka.getBoundingClientRect().height)}px`);
+        new ResizeObserver(vyska).observe(hlavicka);
+        vyska();
+      }
+
+      // Kolik ze stránky už máš za sebou (čára pod hlavičkou)
+      const postup = document.querySelector<HTMLElement>('[data-postup]');
+      if (postup) {
+        let ceka = false;
+        const nastav = () => {
+          ceka = false;
+          const max = document.documentElement.scrollHeight - innerHeight;
+          postup.style.transform = `scaleX(${max > 0 ? Math.min(1, scrollY / max).toFixed(4) : 0})`;
+        };
+        addEventListener('scroll', () => { if (!ceka) { ceka = true; requestAnimationFrame(nastav); } }, { passive: true });
+        addEventListener('resize', nastav);
+        nastav();
       }
 
       // Segmentové přepínače: tmavá pilulka přejede pod vybrané tlačítko místo skoku
@@ -345,7 +366,8 @@ const VZHLED = [
       };
       document.addEventListener('pocitej', (e) => (e.target as HTMLElement).querySelectorAll<HTMLElement>('[data-pocitej]').forEach(pocitej));
 
-      const prvky = document.querySelectorAll('.odhal, .odhal-graf, [data-pocitej]');
+      for (const m of document.querySelectorAll<HTMLElement>('[data-postupne]')) Array.from(m.children).forEach((c, i) => (c as HTMLElement).style.setProperty('--i', String(Math.min(i, 10))));
+      const prvky = document.querySelectorAll('.odhal, .odhal-graf, [data-pocitej], [data-postupne]');
       if ('IntersectionObserver' in window) {
         const pozorovatel = new IntersectionObserver((zaznamy) => {
           for (const z of zaznamy) if (z.isIntersecting) {

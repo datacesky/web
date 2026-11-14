@@ -45,11 +45,13 @@ const data = JSON.stringify({ vrstvy: ciselne, kraje: Object.fromEntries(geo.kra
   .mm__chipy { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-start; }
   .mm__telo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 1.25rem; align-items: stretch; }
   @media (max-width: 880px) { .mm__telo { grid-template-columns: 1fr; } }
-  .mm__mapa { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin); padding: clamp(1.1rem, 3vw, 1.75rem); display: flex; flex-direction: column; gap: 1rem; text-align: center; }
+  /* bez rámečku: mapa i pořadí leží rovnou v bílém pásu úvodní stránky */
+  .mm__mapa { display: flex; flex-direction: column; gap: 1rem; text-align: center; }
   .mm__mapa svg { width: 100%; height: auto; display: block; }
   .mm__kraj { stroke: var(--obrys); stroke-width: 2; stroke-linejoin: round; transition: fill 0.8s ease, opacity 0.2s ease; }
   @media (hover: hover) and (pointer: fine) { .mm__kraj:hover { opacity: 0.8; } }
-  .mm__poradi { list-style: none; margin: 0; padding: 1.1rem; background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin); display: flex; flex-direction: column; justify-content: center; gap: 0.35rem; }
+  .mm__poradi { list-style: none; margin: 0; padding: 0 0 0 clamp(0rem, 2.5vw, 2rem); border-left: 1px solid var(--line-jemna); display: flex; flex-direction: column; justify-content: center; gap: 0.35rem; }
+  @media (max-width: 880px) { .mm__poradi { padding-left: 0; border-left: 0; } }
   :global(.mm__poradi li) { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; font-size: 0.8rem; font-weight: 700; }
   :global(.mm__poradi .p) { color: var(--muted); font-size: 0.74rem; text-align: right; }
   :global(.mm__poradi .s) { display: flex; flex-direction: column; gap: 0.18rem; min-width: 0; }

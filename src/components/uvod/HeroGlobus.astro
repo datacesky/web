@@ -1,6 +1,7 @@
 ---
 // Statický glóbus pro úvodní stránku: Česko oranžově, země ze série Česko vs. svět modře,
-// oblouky z Prahy ke každé z nich. Vykreslí se už při sestavení webu, bez JavaScriptu.
+// oblouky z Prahy ke každé z nich. Vykreslí se už při sestavení webu, bez JavaScriptu. Je vidět, než se
+// načte živý glóbus (src/lib/globus.ts), který ho pak plynule nahradí, a když JavaScript nejde.
 import { geoOrthographic, geoPath, geoGraticule10, geoCentroid, geoInterpolate } from 'd3-geo';
 import { feature } from 'topojson-client';
 import svet from '../../data/svet.json';

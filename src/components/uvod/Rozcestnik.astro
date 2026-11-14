@@ -1,0 +1,56 @@
+---
+// Rozcestník na kraji obrazovky (jen na širokém počítači): tečka za každou část stránky,
+// aktivní je protažená do oranžové. Po najetí myší ukáže názvy, klik dojede na místo.
+interface Props {
+  polozky: { id: string; nazev: string }[];
+}
+const { polozky } = Astro.props;
+---
+
+<nav class="rozcestnik" aria-label="Části stránky" data-rozcestnik>
+  <ol>
+    {polozky.map((p) => (
+      <li><a href={`#${p.id}`} data-cil={p.id}><span class="rozcestnik__nazev">{p.nazev}</span><i aria-hidden="true"></i></a></li>
+    ))}
+  </ol>
+</nav>
+
+<script>
+  const nav = document.querySelector<HTMLElement>('[data-rozcestnik]');
+  if (nav) {
+    const odkazy = Array.from(nav.querySelectorAll<HTMLAnchorElement>('a'));
+    const cile = odkazy.map((a) => document.getElementById(a.dataset.cil!));
+    const tmavy = document.querySelector<HTMLElement>('.pas-tmavy');
+    let ceka = false;
+    const aktualizuj = () => {
+      ceka = false;
+      const stred = innerHeight * 0.5;
+      let akt = 0;
+      cile.forEach((el, i) => { if (el && el.getBoundingClientRect().top <= stred) akt = i; });
+      odkazy.forEach((a, i) => { a.classList.toggle('je-aktivni', i === akt); a.toggleAttribute('aria-current', i === akt); });
+      nav.classList.toggle('je-videt', scrollY > innerHeight * 0.4);
+      if (tmavy) { const r = tmavy.getBoundingClientRect(); nav.classList.toggle('na-tmavem', r.top < stred && r.bottom > stred); }
+    };
+    addEventListener('scroll', () => { if (!ceka) { ceka = true; requestAnimationFrame(aktualizuj); } }, { passive: true });
+    addEventListener('resize', aktualizuj);
+    aktualizuj();
+  }
+</script>
+
+<style>
+  .rozcestnik { position: fixed; z-index: 40; right: 14px; top: 50%; transform: translate(12px, -50%); opacity: 0; pointer-events: none; transition: opacity 0.4s ease, transform 0.5s var(--ease-out); }
+  .rozcestnik.je-videt { opacity: 1; transform: translate(0, -50%); pointer-events: auto; }
+  @media (max-width: 1279px) { .rozcestnik { display: none; } }
+  .rozcestnik ol { display: flex; flex-direction: column; align-items: flex-end; gap: 0.2rem; list-style: none; margin: 0; padding: 0.45rem 0.35rem; border-radius: 999px; transition: background-color 0.3s ease, box-shadow 0.3s ease; }
+  .rozcestnik:hover ol, .rozcestnik:focus-within ol { background: var(--sklo); box-shadow: 0 0 0 1px var(--line), var(--stin-maly); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-radius: 18px; }
+  .rozcestnik a { display: flex; align-items: center; justify-content: flex-end; gap: 0.6rem; min-height: 26px; padding: 0 0.35rem 0 0.6rem; color: var(--muted); font-size: 0.76rem; font-weight: 800; text-decoration: none; white-space: nowrap; }
+  .rozcestnik i { display: block; width: 8px; height: 8px; border-radius: 999px; background: var(--line-2); transition: height 0.4s var(--ease-out), background-color 0.3s ease; }
+  .rozcestnik a.je-aktivni i { height: 22px; background: var(--orange); }
+  .rozcestnik a.je-aktivni { color: var(--navy); }
+  .rozcestnik__nazev { max-width: 0; overflow: hidden; opacity: 0; transition: max-width 0.4s var(--ease-out), opacity 0.25s ease; }
+  .rozcestnik:hover .rozcestnik__nazev, .rozcestnik:focus-within .rozcestnik__nazev { max-width: 12rem; opacity: 1; }
+  @media (hover: hover) and (pointer: fine) { .rozcestnik a:hover { color: var(--navy); } .rozcestnik a:hover i { background: var(--navy); } }
+  .rozcestnik.na-tmavem:not(:hover) i { background: rgba(255, 255, 255, 0.35); }
+  .rozcestnik.na-tmavem:not(:hover) a.je-aktivni i { background: var(--orange); }
+  @media (prefers-reduced-motion: reduce) { .rozcestnik, .rozcestnik i, .rozcestnik__nazev { transition: none; } }
+</style>

@@ -60,7 +60,7 @@ const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 
             </div>
           )}
         </div>
-        <ul class="mrizka-novinek" data-filtr-mrizka>
+        <ul class="mrizka-novinek" data-filtr-mrizka data-postupne>
           {dalsi.map((p) => <NovinkaKarta p={p} kotva={kotva(p.id)} />)}
         </ul>
       </section>
