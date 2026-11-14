@@ -660,3 +660,9 @@ select {
 .oblast-tecka { display: inline-block; flex-shrink: 0; width: 8px; height: 8px; border-radius: 50%; background: var(--orange); }
 .oblast-tecka--evropa { background: var(--navy); }
 .oblast-tecka--svet { background: var(--teal); }
+
+/* Štítek vyznění v souhrnu měsíce: dobře (modrá), špatně (korálová), neutrálně (béžová) */
+.stav { display: inline-flex; align-items: center; gap: 0.35rem; flex-shrink: 0; padding: 0.22rem 0.6rem; border-radius: 999px; font-size: 0.72rem; font-weight: 800; line-height: 1.25; white-space: nowrap; background: var(--bezova); color: var(--text-2); }
+.stav::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.stav--dobre { background: var(--modra-svetla); color: var(--navy); }
+.stav--spatne { background: color-mix(in srgb, var(--valka) 13%, var(--paper)); color: var(--valka-text); }

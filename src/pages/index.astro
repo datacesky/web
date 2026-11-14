@@ -4,7 +4,8 @@ import Base from '../layouts/Base.astro';
 import BarChart from '../components/BarChart.astro';
 import HeroGlobus from '../components/uvod/HeroGlobus.astro';
 import ZebrickyUpoutavka from '../components/ZebrickyUpoutavka.astro';
-import { posledniNovinky } from '../lib/novinky';
+import { posledniNovinky, posledniSouhrn, nazevVydani } from '../lib/novinky';
+import SouhrnUvod from '../components/uvod/SouhrnUvod.astro';
 import MapaMini from '../components/uvod/MapaMini.astro';
 import NoveNaWebu from '../components/uvod/NoveNaWebu.astro';
 import SupermarketyUpoutavka from '../components/uvod/SupermarketyUpoutavka.astro';
@@ -22,6 +23,7 @@ const tydne = grafy[0];
 const videa = await nactiVidea();
 const nejnovejsiVidea = videa.vse.filter((d) => !d.brzy).slice(0, 5);
 const novinky = await posledniNovinky(6);
+const souhrn = await posledniSouhrn();
 const aktualizovano = novinky.length ? new Date(Math.max(...novinky.map((n) => n.datumVydani.valueOf()))) : null;
 // Seznam zemí pro vyhledávání v úvodu (jen název a vlajka, ať je stránka lehká)
 const zemeHledani = JSON.stringify(Object.entries(ZEME).filter(([a3]) => a3 !== 'EUZ' && a3 !== 'CZE').map(([a3, [n, a2]]) => [a3, n, a2]));
@@ -82,6 +84,7 @@ const FB = 'https://www.facebook.com/data.cesky';
         </div>
         <a class="tlacitko tlacitko--male" href="/novinky/">Všechny novinky</a>
       </div>
+      {souhrn && <SouhrnUvod souhrn={souhrn.souhrn} vydani={nazevVydani(souhrn.vydani)} />}
       <ul class="posuvnik" data-posuvnik>
         {novinky.slice(0, 6).map((p) => <NovinkaKarta p={p} hlavni={p.hlavni} />)}
       </ul>

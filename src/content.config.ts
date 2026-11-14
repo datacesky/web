@@ -66,6 +66,49 @@ const novinky = defineCollection({
     datum: z.date(),
     // id hlavní novinky vydání (velká karta nahoře); když chybí, je hlavní první položka
     hlavni: z.string().optional(),
+    // Souhrn měsíce lidskou řečí: titulek a perex na úvodní stránce, celý souhrn nahoře na stránce Novinky.
+    // Skládá ho skripty/novinky.py z nejnovějších čísel, v návrhu ke schválení jde přepsat.
+    souhrn: z
+      .object({
+        titulek: z.string(),
+        // 2–3 věty: na úvodní stránce i nahoře v Novinkách
+        perex: z.string(),
+        // volitelný delší úvod jen na stránce Novinky (odstavce odděl prázdným řádkem \n\n)
+        text: z.string().optional(),
+        // poznámka pro kontrolu v návrhu, na webu se neukazuje
+        zkontroluj: z.string().optional(),
+        body: z
+          .array(
+            z.object({
+              id: z.string(),
+              tema: z.string(),
+              ikona: z.string().optional(),
+              // jak zpráva vyznívá pro lidi: barva štítku
+              ton: z.enum(['dobre', 'spatne', 'neutralni']).default('neutralni'),
+              stav: z.string(),
+              cislo: z.string(),
+              popisCisla: z.string().optional(),
+              // jedna věta lidskou řečí: co to znamená v praxi
+              veta: z.string(),
+              text: z.string(),
+              // malé srovnání v pruzích: [popisek, hodnota, barva] – cz oranžová, eu modrá, svet šedomodrá, jine béžová
+              srovnani: z
+                .object({
+                  popis: z.string(),
+                  jednotka: z.string(),
+                  desetinna: z.number().int().min(0).max(3).default(1),
+                  pruhy: z.array(z.tuple([z.string(), z.number(), z.enum(['cz', 'eu', 'svet', 'jine'])])).min(1),
+                })
+                .optional(),
+              zdroj: z.string(),
+              url: z.string().url(),
+              // id novinky s grafem a detailem (odkaz /novinky/#n-id)
+              novinka: z.string().optional(),
+            })
+          )
+          .min(1),
+      })
+      .optional(),
     polozky: z
       .array(
         z.object({

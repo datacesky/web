@@ -2,6 +2,7 @@
 import Base from '../layouts/Base.astro';
 import NovinkaKarta from '../components/NovinkaKarta.astro';
 import NovinkaHlavni from '../components/NovinkaHlavni.astro';
+import SouhrnMesice from '../components/SouhrnMesice.astro';
 import IkonaZare from '../components/IkonaZare.astro';
 import { vydaniNovinek, hlavniNovinka, polozkyVydani, nazevVydani, OBLASTI, type Oblast } from '../lib/novinky';
 import { datum } from '../lib/format';
@@ -11,6 +12,9 @@ const posledni = vydani[0];
 const hlavni = posledni ? hlavniNovinka(posledni) : null;
 const dalsi = posledni ? polozkyVydani(posledni).slice(1) : [];
 const starsi = vydani.slice(1);
+// souhrn měsíce: z posledního vydání, které ho má
+const sSouhrnem = vydani.find((v) => v.data.souhrn);
+const idNovinek = new Set(vydani.flatMap((v) => v.data.polozky.map((p) => p.id)));
 
 // kotvy (#n-inflace) míří vždy na nejnovější výskyt ukazatele
 const kotvy = new Set<string>(hlavni ? [hlavni.id] : []);
@@ -29,10 +33,12 @@ const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 
     <div class="sloupec" style="max-width: 64ch; gap: 0.85rem;">
       <span class="nadhlavi nadhlavi--zive">Novinky z dat{posledni && ` · ${datum(posledni.data.datum)}`}</span>
       <h1>Co nového ukázala data</h1>
-      <p class="perex">Jednou měsíčně vybírám nejzajímavější čísla z Česka, Evropy i světa, která zveřejnil Český statistický úřad, Eurostat a Světová banka. U každého je graf a odkaz na datovou sadu, ze které pochází.</p>
+      <p class="perex">Jednou měsíčně vybírám nejzajímavější čísla z Česka, Evropy i světa, která zveřejnil Český statistický úřad, Eurostat a Světová banka. Nahoře je souhrn lidskou řečí, pod ním jednotlivé novinky s grafem a odkazem na datovou sadu, ze které pochází.</p>
     </div>
 
     {!posledni && <p class="drobne">První vydání chystám.</p>}
+
+    {sSouhrnem && <SouhrnMesice souhrn={sSouhrnem.data.souhrn!} vydani={nazevVydani(sSouhrnem)} novinky={idNovinek} />}
 
     {hlavni && posledni && <NovinkaHlavni p={hlavni} vydani={nazevVydani(posledni)} />}
 
@@ -82,6 +88,13 @@ const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 
                   <span class="vydani__pocet">{novinek(polozky.length)}<span class="vydani__datum"> · vyšlo {datum(v.data.datum)}</span></span>
                   <svg class="vydani__sipka" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6" /></svg>
                 </summary>
+                {v.data.souhrn && v !== sSouhrnem && (
+                  <div class="vydani__souhrn">
+                    <span class="vydani__souhrn-stitek">Souhrn měsíce</span>
+                    <strong>{v.data.souhrn.titulek}</strong>
+                    <p>{v.data.souhrn.perex}</p>
+                  </div>
+                )}
                 <ul class="mrizka-novinek vydani__mrizka">
                   {polozky.map((p) => <NovinkaKarta p={p} kotva={kotva(p.id)} hlavni={p === h} />)}
                 </ul>
@@ -134,6 +147,10 @@ const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 
   .vydani[open] .vydani__sipka { transform: rotate(180deg); }
   .vydani[open] .vydani__radek { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: 1px solid var(--line-jemna); }
   .vydani__mrizka { padding: 1.1rem; }
+  .vydani__souhrn { display: flex; flex-direction: column; gap: 0.3rem; margin: 1.1rem 1.1rem 0; padding: 0.9rem 1rem; border-radius: 16px; background: var(--plocha-2); border: 1px solid var(--line-jemna); }
+  .vydani__souhrn-stitek { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--orange-text); }
+  .vydani__souhrn strong { font-size: 1.02rem; font-weight: 900; color: var(--navy); line-height: 1.3; }
+  .vydani__souhrn p { font-size: 0.88rem; line-height: 1.6; color: var(--text-2); }
 
   @media (max-width: 1020px) { .mrizka-novinek { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
   @media (max-width: 640px) {

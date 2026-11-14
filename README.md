@@ -34,7 +34,7 @@ Po `git push` do větve main se web sám nasadí.
 | Ověření pro Google, Seznam a měření návštěvnosti | `src/data/web.ts` |
 | Náhledové obrázky pro sdílení | `public/og/` |
 | Vývoj v čase a „Porovnej se“ u grafů | `src/data/grafy/*.json`, obnoví je `python3 skripty/data_grafu.py` |
-| Novinky z dat | `src/content/novinky/RRRR-MM.md`, připravuje je `skripty/novinky.py`, stránka `src/pages/novinky.astro`, karta `src/components/NovinkaKarta.astro`, hlavní novinka `src/components/NovinkaHlavni.astro` |
+| Novinky z dat | `src/content/novinky/RRRR-MM.md`, připravuje je `skripty/novinky.py`, stránka `src/pages/novinky.astro`, karta `src/components/NovinkaKarta.astro`, hlavní novinka `src/components/NovinkaHlavni.astro`, souhrn měsíce `src/components/SouhrnMesice.astro` (na úvodu `src/components/uvod/SouhrnUvod.astro`) |
 | Náhledy novinek | `src/components/NahledNovinky.astro`, ilustrace podle ikony `src/lib/ilustrace.ts`, siluety map `public/novinky/mapy/` (vyrábí `skripty/mapy_novinek.py`) |
 | 3D model Česka | `public/data/cesko3d.json`, obnoví ho `python3 skripty/data_3d.py` |
 | Vlaky za 24 hodin (Mapa Česka) | `public/data/vlaky.json`, vyrobí ho `python3 skripty/data_vlaky.py` z GTFS jízdního řádu (postup je v hlavičce skriptu) |
@@ -65,9 +65,26 @@ Sleduje tyhle ukazatele (ukazatel, který od minulého vydání nemá nová data
 | Evropa | nezaměstnanost (Eurostat une_rt_m), HDP (namq_10_gdp), inflace v zemích EU (prc_hicp_minr), ceny bydlení (prc_hpi_q), ceny elektřiny pro domácnosti (nrg_pc_204), veřejný dluh (gov_10q_ggdebt) |
 | Svět | HDP na obyvatele v paritě kupní síly (Světová banka NY.GDP.PCAP.PP.CD), růst HDP (NY.GDP.MKTP.KD.ZG); vycházejí jednou ročně |
 
-**Stránka Novinky:** nahoře velká **hlavní novinka měsíce**, pod ní ostatní novinky posledního vydání s filtrem
-Česko / Evropa / Svět a dole **archiv starších vydání** (rozbalovací, nic se nemaže). Úvodní stránka ukazuje
-šest nejčerstvějších položek napříč vydáními, hlavní novinka je první.
+**Stránka Novinky:** nahoře **souhrn měsíce**, pod ním velká **hlavní novinka měsíce**, pak ostatní novinky posledního
+vydání s filtrem Česko / Evropa / Svět a dole **archiv starších vydání** (rozbalovací, nic se nemaže, u každého
+vydání zůstane i jeho souhrn). Úvodní stránka ukazuje krátký souhrn a šest nejčerstvějších položek napříč vydáními,
+hlavní novinka je první.
+
+**Souhrn měsíce** je shrnutí lidskou řečí: co se pro lidi změnilo a jak je na tom Česko proti Evropě a světu.
+Skript ho skládá z nejnovějších čísel všech ukazatelů (i těch, která už vyšla dřív) do bloku `souhrn:` v hlavičce
+vydání. Má titulek, perex (2–3 věty, ty jsou i na úvodní stránce) a šest oblastí: ceny, výplaty (reálně, po odečtení
+inflace), tankování, práce, bydlení a ekonomika. Každá oblast má:
+
+- `stav` a `ton` (dobre, spatne, neutralni): štítek a barva, jak zpráva vyznívá pro lidi;
+- `cislo` a `popisCisla`: velké číslo;
+- `veta`: co to znamená v praxi („Co loni v říjnu stálo 1 000 Kč, stálo letos 1 024 Kč“);
+- `text`: čísla a souvislosti, `srovnani`: malé pruhy Česko / průměr EU (JSON na jednom řádku, pruhy vždy od nuly);
+- `zdroj`, `url` a `novinka` (id novinky, na jejíž graf vede odkaz „Graf a detail“).
+
+Věty jsou šablony, takže je v návrhu klidně přepiš po svém. Delší úvod jen pro stránku Novinky přidáš řádkem
+`text: "…"` pod `perex:`. Souhrn do už zveřejněného posledního vydání přepočítáš příkazem
+`python3 skripty/novinky.py --souhrn`. Otevřená data ČSÚ o mzdách (MZDQ1) občas vycházejí později než tisková
+zpráva: když jsou starší, návrh na to upozorní a nejnovější čtvrtletí najdeš na https://csu.gov.cz/statistika/zamestnanci-a-mzdy.
 
 **Karty novinek:** nahoře náhledový obrázek, pod ním číslo, nadpis a tři řádky textu. Klik na kartu otevře detail
 s grafem, celým textem a zdrojem (na stránce Novinky jde poslat odkaz rovnou na detail: `/novinky/#n-inflace`).

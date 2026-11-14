@@ -1,0 +1,64 @@
+---
+// Malé srovnání v pruzích pro souhrn měsíce: Česko oranžově, průměr EU modře, ostatní béžově.
+// Pruhy vždy od nuly; když je některá hodnota záporná, nula je uprostřed a záporné pruhy jdou doleva.
+// Naroste, až přijede do obrazu (třída odhal-graf, viz Base.astro).
+import type { BodSouhrnu } from '../lib/novinky';
+import { nezalomit } from '../lib/format';
+
+interface Props {
+  srovnani: NonNullable<BodSouhrnu['srovnani']>;
+}
+const { srovnani } = Astro.props;
+const { pruhy, jednotka, desetinna, popis } = srovnani;
+const hodnoty = pruhy.map(([, v]) => v);
+const max = Math.max(0, ...hodnoty);
+const min = Math.min(0, ...hodnoty);
+const rozpeti = max - min || 1;
+const nula = (-min / rozpeti) * 100;
+const nf = new Intl.NumberFormat('cs-CZ', { minimumFractionDigits: desetinna, maximumFractionDigits: desetinna });
+const f = (v: number) => nf.format(v).replace(/ /g, ' ').replace('-', '−');
+const jednotkaZa = jednotka === '%' ? ' %' : ` ${jednotka}`;
+---
+
+<figure class="sp odhal-graf">
+  <ul class="sp__radky" role="list">
+    {pruhy.map(([nazev, v, barva], i) => {
+      const sirka = (Math.abs(v) / rozpeti) * 100;
+      const od = v >= 0 ? nula : nula - sirka;
+      return (
+        <li class:list={['sp__radek', `sp__radek--${barva}`]} style={`--i: ${i};`}>
+          <span class="sp__nazev">{nazev}</span>
+          <span class="sp__drah">
+            {min < 0 && <span class="sp__nula" style={`left: ${nula}%;`}></span>}
+            <span class="sp__pruh" style={`left: ${od}%; width: max(${sirka}%, 3px); transform-origin: ${v >= 0 ? 'left' : 'right'};`}></span>
+          </span>
+          <span class="sp__hodnota">{f(v)}{jednotkaZa}</span>
+        </li>
+      );
+    })}
+  </ul>
+  <figcaption class="sp__popis">{nezalomit(popis)}</figcaption>
+</figure>
+
+<style>
+  .sp { margin: 0; display: flex; flex-direction: column; gap: 0.5rem; }
+  .sp__radky { display: flex; flex-direction: column; gap: 0.4rem; list-style: none; margin: 0; padding: 0; }
+  .sp__radek { display: grid; grid-template-columns: minmax(4.6rem, auto) minmax(0, 1fr) auto; align-items: center; gap: 0.6rem; font-size: 0.8rem; font-weight: 700; color: var(--text-2); }
+  .sp__nazev { white-space: nowrap; }
+  .sp__drah { position: relative; height: 12px; border-radius: 999px; background: var(--line-jemna); }
+  .sp__pruh { position: absolute; top: 0; bottom: 0; border-radius: 999px; background: var(--sloupec-seda); }
+  .sp__nula { position: absolute; top: -3px; bottom: -3px; width: 2px; margin-left: -1px; background: var(--line-2); border-radius: 2px; }
+  .sp__radek--cz .sp__pruh { background: var(--orange); }
+  .sp__radek--eu .sp__pruh { background: var(--navy); }
+  .sp__radek--svet .sp__pruh { background: var(--slate); }
+  .sp__radek--cz .sp__nazev, .sp__radek--cz .sp__hodnota { color: var(--orange-text); font-weight: 800; }
+  .sp__hodnota { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--navy); font-weight: 800; }
+  .sp__popis { font-size: 0.72rem; font-weight: 600; color: var(--muted); line-height: 1.4; }
+  /* pruhy narostou postupně */
+  :global(.js) .sp:not(:global(.odhal--videt)) .sp__pruh { transform: scaleX(0); }
+  :global(.js) .sp:global(.odhal--videt) .sp__pruh { transform: none; transition: transform 1s cubic-bezier(0.22, 0.9, 0.28, 1) calc(var(--i) * 110ms + 120ms); }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .sp:not(:global(.odhal--videt)) .sp__pruh { transform: none; }
+    :global(.js) .sp:global(.odhal--videt) .sp__pruh { transition: none; }
+  }
+</style>

@@ -28,6 +28,15 @@ export function nazevVydani(v: Vydani): string {
   return t.charAt(0).toUpperCase() + t.slice(1);
 }
 
+export type Souhrn = NonNullable<Vydani['data']['souhrn']>;
+export type BodSouhrnu = Souhrn['body'][number];
+
+// Souhrn měsíce z nejnovějšího vydání, které ho má
+export async function posledniSouhrn() {
+  const v = (await vydaniNovinek()).find((x) => x.data.souhrn);
+  return v ? { souhrn: v.data.souhrn!, vydani: v } : null;
+}
+
 // Nejčerstvější položky napříč vydáními: z každého ukazatele jen ta nejnovější, hlavní novinka posledního vydání první.
 // Když má poslední vydání míň položek, doplní se z předchozích.
 export async function posledniNovinky(kolik = 6) {

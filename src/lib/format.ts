@@ -44,6 +44,8 @@ export function sklonuj(n: number, jeden: string, dva: string, pet: string): str
 // se nerozdělí na konci řádku.
 export function nezalomit(text: string): string {
   return text
-    .replace(/(\d) (?=%|‰|Kč|p\. b\.|kWh|mil\.|tis\.|mld\.|dolar|eur|dět|host|zem)/g, '$1\u00a0')
+    .replace(/(\d) (?=%|‰|Kč|p\. b\.|kWh|mil\.|tis\.|mld\.|dolar|eur|dět|host|zem|milion|korun|lidí|litr)/g, '$1\u00a0')
+    // řadová číslovka se nerozdělí od slova za ní: „2. čtvrtletí“, „45. týden“
+    .replace(/(\d\.) (?=[a-zěščřžýáíéůúó])/g, '$1\u00a0')
     .replace(/(?<=^|[\s(„\u00a0])([vVkKsSzZoOuUaAiI]) /g, '$1\u00a0');
 }

@@ -1,0 +1,141 @@
+---
+// Souhrn měsíce nahoře na stránce Novinky: titulek a pár vět lidskou řečí, pod nimi šest oblastí
+// (ceny, výplaty, tankování, práce, bydlení, ekonomika). U každé co to znamená v praxi, srovnání
+// s Evropou v pruzích, čísla a odkaz na zdroj i na novinku s grafem. Data: pole souhrn ve vydání novinek.
+import IkonaZare from './IkonaZare.astro';
+import SouhrnPruhy from './SouhrnPruhy.astro';
+import type { Souhrn } from '../lib/novinky';
+import { nezalomit } from '../lib/format';
+
+interface Props {
+  souhrn: Souhrn;
+  // „Listopad 2026“
+  vydani: string;
+  // id novinek, které jsou na stránce (odkaz „Graf a detail“ jen u nich)
+  novinky?: Set<string>;
+}
+const { souhrn, vydani, novinky } = Astro.props;
+const odstavce = nezalomit(souhrn.text ?? souhrn.perex).split(/\n\s*\n/);
+// „ČSÚ, Eurostatu a Světové banky“
+const GENITIV: Record<string, string> = { Eurostat: 'Eurostatu', 'Světová banka': 'Světové banky', OECD: 'OECD', ČNB: 'ČNB', ČSÚ: 'ČSÚ' };
+const zdroje = [...new Set(souhrn.body.flatMap((b) => b.zdroj.split(/,\s*/)))].map((z) => GENITIV[z] ?? z);
+const zdrojeText = zdroje.length > 1 ? `${zdroje.slice(0, -1).join(', ')} a ${zdroje.at(-1)}` : zdroje[0];
+---
+
+<section class="sm odhal" id="souhrn" aria-labelledby="souhrn-titulek">
+  <div class="sm__hlava">
+    <div class="sm__stitky">
+      <span class="sm__nadhlavi">
+        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16 M4 12h10 M4 18h13" /></svg>
+        Souhrn měsíce
+      </span>
+      <span class="sm__kdy">{vydani}</span>
+      <span class="sm__oblasti" aria-label="Česko, Evropa a svět">
+        <span><i class="oblast-tecka"></i>Česko</span>
+        <span><i class="oblast-tecka oblast-tecka--evropa"></i>Evropa</span>
+        <span><i class="oblast-tecka oblast-tecka--svet"></i>Svět</span>
+      </span>
+    </div>
+    <h2 id="souhrn-titulek" class="sm__titulek">{nezalomit(souhrn.titulek)}</h2>
+    <div class="sm__perex">{odstavce.map((o) => <p>{o}</p>)}</div>
+  </div>
+
+  <ul class="sm__body" role="list">
+    {souhrn.body.map((b, i) => (
+      <li class:list={['sb', `sb--${b.ton}`]} id={`s-${b.id}`} style={`--i: ${i};`}>
+        <div class="sb__hlava">
+          <IkonaZare id={b.ikona} velikost={38} />
+          <span class="sb__tema">{b.tema}</span>
+          <span class:list={['stav', `stav--${b.ton}`]}>{b.stav}</span>
+        </div>
+        <p class="sb__cislo"><span data-pocitej>{b.cislo}</span>{b.popisCisla && <small>{b.popisCisla}</small>}</p>
+        <p class="sb__veta">{nezalomit(b.veta)}</p>
+        {b.srovnani && <div class="sb__graf"><SouhrnPruhy srovnani={b.srovnani} /></div>}
+        <p class="sb__text">{nezalomit(b.text)}</p>
+        <p class="sb__pata">
+          <a class="sb__zdroj" href={b.url}>Zdroj: {b.zdroj}</a>
+          {b.novinka && (!novinky || novinky.has(b.novinka)) && (
+            <a class="sb__vice" href={`#n-${b.novinka}`}>
+              Graf a detail
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+            </a>
+          )}
+        </p>
+      </li>
+    ))}
+  </ul>
+
+  <p class="sm__pozn">
+    Souhrn skládám z nejnovějších čísel {zdrojeText}. Každá oblast má odkaz na zdroj.
+    Srovnání s Evropou je vždy za stejné období a podle stejné metodiky.
+  </p>
+</section>
+
+<style>
+  .sm {
+    position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; gap: clamp(1.25rem, 3vw, 2rem);
+    padding: clamp(1.25rem, 3.5vw, 2.5rem); border-radius: 28px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin);
+    scroll-margin-top: 90px;
+  }
+  /* vrstevnice a měkká záře jako na titulních slidech */
+  .sm::before {
+    content: ''; position: absolute; z-index: -1; inset: -35% -10% auto auto; width: 60%; aspect-ratio: 1; pointer-events: none;
+    background: radial-gradient(circle, rgba(240, 136, 41, 0.14), rgba(240, 136, 41, 0) 62%);
+  }
+  .sm::after {
+    content: ''; position: absolute; z-index: -2; inset: 0 0 auto; height: 380px; pointer-events: none;
+    background: url('/vrstevnice.svg') center top / cover no-repeat; opacity: calc(0.42 * var(--vrstevnice-sila));
+    -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent); mask-image: linear-gradient(to bottom, #000 40%, transparent);
+  }
+  .sm__hlava { display: flex; flex-direction: column; gap: 0.9rem; max-width: 74ch; }
+  .sm__stitky { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; }
+  .sm__nadhlavi { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.38rem 0.8rem; border-radius: 999px; background: var(--navy); color: var(--cream); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
+  .sm__kdy { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--orange-text); }
+  .sm__oblasti { display: inline-flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; font-size: 0.78rem; font-weight: 700; color: var(--muted); }
+  .sm__oblasti span { display: inline-flex; align-items: center; gap: 0.35rem; }
+  .sm__titulek { font-size: clamp(1.55rem, 3.4vw, 2.35rem); line-height: 1.18; letter-spacing: -0.022em; color: var(--navy); text-wrap: balance; }
+  .sm__perex { display: flex; flex-direction: column; gap: 0.6rem; font-size: clamp(1rem, 1.5vw, 1.1rem); line-height: 1.7; color: var(--text-2); text-wrap: pretty; }
+
+  .sm__body { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(0.85rem, 1.8vw, 1.25rem); list-style: none; margin: 0; padding: 0; }
+  .sb {
+    position: relative; display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; padding: 1.05rem 1.15rem 0.95rem;
+    border-radius: 22px; background: var(--plocha-2); border: 1px solid var(--line-jemna); scroll-margin-top: 90px;
+    transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out), background-color 0.3s ease;
+  }
+  /* proužek nahoře podle vyznění */
+  .sb::before { content: ''; position: absolute; inset: 0 1.15rem auto; height: 3px; border-radius: 0 0 3px 3px; background: var(--line-2); opacity: 0.7; }
+  .sb--dobre::before { background: var(--navy); }
+  .sb--spatne::before { background: var(--valka); }
+  @media (hover: hover) and (pointer: fine) { .sb:hover { transform: translateY(-3px); box-shadow: var(--stin-maly); background: var(--paper); } }
+  .sb:target { box-shadow: 0 0 0 2px var(--orange), var(--stin-maly); background: var(--paper); }
+  .sb__hlava { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
+  .sb__tema { flex: 1 1 auto; min-width: 0; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--navy); }
+  .sb__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.1rem 0.45rem; margin-top: 0.15rem; font-size: clamp(1.9rem, 3.4vw, 2.3rem); font-weight: 900; line-height: 1.05; letter-spacing: -0.03em; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .sb--spatne .sb__cislo, .sb--dobre .sb__cislo { color: var(--navy); }
+  .sb__cislo small { font-size: 0.82rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
+  .sb__veta { font-size: 1rem; font-weight: 700; line-height: 1.5; color: var(--navy); text-wrap: pretty; }
+  .sb__graf { padding: 0.7rem 0.8rem 0.6rem; border-radius: 16px; background: var(--paper); border: 1px solid var(--line-jemna); }
+  .sb__text { flex-grow: 1; font-size: 0.85rem; line-height: 1.6; color: var(--text-2); text-wrap: pretty; }
+  .sb__pata { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--line); font-size: 0.76rem; font-weight: 700; }
+  .sb__zdroj { color: var(--muted); text-decoration: none; }
+  .sb__zdroj:hover { color: var(--navy); text-decoration: underline; }
+  .sb__vice { display: inline-flex; align-items: center; gap: 0.2rem; color: var(--orange-text); font-weight: 800; text-decoration: none; transition: gap 0.2s var(--ease-out); }
+  .sb__vice:hover { gap: 0.4rem; color: var(--orange-text); }
+  .sm__pozn { font-size: 0.78rem; font-weight: 600; color: var(--muted); line-height: 1.5; max-width: 80ch; }
+
+  /* dlaždice naskočí jedna po druhé */
+  :global(.js) .sm .sb { opacity: 0; transform: translateY(10px); }
+  :global(.js) .sm:global(.odhal--videt) .sb { opacity: 1; transform: none; transition: opacity 0.5s var(--ease-out) calc(var(--i) * 70ms + 150ms), transform 0.5s var(--ease-out) calc(var(--i) * 70ms + 150ms), box-shadow 0.3s var(--ease-out), background-color 0.3s ease; }
+  @media (hover: hover) and (pointer: fine) { :global(.js) .sm:global(.odhal--videt) .sb:hover { transform: translateY(-3px); transition-delay: 0s; } }
+
+  @media (max-width: 1020px) { .sm__body { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  @media (max-width: 640px) {
+    .sm { border-radius: 22px; }
+    .sm__body { grid-template-columns: 1fr; }
+    .sb { padding: 0.95rem 1rem 0.85rem; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    :global(.js) .sm .sb { opacity: 1; transform: none; transition: none; }
+    .sb, .sb:hover { transform: none; }
+  }
+</style>
