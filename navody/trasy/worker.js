@@ -1,9 +1,12 @@
 // Trasy pro mapu supermarketů na datacesky.cz: Cloudflare Worker, který drží API klíč Mapy.com v tajnosti
-// a přeposílá jen dotazy na vzdálenost a čas cesty (Matrix routing, 1 start × nejvýš 25 prodejen).
-// Nasazení a nastavení klíče: navody/trasy/README.md
+// a přeposílá jen dva druhy dotazů. Nasazení a nastavení klíče: navody/trasy/README.md
 //
-// Dotaz:  GET /?z=14.4378,50.0755&do=14.44,50.07;14.45,50.08&typ=foot_fast
-// Odpověď: odpověď Mapy.com ({ matrix: [[{ length, duration }, …]] }), délka v metrech, čas v sekundách.
+// 1) Vzdálenost a čas k víc prodejnám (Matrix routing, 1 start × nejvýš 25 prodejen):
+//    GET /?z=14.4378,50.0755&do=14.44,50.07;14.45,50.08&typ=foot_fast
+//    Odpověď: odpověď Mapy.com ({ matrix: [[{ length, duration }, …]] }), délka v metrech, čas v sekundách.
+// 2) Trasa k jedné prodejně i s čárou na mapu (Routing):
+//    GET /?trasa=1&z=14.4378,50.0755&do=14.44,50.07&typ=foot_fast
+//    Odpověď: { m: délka v metrech, s: čas v sekundách, cara: [[lon, lat], …] }
 
 const TYPY = new Set(['car_fast', 'foot_fast']);
 const MAX_CILU = 25;
@@ -40,13 +43,16 @@ export default {
     const start = souradnice(url.searchParams.get('z'));
     const cile = (url.searchParams.get('do') || '').split(';').filter(Boolean).map(souradnice);
     const typ = url.searchParams.get('typ');
-    if (!start || !cile.length || cile.length > MAX_CILU || cile.some((c) => !c) || !TYPY.has(typ)) {
+    const jednaTrasa = url.searchParams.has('trasa');
+    if (!start || !cile.length || cile.length > (jednaTrasa ? 1 : MAX_CILU) || cile.some((c) => !c) || !TYPY.has(typ)) {
       return odpoved({ chyba: 'Špatný dotaz' }, 400);
     }
 
     // Start se zaokrouhlí na 4 desetinná místa (asi 10 m): méně se toho pošle dál a víc dotazů se trefí do mezipaměti
     const z = `${start[0].toFixed(4)},${start[1].toFixed(4)}`;
     const d = cile.map((c) => `${c[0]},${c[1]}`).join(';');
+
+    if (jednaTrasa) return trasa(z, d, typ, env, ctx, hlavicky, odpoved);
     const klicMezipameti = new Request(`https://trasy.cache/${typ}/${z}/${d}`);
     const mezipamet = caches.default;
     const ulozena = await mezipamet.match(klicMezipameti);
@@ -64,3 +70,33 @@ export default {
     return new Response(telo, { headers: hlavicky });
   },
 };
+
+// Jedna trasa i s geometrií. Čára se zaokrouhlí na 5 desetinných míst (asi 1 m) a vynechají se zbytečné body,
+// ať je odpověď malá.
+async function trasa(z, d, typ, env, ctx, hlavicky, odpoved) {
+  const klic = new Request(`https://trasy.cache/trasa/${typ}/${z}/${d}`);
+  const mezipamet = caches.default;
+  const ulozena = await mezipamet.match(klic);
+  if (ulozena) return new Response(ulozena.body, { headers: { ...hlavicky, 'X-Mezipamet': 'ano' } });
+
+  const mapy = new URL('https://api.mapy.com/v1/routing/route');
+  mapy.searchParams.set('start', z);
+  mapy.searchParams.set('end', d);
+  mapy.searchParams.set('routeType', typ);
+  mapy.searchParams.set('format', 'geojson');
+  mapy.searchParams.set('lang', 'cs');
+  const r = await fetch(mapy, { headers: { 'X-Mapy-Api-Key': env.MAPY_KLIC, 'Accept': 'application/json' } });
+  if (!r.ok) return odpoved({ chyba: `Mapy.com odpověděly ${r.status}` }, 502);
+  const data = await r.json();
+  const body = data?.geometry?.geometry?.coordinates;
+  if (!Array.isArray(body) || !(data.length >= 0)) return odpoved({ chyba: 'Trasu se nepodařilo najít' }, 404);
+  const cara = [];
+  for (const [lon, lat] of body) {
+    const b = [Math.round(lon * 1e5) / 1e5, Math.round(lat * 1e5) / 1e5];
+    const p = cara[cara.length - 1];
+    if (!p || p[0] !== b[0] || p[1] !== b[1]) cara.push(b);
+  }
+  const telo = JSON.stringify({ m: data.length, s: data.duration, cara });
+  ctx.waitUntil(mezipamet.put(klic, new Response(telo, { headers: { 'Content-Type': 'application/json', 'Cache-Control': 'public, max-age=604800' } })));
+  return new Response(telo, { headers: hlavicky });
+}

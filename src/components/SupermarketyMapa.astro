@@ -1,8 +1,10 @@
 ---
-// Mapa supermarketů přes celou obrazovku: všechny prodejny sedmi největších řetězců (public/data/obchody.json,
-// vyrábí skripty/data_obchody.py z OpenStreetMap), hledání obce (public/data/obce.json), nejbližší prodejny
-// podle polohy, filtr řetězců, otevírací doba a vzdálenost. Po silnici (pěšky, autem) přes Mapy.com, když je
-// v src/data/web.ts vyplněná adresa Workeru „trasy“, jinak vzdušnou čarou. Podklad: OpenFreeMap (src/lib/mapa-styl.ts).
+// Mapa supermarketů ve stylu Google Maps: mapa přes celou obrazovku, nahoře hledání a filtry (řetězce, otevřeno teď,
+// oblíbené), vlevo (na mobilu zespodu) panel s nejbližšími prodejnami nebo s kartou vybrané prodejny.
+// Prodejny: public/data/obchody.json (skripty/data_obchody.py z OpenStreetMap), obce: public/data/obce.json.
+// Vzdálenost, čas a čára trasy po silnici přes Mapy.com, když je v src/data/web.ts adresa Workeru „trasy“
+// (navody/trasy/), jinak vzdušnou čarou. Podklad: OpenFreeMap (src/lib/mapa-styl.ts).
+// V prohlížeči si mapa pamatuje oblíbené prodejny (sm-oblibene) a poslední pohled (sm-pohled), nic se neposílá ven.
 import { web } from '../data/web';
 import { logo } from '../lib/loga';
 import { datum, cislo } from '../lib/format';
@@ -16,67 +18,83 @@ const nastaveni = JSON.stringify({
   retezce: data.retezce, formaty: data.formaty, barvy: BARVY, trasy: web.trasy,
   loga: Object.fromEntries(Object.entries(loga).map(([id, l]) => [id, l ? { src: l.src, tmave: l.tmave, pomer: l.pomer } : null])),
 });
+const IKONA_JA = 'M12 8a4 4 0 1 0 0 8a4 4 0 1 0 0-8z M12 2v3 M12 19v3 M2 12h3 M19 12h3';
 ---
 
-<section class="sm" id="mapa-prodejen" data-sm data-nastaveni={nastaveni}>
+<section class="sm" id="mapa-prodejen" data-sm data-stav="uvod" data-nastaveni={nastaveni}>
   <div class="sm__mapa" data-sm-mapa role="application" aria-label="Mapa supermarketů v Česku"></div>
 
+  <!-- Nahoře: hledání a filtry jako v Google Maps -->
+  <div class="sm__horni" data-sm-horni>
+    <div class="sm__hledani">
+      <a class="sm__domu" href="/" aria-label="Zpět na datacesky.cz" title="Zpět na datacesky.cz">
+        <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7" /></svg>
+      </a>
+      <svg class="sm__lupa" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
+      <input
+        type="text" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false"
+        class="sm__pole" placeholder="Hledat obec, město nebo řetězec" aria-label="Hledat obec nebo řetězec"
+        role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sm-naseptavac" data-sm-hledat
+      />
+      <button type="button" class="sm__smazat" data-sm-smazat aria-label="Smazat hledání" hidden>
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
+      </button>
+      <ul class="sm__naseptavac" id="sm-naseptavac" role="listbox" aria-label="Návrhy" data-sm-naseptavac hidden></ul>
+    </div>
+    <div class="sm__cipy" role="group" aria-label="Filtr prodejen">
+      <button type="button" class="sm__cip" data-sm-oblibene aria-pressed="false">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 20s-7.5-4.6-7.5-10.1A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z" /></svg>
+        Oblíbené
+      </button>
+      <button type="button" class="sm__cip" data-sm-otevreno aria-pressed="false">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></svg>
+        Otevřeno teď
+      </button>
+      {data.retezce.map((r) => (
+        <button type="button" class="sm__cip sm__cip--retezec" data-r={r.id} aria-pressed="false" aria-label={`Jen ${r.nazev}`} title={`${r.nazev}: ${r.pocet} prodejen na mapě`} style={`--barva: ${BARVY[r.id]};`}>
+          <span class:list={['sm__logo', 'sm__logo--cip', { 'sm__logo--tmave': loga[r.id]?.tmave }]}>
+            {loga[r.id] ? <img src={loga[r.id]!.src} alt="" width="40" height="20" /> : r.nazev}
+          </span>
+        </button>
+      ))}
+    </div>
+  </div>
+
+  <!-- Nástroje na počítači: celá obrazovka nahoře, moje poloha dole nad přiblížením -->
   <button type="button" class="sm__nastroj sm__cela" data-sm-cela aria-pressed="false" aria-label="Mapa na celou obrazovku" title="Na celou obrazovku">
     <svg class="sm__ikona-zvetsit" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5" /></svg>
     <svg class="sm__ikona-zmensit" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 4v5H4M15 4v5h5M9 20v-5H4M15 20v-5h5" /></svg>
   </button>
-  <button type="button" class="sm__nastroj sm__ja" data-sm-poloha-mapa aria-label="Moje poloha" title="Moje poloha">
-    <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4" /><path d="M12 2v3M12 19v3M2 12h3M19 12h3" /></svg>
+  <button type="button" class="sm__nastroj sm__ja sm__ja--pc" data-sm-ja aria-label="Moje poloha" title="Moje poloha">
+    <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d={IKONA_JA} /></svg>
   </button>
 
-  <aside class="sm__panel" data-sm-panel data-vyska="nizko" aria-label="Hledání supermarketů">
-    <button type="button" class="sm__uchyt" data-sm-uchyt aria-label="Rozbalit nebo sbalit panel"><span></span></button>
-    <div class="sm__obsah" data-sm-obsah>
-      <header class="sm__hlava">
-        <span class="nadhlavi">Mapa · OpenStreetMap, {datum(new Date(data.stav))}</span>
-        <h1 class="sm__titul">Supermarkety v Česku</h1>
-        <p class="sm__fakt">
-          Na mapě je <strong>{cislo(celkem)} prodejen</strong> sedmi největších řetězců. Najdi tu nejbližší podle polohy nebo obce.
-        </p>
-      </header>
-
-      <div class="sm__hledani">
-        <svg class="sm__lupa" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
-        <input
-          type="text" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false"
-          class="sm__pole" placeholder="Obec, město nebo městská část" aria-label="Hledat obec"
-          role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sm-naseptavac" data-sm-hledat
-        />
-        <button type="button" class="sm__smazat" data-sm-smazat aria-label="Smazat hledání" hidden>
-          <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg>
-        </button>
-        <ul class="sm__naseptavac" id="sm-naseptavac" role="listbox" aria-label="Obce" data-sm-naseptavac hidden></ul>
-      </div>
-
-      <button type="button" class="tlacitko tlacitko--oranzovy tlacitko--plna-sirka sm__najdi" data-sm-poloha>
-        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
-        <span>Najít nejbližší podle polohy</span>
-      </button>
-
-      <div class="sm__retezce" role="group" aria-label="Které řetězce ukázat">
-        <button type="button" class="sm__retezec sm__retezec--vse" data-sm-vse aria-pressed="true">Vše</button>
-        {data.retezce.map((r) => (
-          <button type="button" class="sm__retezec" data-r={r.id} aria-pressed="true" aria-label={r.nazev} title={`${r.nazev}: ${r.pocet} prodejen na mapě`} style={`--barva: ${BARVY[r.id]};`}>
-            <span class:list={['sm__logo', { 'sm__logo--tmave': loga[r.id]?.tmave }]}>
-              {loga[r.id] ? <img src={loga[r.id]!.src} alt="" width="40" height="20" /> : r.nazev}
-            </span>
+  <aside class="sm__panel" data-sm-panel data-vyska="nizko" aria-label="Supermarkety">
+    <!-- moje poloha na mobilu: jezdí nad panelem -->
+    <button type="button" class="sm__nastroj sm__ja sm__ja--mobil" data-sm-ja aria-label="Moje poloha">
+      <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d={IKONA_JA} /></svg>
+    </button>
+    <div class="sm__karta">
+      <button type="button" class="sm__uchyt" data-sm-uchyt aria-label="Rozbalit nebo sbalit panel"><span></span></button>
+      <div class="sm__obsah" data-sm-obsah>
+        <header class="sm__hlava">
+          <h1 class="sm__titul">Supermarkety v Česku</h1>
+          <p class="sm__fakt">
+            <strong>{cislo(celkem)} prodejen</strong> Penny, Albertu, Lidlu, Billy, Tesca, Kauflandu a Globusu s otevírací dobou.
+          </p>
+          <button type="button" class="tlacitko tlacitko--oranzovy tlacitko--plna-sirka sm__najdi" data-sm-poloha>
+            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+            <span>Nejbližší ke mně</span>
           </button>
-        ))}
-      </div>
+        </header>
 
-      <div class="sm__vysledky" data-sm-vysledky aria-live="polite">
-        <p class="sm__tip">Klikni na prodejnu na mapě, napiš obec, nebo si nech najít nejbližší prodejny podle polohy. Kliknutím na logo vybereš jen jeden řetězec.</p>
-      </div>
+        <div class="sm__vysledky" data-sm-vysledky aria-live="polite"></div>
 
-      <p class="sm__pata drobne">
-        Prodejny: © přispěvatelé <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, stav {datum(new Date(data.stav))}.
-        <a href="#supermarkety-v-cislech">Kolik jich je a metodika</a>
-      </p>
+        <p class="sm__pata drobne">
+          Prodejny: © přispěvatelé <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>, stav {datum(new Date(data.stav))}.
+          <a href="#supermarkety-v-cislech">Kolik jich je a metodika</a>
+        </p>
+      </div>
     </div>
   </aside>
 
@@ -84,6 +102,7 @@ const nastaveni = JSON.stringify({
     <span>Kolik jich je</span>
     <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6" /></svg>
   </a>
+  <div class="sm__oznameni" data-sm-oznameni role="status" aria-live="polite" hidden></div>
 </section>
 
 <script>
@@ -98,7 +117,8 @@ const nastaveni = JSON.stringify({
   // [lon, lat, řetězec, formát, adresa, obec, otevírací doba, id v OSM]
   type Bod = [number, number, number, number, string, string, string, string];
   type Obec = [string, number, number, number, number, string]; // název, lon, lat, typ, kraj, u
-  type Trasa = { m: number; s: number } | null;
+  type Cas = { m: number; s: number } | null;
+  type Rezim = 'pesky' | 'autem';
 
   const koren = document.querySelector<HTMLElement>('[data-sm]');
   if (koren) spust(koren);
@@ -107,21 +127,31 @@ const nastaveni = JSON.stringify({
     const N: N = JSON.parse(el.dataset.nastaveni!);
     const $ = <T extends Element = HTMLElement>(s: string) => el.querySelector<T>(s)!;
     const mapaEl = $('[data-sm-mapa]'), panel = $('[data-sm-panel]'), obsah = $('[data-sm-obsah]'), vysledkyEl = $('[data-sm-vysledky]');
+    const horni = $('[data-sm-horni]'), oznameni = $('[data-sm-oznameni]');
     const pole = $<HTMLInputElement>('[data-sm-hledat]'), naseptavac = $<HTMLUListElement>('[data-sm-naseptavac]'), smazat = $('[data-sm-smazat]');
     const ids = N.retezce.map((r) => r.id);
     const tmavy = () => document.documentElement.dataset.tema === 'tmavy';
     const mobil = matchMedia('(max-width: 760px)');
     const fmt = new Intl.NumberFormat('cs-CZ');
+    const MODRA = '#1A73E8';
 
     let body: Bod[] = [];
     let obce: Obec[] | null = null, nazvyKraju: string[] = [];
-    let vybrane = new Set(ids);
+    // Filtry: prázdná množina řetězců = všechny
+    let vybrane = new Set<string>();
+    let jenOtevrene = false, jenOblibene = false;
+    let otevreneTed = new Set<number>();
     // Výchozí bod seznamu: poloha člověka nebo hledaná obec
     let ref: { lon: number; lat: number; typ: 'poloha' | 'obec'; nazev: string; dosah: number } | null = null;
+    // Poslední známá poloha (modrá tečka), i když seznam ukazuje obec
+    let poloha: { lon: number; lat: number; presnost: number } | null = null;
     let seznam: number[] = [], kolikUkazat = 12, vybrana = -1;
-    let rezim: 'pesky' | 'autem' = 'autem';
-    const trasy = new Map<string, Trasa>();
-    let cekaTrasy = false, chybaTras = false;
+    let rezim: Rezim = 'autem';
+    const casy = new Map<string, Cas>();
+    let cekaCasy = false, chybaCasu = false;
+    // Nakreslená trasa k vybrané prodejně
+    let trasa: { i: number; rezim: Rezim; m: number; s: number; vzduchem: boolean } | null = null;
+    let cekaTrasa = false, nabidkaNavigace = false;
 
     // ---------- pomocné ----------
     const esc = (s: string) => s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
@@ -134,16 +164,32 @@ const nastaveni = JSON.stringify({
     const vzdalenost = (m: number) => (m < 950 ? `${Math.max(10, Math.round(m / 10) * 10)} m` : m < 9950 ? `${(m / 1000).toFixed(1).replace('.', ',')} km` : `${fmt.format(Math.round(m / 1000))} km`);
     const doba = (s: number) => { const min = Math.max(1, Math.round(s / 60)); return min < 60 ? `${min} min` : `${Math.floor(min / 60)} h ${min % 60} min`; };
     const nazevProdejny = (b: Bod) => (b[3] >= 0 ? N.formaty[b[3]] : N.retezce[b[2]].nazev);
+    const adresa = (b: Bod) => [b[4], b[5]].filter(Boolean).join(', ');
     const vzduchem = (i: number) => (ref ? metru([ref.lon, ref.lat], [body[i][0], body[i][1]]) : 0);
-    const klicTrasy = (i: number) => `${rezim}|${ref?.lon.toFixed(4)},${ref?.lat.toFixed(4)}|${body[i][7]}`;
-    const trasa = (i: number) => (ref?.typ === 'poloha' ? trasy.get(klicTrasy(i)) : undefined);
+    const odMe = (i: number) => (poloha ? metru([poloha.lon, poloha.lat], [body[i][0], body[i][1]]) : 0);
+    const klicCasu = (i: number, r = rezim) => `${r}|${poloha?.lon.toFixed(4)},${poloha?.lat.toFixed(4)}|${body[i][7]}`;
+    // Čas po silnici: jen když vycházíme z polohy (u obce se počítá od středu, tam stačí vzdušná čára)
+    const cas = (i: number) => (poloha ? casy.get(klicCasu(i)) : undefined);
+    const ulozeno = <T,>(klic: string, vychozi: T): T => { try { const v = localStorage.getItem(klic); return v ? JSON.parse(v) : vychozi; } catch { return vychozi; } };
+    const uloz = (klic: string, v: unknown) => { try { localStorage.setItem(klic, JSON.stringify(v)); } catch {} };
+    let casOznameni = 0;
+    function oznam(text: string) {
+      oznameni.textContent = text; oznameni.hidden = false;
+      clearTimeout(casOznameni); casOznameni = window.setTimeout(() => (oznameni.hidden = true), 2600);
+    }
     function logoHtml(r: number, velke = false) {
       const id = ids[r], l = N.loga[id];
       return `<span class="sm__logo${l?.tmave ? ' sm__logo--tmave' : ''}${velke ? ' sm__logo--velke' : ''}" style="--barva:${N.barvy[id]}">${l ? `<img src="${l.src}" alt="" />` : esc(N.retezce[r].nazev)}</span>`;
     }
 
+    // ---------- oblíbené (jen v tomto prohlížeči) ----------
+    const oblibene = new Set<string>(ulozeno<string[]>('sm-oblibene', []));
+    const jeOblibena = (i: number) => oblibene.has(body[i][7]);
+
     // ---------- mapa ----------
-    // Když se nenačte podklad (blokovaný nebo nedostupný server), ukáže se aspoň obrys krajů
+    // Začátek: poslední pohled z tohoto prohlížeče, napoprvé Praha zblízka. Kdo už polohu povolil, toho mapa po načtení přiblíží k němu.
+    const pohled = ulozeno<{ c: [number, number]; z: number } | null>('sm-pohled', null);
+    const platnyPohled = pohled && Array.isArray(pohled.c) && pohled.c[0] > 11.5 && pohled.c[0] < 19.5 && pohled.c[1] > 48 && pohled.c[1] < 51.5 && pohled.z >= 6 && pohled.z <= 18.5;
     let bezPodkladu = false;
     function ukazObrysKraju() {
       if (map.getSource('kraje')) return;
@@ -151,24 +197,24 @@ const nastaveni = JSON.stringify({
       map.addLayer({ id: 'kraje-zaloha', type: 'line', source: 'kraje', paint: { 'line-color': '#B9AE9B', 'line-width': 1 } }, map.getLayer('ref-dosah') ? 'ref-dosah' : undefined);
     }
     const map = new maplibregl.Map({
-      container: mapaEl, style: stylMapy(tmavy()), center: [15.47, 49.8], zoom: 6,
-      minZoom: 4.5, maxZoom: 18.5, dragRotate: false, pitchWithRotate: false, touchPitch: false,
+      container: mapaEl, style: stylMapy(tmavy()),
+      center: platnyPohled ? pohled!.c : [14.4378, 50.0755], zoom: platnyPohled ? pohled!.z : mobil.matches ? 12.4 : 12.8,
+      minZoom: 5.5, maxZoom: 18.5, dragRotate: false, pitchWithRotate: false, touchPitch: false,
       attributionControl: false,
       locale: { 'NavigationControl.ZoomIn': 'Přiblížit', 'NavigationControl.ZoomOut': 'Oddálit', 'AttributionControl.ToggleAttribution': 'Zdroje mapy' },
     });
     map.touchZoomRotate.disableRotation();
-    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'top-right');
-    // Na mobilu je dole vysouvací panel, zdroje mapy proto vlevo nahoře
-    map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: '<a href="https://openfreemap.org">OpenFreeMap</a>' }), mobil.matches ? 'top-left' : 'bottom-right');
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+    map.addControl(new maplibregl.AttributionControl({ compact: true, customAttribution: '<a href="https://openfreemap.org">OpenFreeMap</a>' }), 'top-right');
 
-    // Odsazení mapy o panel: vlevo na počítači, dole na mobilu (podle toho, jak vysoko je panel vysunutý)
+    // Odsazení mapy: nahoře hledání, vlevo panel (počítač), dole panel (mobil, podle vysunutí)
+    const NIZKO = 172;
     function odsazeni(vyska = panel.dataset.vyska) {
-      if (!mobil.matches) return { top: 0, right: 48, bottom: 0, left: panel.offsetWidth + 14 };
+      const top = horni.offsetTop + horni.offsetHeight + 8;
+      if (!mobil.matches) return { top: el.dataset.stav === 'uvod' ? top : 16, right: 64, bottom: 16, left: panel.offsetWidth + 30 };
       const H = el.clientHeight;
-      return { top: 0, right: 0, left: 0, bottom: vyska === 'vysoko' ? H * 0.5 : vyska === 'stred' ? H * 0.56 : 214 };
+      return { top, right: 0, left: 0, bottom: vyska === 'nizko' ? NIZKO : H * 0.5 };
     }
-    map.setPadding(odsazeni());
-    map.fitBounds([[12.09, 48.55], [18.86, 51.06]], { padding: 24, duration: 0 });
 
     // Odznaky s logy: bílá pilulka s barevným okrajem a špičkou dole, logo uvnitř
     async function odznak(id: string, l: Logo): Promise<ImageData> {
@@ -197,61 +243,90 @@ const nastaveni = JSON.stringify({
       }
       return g.getImageData(0, 0, c.width, c.height);
     }
+    // Srdíčko u oblíbených prodejen
+    function srdce(): ImageData {
+      const dpr = 2, s = 18, c = document.createElement('canvas');
+      c.width = c.height = s * dpr;
+      const g = c.getContext('2d')!;
+      g.scale(dpr, dpr);
+      g.beginPath(); g.arc(s / 2, s / 2, s / 2 - 1, 0, Math.PI * 2); g.fillStyle = '#FFFFFF'; g.fill();
+      g.lineWidth = 1.5; g.strokeStyle = 'rgba(27, 42, 74, 0.25)'; g.stroke();
+      g.translate(s / 2, s / 2 + 0.5); g.scale(0.62, 0.62);
+      g.beginPath(); g.moveTo(0, 6); g.bezierCurveTo(-9, 0, -8, -8, -3.5, -8); g.bezierCurveTo(-1.5, -8, 0, -6.5, 0, -5);
+      g.bezierCurveTo(0, -6.5, 1.5, -8, 3.5, -8); g.bezierCurveTo(8, -8, 9, 0, 0, 6); g.closePath();
+      g.fillStyle = '#E5484D'; g.fill();
+      return g.getImageData(0, 0, c.width, c.height);
+    }
 
-    const filtrRetezcu = () => ['in', ['get', 'r'], ['literal', [...vybrane].map((id) => ids.indexOf(id))]] as any;
-    const barvaRetezce = ['match', ['get', 'r'], ...ids.flatMap((id, i) => [i, N.barvy[id]]), '#1B2A4A'] as any;
-
+    const prazdne = { type: 'FeatureCollection', features: [] } as any;
     function vrstvyObchodu() {
       const p = PODKLAD(tmavy());
-      if (!map.getSource('obchody')) {
-        map.addSource('obchody', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-        map.addSource('vybrana', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-        map.addSource('ref', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
-      }
+      for (const z of ['obchody', 'vybrana', 'ref', 'presnost', 'trasa']) if (!map.getSource(z)) map.addSource(z, { type: 'geojson', data: prazdne });
       if (bezPodkladu) ukazObrysKraju();
-      map.addLayer({ id: 'ref-dosah', type: 'circle', source: 'ref', filter: ['==', ['get', 'typ'], 'obec'], paint: { 'circle-radius': 10, 'circle-color': 'rgba(27, 42, 74, 0.12)', 'circle-stroke-color': p.text, 'circle-stroke-width': 2 } });
-      map.addLayer({ id: 'obchody-tecky', type: 'circle', source: 'obchody', filter: filtrRetezcu(), paint: {
+      map.addLayer({ id: 'presnost', type: 'fill', source: 'presnost', paint: { 'fill-color': MODRA, 'fill-opacity': 0.12 } });
+      map.addLayer({ id: 'presnost-okraj', type: 'line', source: 'presnost', paint: { 'line-color': MODRA, 'line-opacity': 0.35, 'line-width': 1 } });
+      map.addLayer({ id: 'trasa-obrys', type: 'line', source: 'trasa', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': '#FFFFFF', 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 6, 16, 11] } });
+      map.addLayer({ id: 'trasa', type: 'line', source: 'trasa', layout: { 'line-cap': 'round', 'line-join': 'round' }, paint: { 'line-color': MODRA, 'line-width': ['interpolate', ['linear'], ['zoom'], 10, 3.5, 16, 6.5] } });
+      map.addLayer({ id: 'ref-dosah', type: 'circle', source: 'ref', paint: { 'circle-radius': 10, 'circle-color': 'rgba(27, 42, 74, 0.12)', 'circle-stroke-color': p.text, 'circle-stroke-width': 2 } });
+      map.addLayer({ id: 'obchody-tecky', type: 'circle', source: 'obchody', paint: {
         'circle-color': barvaRetezce,
         'circle-radius': ['interpolate', ['linear'], ['zoom'], 5, 1.8, 8, 3, 11, 4.5, 15, 6],
         'circle-stroke-color': p.pozadi, 'circle-stroke-width': ['interpolate', ['linear'], ['zoom'], 5, 0.4, 10, 1.2],
       } });
       map.addLayer({ id: 'vybrana-kruh', type: 'circle', source: 'vybrana', paint: { 'circle-radius': 22, 'circle-color': 'rgba(240, 136, 41, 0.22)', 'circle-stroke-color': '#F08829', 'circle-stroke-width': 2 } });
-      map.addLayer({ id: 'obchody-loga', type: 'symbol', source: 'obchody', minzoom: 9.5, filter: filtrRetezcu(), layout: {
+      map.addLayer({ id: 'obchody-loga', type: 'symbol', source: 'obchody', minzoom: 9.5, layout: {
         'icon-image': ['concat', 'odznak-', ['get', 'id']] as any, 'icon-anchor': 'bottom',
         'icon-size': ['interpolate', ['linear'], ['zoom'], 9.5, 0.82, 12, 0.92, 14, 1] as any, 'icon-padding': 0,
       } });
-      map.addLayer({ id: 'ref-bod', type: 'circle', source: 'ref', paint: {
-        'circle-radius': ['match', ['get', 'typ'], 'poloha', 8, 5] as any, 'circle-color': ['match', ['get', 'typ'], 'poloha', '#1E9E91', p.text] as any,
-        'circle-stroke-color': '#FFFFFF', 'circle-stroke-width': 3,
+      map.addLayer({ id: 'obchody-srdce', type: 'symbol', source: 'obchody', minzoom: 9.5, filter: ['==', ['get', 'f'], 1], layout: {
+        'icon-image': 'srdce', 'icon-anchor': 'bottom-left', 'icon-offset': [10, -30], 'icon-allow-overlap': true, 'icon-ignore-placement': true,
       } });
       map.addLayer({ id: 'vybrana-logo', type: 'symbol', source: 'vybrana', layout: { 'icon-image': ['concat', 'odznak-', ['get', 'id']] as any, 'icon-anchor': 'bottom', 'icon-size': 1.3, 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
     }
+    const barvaRetezce = ['match', ['get', 'r'], ...ids.flatMap((id, i) => [i, N.barvy[id]]), '#1B2A4A'] as any;
 
     const nacteni = Promise.all(N.retezce.map(async (r) => [r.id, await odznak(r.id, N.loga[r.id])] as const));
+    // Prodejny se stahují hned, souběžně s podkladem mapy
+    const nacteniProdejen = fetch('/data/obchody.json').then((r) => r.json());
 
-    map.on('load', async () => {
+    // Vrstvy s prodejnami se přidají hned po načtení stylu, nečeká se na dlaždice podkladu
+    // (když server s podkladem nejde, prodejny jsou na mapě aspoň s obrysem krajů)
+    map.once('style.load', async () => {
       for (const [id, obr] of await nacteni) if (!map.hasImage(`odznak-${id}`)) map.addImage(`odznak-${id}`, obr, { pixelRatio: 2 });
+      if (!map.hasImage('srdce')) map.addImage('srdce', srdce(), { pixelRatio: 2 });
       vrstvyObchodu();
-      const odpoved = await fetch('/data/obchody.json');
-      body = (await odpoved.json()).body;
-      (map.getSource('obchody') as maplibregl.GeoJSONSource).setData({
-        type: 'FeatureCollection',
-        features: body.map((b, i) => ({ type: 'Feature', id: i, properties: { i, r: b[2], id: ids[b[2]] }, geometry: { type: 'Point', coordinates: [b[0], b[1]] } })),
-      });
+      body = (await nacteniProdejen).body;
+      aktualizujProdejny();
       el.classList.add('je-nacteno');
+      // na mobilu zdroje mapy jen jako ikonka „i“, ať nezabírají místo
+      if (mobil.matches) mapaEl.querySelector('.maplibregl-ctrl-attrib')?.classList.remove('maplibregl-compact-show');
+      map.setPadding(odsazeni());
+      vykresli();
       const m = /prodejna=([nwr]\d+)/.exec(location.hash);
       if (m) { const i = body.findIndex((b) => b[7] === m[1]); if (i >= 0) vyber(i, true); }
-      else zHashe();
-      // odkaz s #obec / #poloha otevřený, když už je mapa načtená
-      window.addEventListener('hashchange', zHashe);
+      else if (!(await zHashe())) {
+        // Kdo už polohu dřív povolil, toho rovnou ukážeme u něj (bez dotazu prohlížeče)
+        try {
+          const s = await navigator.permissions?.query({ name: 'geolocation' as PermissionName });
+          if (s?.state === 'granted') najdiPolohu();
+        } catch {}
+      }
+      window.addEventListener('hashchange', () => zHashe());
+    });
+
+    // Poslední pohled si pamatuje prohlížeč, příště mapa začne tam
+    let casPohledu = 0;
+    map.on('moveend', () => {
+      clearTimeout(casPohledu);
+      casPohledu = window.setTimeout(() => { const c = map.getCenter(); uloz('sm-pohled', { c: [+c.lng.toFixed(5), +c.lat.toFixed(5)], z: +map.getZoom().toFixed(2) }); }, 500);
     });
 
     // Odkaz z úvodní stránky: #obec=Brno (i=pořadí v obce.json, když je víc obcí stejného jména) nebo #poloha
     async function zHashe() {
       const h = new URLSearchParams(location.hash.slice(1));
-      if (h.has('poloha')) { najdiPolohu(); return; }
+      if (h.has('poloha')) { najdiPolohu(); return true; }
       const nazev = h.get('obec')?.trim();
-      if (!nazev) return;
+      if (!nazev) return false;
       await nactiObce();
       const i = Number(h.get('i'));
       const q = bezDiakritiky(nazev);
@@ -260,6 +335,7 @@ const nastaveni = JSON.stringify({
         ?? obce!.filter((x) => bezDiakritiky(x[0]).startsWith(q)).sort((a, b) => a[3] - b[3])[0];
       if (o) vyberObec(o);
       else { pole.value = nazev; smazat.hidden = false; hlaska(`Obec „${nazev}“ neznám. Zkus napsat jiný název, nebo si nech najít nejbližší prodejny podle polohy.`); }
+      return true;
     }
 
     map.on('error', (e: any) => {
@@ -279,27 +355,69 @@ const nastaveni = JSON.stringify({
       const p = PODKLAD(tmavy());
       if (map.getLayer('obchody-tecky')) map.setPaintProperty('obchody-tecky', 'circle-stroke-color', p.pozadi);
       if (map.getLayer('ref-dosah')) map.setPaintProperty('ref-dosah', 'circle-stroke-color', p.text);
+      if (map.getLayer('trasa-obrys')) map.setPaintProperty('trasa-obrys', 'line-color', tmavy() ? '#0E1628' : '#FFFFFF');
     });
+
+    // Prodejny na mapě podle filtrů (řetězce, otevřeno teď, oblíbené)
+    const projde = (i: number) => {
+      const b = body[i];
+      return (!vybrane.size || vybrane.has(ids[b[2]])) && (!jenOtevrene || otevreneTed.has(i)) && (!jenOblibene || oblibene.has(b[7]));
+    };
+    function aktualizujProdejny() {
+      const f = [];
+      for (let i = 0; i < body.length; i++) {
+        if (!projde(i)) continue;
+        const b = body[i];
+        f.push({ type: 'Feature', id: i, properties: { i, r: b[2], id: ids[b[2]], f: oblibene.has(b[7]) ? 1 : 0 }, geometry: { type: 'Point', coordinates: [b[0], b[1]] } });
+      }
+      (map.getSource('obchody') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: f } as any);
+    }
 
     function nastavRef(r: typeof ref) {
       ref = r;
+      // Bod na mapě jen u obce, poloha má modrou tečku
       (map.getSource('ref') as maplibregl.GeoJSONSource | undefined)?.setData({
         type: 'FeatureCollection',
-        features: r ? [{ type: 'Feature', properties: { typ: r.typ }, geometry: { type: 'Point', coordinates: [r.lon, r.lat] } }] : [],
-      });
+        features: r?.typ === 'obec' ? [{ type: 'Feature', properties: {}, geometry: { type: 'Point', coordinates: [r.lon, r.lat] } }] : [],
+      } as any);
+    }
+
+    // ---------- moje poloha: modré kolečko s kruhem přesnosti ----------
+    const tecka = document.createElement('div');
+    tecka.className = 'sm-tecka';
+    tecka.innerHTML = '<span class="sm-tecka__pulz"></span><span class="sm-tecka__bod"></span>';
+    tecka.setAttribute('aria-label', 'Moje poloha');
+    const znackaJa = new maplibregl.Marker({ element: tecka });
+    function kruh(lon: number, lat: number, m: number) {
+      const k = [];
+      for (let a = 0; a <= 64; a++) {
+        const u = (a / 64) * Math.PI * 2;
+        k.push([lon + (m / (111320 * Math.cos((lat * Math.PI) / 180))) * Math.cos(u), lat + (m / 110540) * Math.sin(u)]);
+      }
+      return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [k] } };
+    }
+    function nastavPolohu(p: GeolocationPosition) {
+      poloha = { lon: p.coords.longitude, lat: p.coords.latitude, presnost: Math.min(p.coords.accuracy || 0, 2000) };
+      znackaJa.setLngLat([poloha.lon, poloha.lat]).addTo(map);
+      (map.getSource('presnost') as maplibregl.GeoJSONSource | undefined)?.setData(poloha.presnost > 25 ? kruh(poloha.lon, poloha.lat, poloha.presnost) as any : prazdne);
+      el.classList.add('ma-polohu');
+    }
+    let sleduji = false;
+    function sleduj() {
+      if (sleduji || !('geolocation' in navigator)) return;
+      sleduji = true;
+      navigator.geolocation.watchPosition((p) => nastavPolohu(p), () => {}, { enableHighAccuracy: true, maximumAge: 15000 });
     }
 
     // ---------- seznam ----------
     function prepocitej() {
       if (!ref || !body.length) { seznam = []; return; }
-      const filtr = new Set([...vybrane].map((id) => ids.indexOf(id)));
-      const vse = body.map((_, i) => i).filter((i) => filtr.has(body[i][2])).map((i) => [i, vzduchem(i)] as const).sort((a, b) => a[1] - b[1]);
+      const vse = body.map((_, i) => i).filter(projde).map((i) => [i, vzduchem(i)] as const).sort((a, b) => a[1] - b[1]);
       const vDosahu = ref.typ === 'obec' ? vse.filter(([, d]) => d <= ref!.dosah) : [];
       seznam = (vDosahu.length ? vDosahu : vse.slice(0, 10)).map(([i]) => i);
       if (ref.typ === 'poloha') {
         seznam = seznam.slice(0, 10);
-        const t = (i: number) => trasa(i);
-        if (seznam.every((i) => t(i))) seznam.sort((a, b) => (t(a)!.s - t(b)!.s) || (t(a)!.m - t(b)!.m));
+        if (seznam.every((i) => cas(i))) seznam.sort((a, b) => (cas(a)!.s - cas(b)!.s) || (cas(a)!.m - cas(b)!.m));
       }
     }
 
@@ -311,32 +429,36 @@ const nastaveni = JSON.stringify({
       return nej.filter(([i]) => i >= 0);
     }
 
-    async function nactiTrasy() {
-      if (!N.trasy || ref?.typ !== 'poloha' || !body.length) return;
-      const cile = [...new Set([...seznam, ...nejblizsiZRetezcu().map(([i]) => i)])].filter((i) => !trasy.has(klicTrasy(i)));
+    // Čas a vzdálenost po silnici k víc prodejnám najednou (Matrix přes Worker)
+    async function nactiCasy(navic: number[] = []) {
+      if (!N.trasy || !poloha || !body.length) return;
+      const kandidati = ref?.typ === 'poloha' ? [...seznam, ...nejblizsiZRetezcu().map(([i]) => i)] : [];
+      const cile = [...new Set([...kandidati, ...navic])].filter((i) => !casy.has(klicCasu(i)) && odMe(i) < 80000).slice(0, 25);
       if (!cile.length) return;
-      cekaTrasy = true; chybaTras = false; vykresli();
+      cekaCasy = true; chybaCasu = false; vykresli();
       try {
         const u = new URL(N.trasy);
-        u.searchParams.set('z', `${ref.lon.toFixed(4)},${ref.lat.toFixed(4)}`);
+        u.searchParams.set('z', `${poloha.lon.toFixed(4)},${poloha.lat.toFixed(4)}`);
         u.searchParams.set('do', cile.map((i) => `${body[i][0]},${body[i][1]}`).join(';'));
         u.searchParams.set('typ', rezim === 'pesky' ? 'foot_fast' : 'car_fast');
         const odp = await fetch(u);
         if (!odp.ok) throw new Error(String(odp.status));
         const radek = (await odp.json()).matrix?.[0] ?? [];
-        cile.forEach((i, k) => { const x = radek[k]; trasy.set(klicTrasy(i), x && x.length >= 0 && x.duration >= 0 ? { m: x.length, s: x.duration } : null); });
+        cile.forEach((i, k) => { const x = radek[k]; casy.set(klicCasu(i), x && x.length >= 0 && x.duration >= 0 ? { m: x.length, s: x.duration } : null); });
       } catch {
-        chybaTras = true;
+        chybaCasu = true;
       }
-      cekaTrasy = false;
+      cekaCasy = false;
       prepocitej(); vykresli();
     }
 
     function vzdalenostHtml(i: number, podrobne = false) {
-      const t = trasa(i), d = vzduchem(i);
-      if (!ref) return '';
-      if (t) return `<span class="sm__vzd"><strong>${doba(t.s)}</strong> ${rezim === 'pesky' ? 'pěšky' : 'autem'} · ${vzdalenost(t.m)}</span>${podrobne ? `<span class="drobne">vzdušnou čarou ${vzdalenost(d)}</span>` : ''}`;
-      return `<span class="sm__vzd"><strong>${vzdalenost(d)}</strong>${podrobne || ref.typ === 'obec' ? ` <span class="drobne">${ref.typ === 'obec' ? 'od středu obce' : 'vzdušnou čarou'}</span>` : ''}</span>`;
+      const t = cas(i);
+      if (t) return `<span class="sm__vzd"><strong>${doba(t.s)}</strong> ${rezim === 'pesky' ? 'pěšky' : 'autem'} · ${vzdalenost(t.m)}</span>`;
+      if (ref?.typ === 'obec' && !podrobne) return `<span class="sm__vzd"><strong>${vzdalenost(vzduchem(i))}</strong> <span class="drobne">od středu obce</span></span>`;
+      if (poloha) return `<span class="sm__vzd"><strong>${vzdalenost(odMe(i))}</strong>${podrobne ? ' <span class="drobne">vzdušnou čarou</span>' : ''}</span>`;
+      if (ref) return `<span class="sm__vzd"><strong>${vzdalenost(vzduchem(i))}</strong> <span class="drobne">od středu obce</span></span>`;
+      return '';
     }
 
     function stavHtml(b: Bod) {
@@ -348,227 +470,425 @@ const nastaveni = JSON.stringify({
       const b = body[i];
       return `<li><button type="button" class="sm__polozka${i === vybrana ? ' je-vybrana' : ''}" data-i="${i}">
         ${logoHtml(b[2])}
-        <span class="sm__polozka-text"><strong>${esc(nazevProdejny(b))}</strong><span class="drobne">${esc([b[4], b[5]].filter(Boolean).join(', ') || 'adresa v OpenStreetMap chybí')}</span>${stavHtml(b)}</span>
+        <span class="sm__polozka-text"><strong>${esc(nazevProdejny(b))}${jeOblibena(i) ? ' <span class="sm__srdicko" aria-label="oblíbená">♥</span>' : ''}</strong><span class="drobne">${esc(adresa(b) || 'adresa v OpenStreetMap chybí')}</span>${stavHtml(b)}</span>
         ${vzdalenostHtml(i)}
       </button></li>`;
     }
 
     function rezimHtml() {
-      if (ref?.typ !== 'poloha' || !N.trasy) return '';
-      return `<div class="segment sm__rezim" role="group" aria-label="Jak se dostaneš">
+      if (!poloha || !N.trasy) return '';
+      return `<div class="segment segment--male sm__rezim" role="group" aria-label="Jak se dostaneš">
         <button type="button" data-rezim="pesky" aria-pressed="${rezim === 'pesky'}">Pěšky</button>
         <button type="button" data-rezim="autem" aria-pressed="${rezim === 'autem'}">Autem</button>
       </div>`;
     }
 
+    // Seznam oblíbených (seřazený podle vzdálenosti, když ji známe)
+    function oblibeneSeznam() {
+      const s = body.map((_, i) => i).filter((i) => oblibene.has(body[i][7]));
+      const d = (i: number) => (poloha ? odMe(i) : ref ? vzduchem(i) : 0);
+      return s.sort((a, b) => d(a) - d(b));
+    }
+
     function vykresli() {
-      if (vybrana >= 0) return vykresliDetail();
-      if (!ref) {
-        vysledkyEl.innerHTML = `<p class="sm__tip">Klikni na prodejnu na mapě, napiš obec, nebo si nech najít nejbližší prodejny podle polohy. Kliknutím na logo vybereš jen jeden řetězec.</p>`;
+      if (vybrana >= 0) { el.dataset.stav = 'detail'; return vykresliDetail(); }
+      if (jenOblibene) {
+        el.dataset.stav = 'oblibene';
+        const s = oblibeneSeznam();
+        vysledkyEl.innerHTML = `<div class="sm__vysledky-hlava"><h2>Oblíbené prodejny</h2>${rezimHtml()}</div>
+          ${s.length ? `<ol class="sm__seznam">${s.map(polozkaHtml).join('')}</ol>` : `<p class="sm__tip">Zatím tu nic není. Otevři prodejnu na mapě a klikni na <strong>Uložit</strong>. Oblíbené si pamatuje jen tento prohlížeč.</p>`}`;
         return;
       }
+      if (!ref) {
+        el.dataset.stav = 'uvod';
+        const s = oblibeneSeznam();
+        vysledkyEl.innerHTML = s.length
+          ? `<h2 class="sm__mezinadpis">Tvoje oblíbené</h2><ol class="sm__seznam">${s.slice(0, 3).map(polozkaHtml).join('')}</ol>`
+          : `<p class="sm__tip">Klikni na prodejnu na mapě nebo nahoře napiš obec. Filtr nahoře ukáže jen jeden řetězec nebo jen otevřené prodejny.</p>`;
+        return;
+      }
+      el.dataset.stav = 'seznam';
       const vDosahu = ref.typ === 'obec' && seznam.length && vzduchem(seznam[seznam.length - 1]) <= ref.dosah;
       const nadpis = ref.typ === 'poloha'
         ? 'Nejblíž k tobě'
-        : vDosahu ? `${esc(ref.nazev)}: ${seznam.length} ${seznam.length === 1 ? 'prodejna' : seznam.length < 5 ? 'prodejny' : 'prodejen'} do ${vzdalenost(ref.dosah)}` : `V obci ${esc(ref.nazev)} žádná prodejna není. Nejbližší:`;
+        : !seznam.length ? `Žádná prodejna neodpovídá filtru` : vDosahu ? `${esc(ref.nazev)}: ${seznam.length} ${seznam.length === 1 ? 'prodejna' : seznam.length < 5 ? 'prodejny' : 'prodejen'} do ${vzdalenost(ref.dosah)}` : `V obci ${esc(ref.nazev)} žádná prodejna není. Nejbližší:`;
       const zRetezcu = nejblizsiZRetezcu();
       const poznamka = ref.typ === 'poloha'
-        ? cekaTrasy ? 'Počítám trasy…' : chybaTras ? 'Trasy se teď nepodařilo spočítat, vzdálenosti jsou vzdušnou čarou.' : N.trasy ? '' : 'Vzdálenosti jsou vzdušnou čarou.'
+        ? cekaCasy ? 'Počítám cestu…' : chybaCasu ? 'Cestu po silnici se teď nepodařilo spočítat, vzdálenosti jsou vzdušnou čarou.' : N.trasy ? '' : 'Vzdálenosti jsou vzdušnou čarou.'
         : '';
       vysledkyEl.innerHTML = `
-        <div class="sm__vysledky-hlava"><h2>${nadpis}</h2>${rezimHtml()}</div>
+        <div class="sm__vysledky-hlava">
+          <button type="button" class="sm__zavrit sm__zavrit--maly" data-zrusit aria-label="Zavřít seznam"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18" /></svg></button>
+          <h2>${nadpis}</h2>${ref.typ === 'poloha' ? rezimHtml() : ''}
+        </div>
         ${poznamka ? `<p class="drobne sm__poznamka">${poznamka}</p>` : ''}
+        ${!seznam.length && (vybrane.size || jenOtevrene) ? `<p class="sm__tip">Zkus vypnout filtr nahoře.</p>` : ''}
         <ol class="sm__seznam">${seznam.slice(0, kolikUkazat).map(polozkaHtml).join('')}</ol>
         ${seznam.length > kolikUkazat ? `<button type="button" class="tlacitko tlacitko--plna-sirka" data-dalsi>Ukázat další (${seznam.length - kolikUkazat})</button>` : ''}
         <h3 class="sm__mezinadpis">Nejbližší z každého řetězce</h3>
         <ul class="sm__kazdy">${zRetezcu.map(([i]) => `<li><button type="button" class="sm__kazdy-tl" data-i="${i}" aria-label="Nejbližší ${esc(N.retezce[body[i][2]].nazev)}">${logoHtml(body[i][2])}${vzdalenostHtml(i)}</button></li>`).join('')}</ul>`;
     }
 
-    function vykresliDetail() {
-      const b = body[vybrana], d = nactiDobu(b[6]), radky = radkyDoby(d, b[6]);
-      const cil = `${b[0]},${b[1]}`;
+    const IKONA = {
+      trasa: '<path d="M6 19a2 2 0 1 0 0-4a2 2 0 1 0 0 4z M18 9a2 2 0 1 0 0-4a2 2 0 1 0 0 4z M8 17h6.5a3.5 3.5 0 0 0 0-7h-5a3.5 3.5 0 0 1 0-7H16" transform="translate(0 2)"/>',
+      srdce: '<path d="M12 20s-7.5-4.6-7.5-10.1A4.2 4.2 0 0 1 12 7.4a4.2 4.2 0 0 1 7.5 2.5C19.5 15.4 12 20 12 20z"/>',
+      navigovat: '<path d="M20 4L4 11l7 2 2 7z"/>',
+      sdilet: '<path d="M12 15V4 M8 8l4-4 4 4 M5 13v5a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-5"/>',
+      pesky: '<path d="M13 4.5a1.5 1.5 0 1 0 0 .01 M10 21l2-6 3 3v3 M9 12l2-4 3 1 2 3 M11 8l-2 5"/>',
+      auto: '<path d="M5 16V11l2-5h10l2 5v5 M5 16h14 M5 16v2 M19 16v2 M7.5 13h.01 M16.5 13h.01"/>',
+    };
+    const svg = (d: string, plne = false) => `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="${plne ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+
+    function odkazyNavigace(b: Bod) {
       const mapy = new URL('https://mapy.com/fnc/v1/route');
-      if (ref?.typ === 'poloha') mapy.searchParams.set('start', `${ref.lon.toFixed(5)},${ref.lat.toFixed(5)}`);
-      mapy.searchParams.set('end', cil);
+      if (poloha) mapy.searchParams.set('start', `${poloha.lon.toFixed(5)},${poloha.lat.toFixed(5)}`);
+      mapy.searchParams.set('end', `${b[0]},${b[1]}`);
       mapy.searchParams.set('routeType', rezim === 'pesky' ? 'foot_fast' : 'car_fast');
       mapy.searchParams.set('navigate', 'true');
       const google = `https://www.google.com/maps/dir/?api=1&destination=${b[1]},${b[0]}&travelmode=${rezim === 'pesky' ? 'walking' : 'driving'}`;
+      return { mapy: mapy.toString(), google };
+    }
+
+    function vykresliDetail() {
+      const b = body[vybrana], d = nactiDobu(b[6]), radky = radkyDoby(d, b[6]);
       const osm = `https://www.openstreetmap.org/${({ n: 'node', w: 'way', r: 'relation' } as Record<string, string>)[b[7][0]]}/${b[7].slice(1)}`;
+      const nav = odkazyNavigace(b);
+      const oblib = jeOblibena(vybrana);
+      const maTrasu = trasa?.i === vybrana;
+      const t = cas(vybrana);
+      let cesta = '';
+      if (maTrasu) {
+        cesta = `<div class="sm__cesta je-trasa">
+          <span class="sm__cesta-ikona">${svg(rezim === 'pesky' ? IKONA.pesky : IKONA.auto)}</span>
+          <span class="sm__cesta-text"><strong>${doba(trasa!.s)}</strong> <span>${vzdalenost(trasa!.m)}</span></span>
+          ${rezimHtml()}
+        </div>
+        ${trasa!.vzduchem ? '<p class="drobne sm__poznamka-trasy">Cestu po silnici se teď nepodařilo spočítat. Čára i čas jsou jen odhad vzdušnou čarou, pro navigaci použij Navigovat.</p>' : ''}`;
+      } else if (poloha || ref) {
+        cesta = `<div class="sm__cesta">${vzdalenostHtml(vybrana, true)}${t || !poloha ? '' : cekaCasy ? '<span class="drobne">Počítám cestu…</span>' : ''}${poloha ? rezimHtml() : ''}</div>`;
+      }
       vysledkyEl.innerHTML = `
-        ${ref || seznam.length ? `<button type="button" class="sm__zpet" data-zpet>← Zpět na seznam</button>` : ''}
         <article class="sm__detail">
-          <div class="sm__detail-hlava">${logoHtml(b[2], true)}<div><h2>${esc(nazevProdejny(b))}</h2><p>${esc([b[4], b[5]].filter(Boolean).join(', ') || 'Adresa v OpenStreetMap chybí')}</p></div></div>
-          ${ref ? `<div class="sm__detail-vzd">${vzdalenostHtml(vybrana, true)}${rezimHtml()}</div>` : ''}
-          ${stavHtml(b)}
-          ${radky.length ? `<div class="sm__doba"><h3>Otevírací doba</h3><ul>${radky.map((r) => `<li>${esc(r)}</li>`).join('')}</ul></div>` : `<p class="drobne">Otevírací doba v OpenStreetMap chybí.</p>`}
-          <div class="sm__detail-akce">
-            <a class="tlacitko tlacitko--oranzovy" href="${mapy.toString()}" target="_blank" rel="noopener">Navigovat přes Mapy.com</a>
-            <a class="tlacitko" href="${google}" target="_blank" rel="noopener">Navigovat přes Google Mapy</a>
+          <div class="sm__detail-hlava">
+            ${logoHtml(b[2], true)}
+            <div class="sm__detail-nazev"><h2>${esc(nazevProdejny(b))}</h2><p>${esc(adresa(b) || 'Adresa v OpenStreetMap chybí')}</p>${stavHtml(b)}</div>
+            <button type="button" class="sm__zavrit" data-zavrit aria-label="Zavřít">${svg('<path d="M6 6l12 12M18 6L6 18"/>')}</button>
           </div>
+          <div class="sm__akce">
+            <button type="button" class="sm__akce-tl sm__akce-tl--hlavni" data-trasa aria-pressed="${maTrasu}" ${cekaTrasa ? 'disabled' : ''}>
+              <span class="sm__akce-kruh">${svg(IKONA.trasa)}</span><span>${cekaTrasa ? 'Hledám…' : maTrasu ? 'Skrýt trasu' : 'Trasa'}</span>
+            </button>
+            <button type="button" class="sm__akce-tl" data-oblibit aria-pressed="${oblib}">
+              <span class="sm__akce-kruh">${svg(IKONA.srdce, oblib)}</span><span>${oblib ? 'Uloženo' : 'Uložit'}</span>
+            </button>
+            <button type="button" class="sm__akce-tl" data-navigovat aria-expanded="${nabidkaNavigace}">
+              <span class="sm__akce-kruh">${svg(IKONA.navigovat)}</span><span>Navigovat</span>
+            </button>
+            <button type="button" class="sm__akce-tl" data-sdilet>
+              <span class="sm__akce-kruh">${svg(IKONA.sdilet)}</span><span>Sdílet</span>
+            </button>
+          </div>
+          ${nabidkaNavigace ? `<div class="sm__navigace">
+            <p class="drobne">Navigace krok za krokem v aplikaci (v mobilu se otevře, když ji máš):</p>
+            <div class="sm__navigace-tl">
+              <a class="tlacitko tlacitko--oranzovy" href="${nav.mapy}" target="_blank" rel="noopener">Mapy.com</a>
+              <a class="tlacitko" href="${nav.google}" target="_blank" rel="noopener">Google Mapy</a>
+            </div>
+          </div>` : ''}
+          ${cesta}
+          ${radky.length ? `<div class="sm__doba"><h3>Otevírací doba</h3><ul>${radky.map((r) => `<li>${esc(r)}</li>`).join('')}</ul></div>` : `<p class="drobne">Otevírací doba v OpenStreetMap chybí.</p>`}
           <p class="drobne">Chybí adresa nebo nesedí otevírací doba? <a href="${osm}" target="_blank" rel="noopener">Oprav ji v OpenStreetMap</a>, na web se dostane při další aktualizaci.</p>
         </article>`;
     }
 
+    // Přiblížit na body. MapLibre k odsazení v options přičítá i odsazení mapy, proto se nastaví zvlášť
+    // a do fitBounds jde jen malý okraj.
+    function priblizNa(pts: number[][], maxZoom = 15.5, duration = 900) {
+      const lon = pts.map((p) => p[0]), lat = pts.map((p) => p[1]);
+      map.setPadding(odsazeni());
+      map.fitBounds([[Math.min(...lon), Math.min(...lat)], [Math.max(...lon), Math.max(...lat)]], { padding: 36, maxZoom, duration });
+    }
+
     function zobrazSeznamNaMape() {
       if (!ref || !seznam.length) return;
-      const pts = [[ref.lon, ref.lat], ...seznam.slice(0, Math.min(seznam.length, ref.typ === 'poloha' ? 5 : 30)).map((i) => [body[i][0], body[i][1]])];
-      const lon = pts.map((p) => p[0]), lat = pts.map((p) => p[1]);
-      map.fitBounds([[Math.min(...lon), Math.min(...lat)], [Math.max(...lon), Math.max(...lat)]], { padding: 56, maxZoom: 15.5, duration: 900 });
+      priblizNa([[ref.lon, ref.lat], ...seznam.slice(0, Math.min(seznam.length, ref.typ === 'poloha' ? 5 : 30)).map((i) => [body[i][0], body[i][1]])]);
     }
 
     function vyber(i: number, zPrikazu = false) {
-      vybrana = i;
+      if (trasa && trasa.i !== i) zrusTrasu();
+      vybrana = i; nabidkaNavigace = false;
       const b = body[i];
       (map.getSource('vybrana') as maplibregl.GeoJSONSource).setData({ type: 'Feature', properties: { id: ids[b[2]] }, geometry: { type: 'Point', coordinates: [b[0], b[1]] } } as any);
-      vysun('stred', false);
-      map.easeTo({ center: [b[0], b[1]], zoom: Math.max(map.getZoom(), 15), padding: odsazeni(), duration: zPrikazu ? 0 : 700 });
-      history.replaceState(null, '', `#prodejna=${b[7]}`);
       vykresli();
-      ukazVysledky();
-    }
-
-    // Na mobilu posune obsah panelu k výsledkům (hledání a filtr zůstanou nad nimi), na počítači nahoru
-    function ukazVysledky() {
-      if (!mobil.matches) { obsah.scrollTo({ top: 0 }); return; }
-      requestAnimationFrame(() => obsah.scrollTo({ top: obsah.scrollTop + vysledkyEl.getBoundingClientRect().top - obsah.getBoundingClientRect().top - 8, behavior: 'smooth' }));
+      vysun('stred', false);
+      requestAnimationFrame(() => map.easeTo({ center: [b[0], b[1]], zoom: Math.max(map.getZoom(), 15), padding: odsazeni(), duration: zPrikazu ? 0 : 700 }));
+      history.replaceState(null, '', `#prodejna=${b[7]}`);
+      obsah.scrollTo({ top: 0 });
+      // čas cesty k této prodejně, i když není v seznamu nejbližších
+      if (poloha && !casy.has(klicCasu(i))) nactiCasy([i]);
     }
 
     function zrusVyber() {
-      vybrana = -1;
-      (map.getSource('vybrana') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: [] });
+      vybrana = -1; nabidkaNavigace = false;
+      zrusTrasu();
+      (map.getSource('vybrana') as maplibregl.GeoJSONSource | undefined)?.setData(prazdne);
       history.replaceState(null, '', location.pathname + location.search + '#mapa-prodejen');
       vykresli();
+      map.easeTo({ padding: odsazeni(), duration: 300 });
+    }
+
+    // ---------- trasa na mapě ----------
+    function zrusTrasu() {
+      trasa = null;
+      (map.getSource('trasa') as maplibregl.GeoJSONSource | undefined)?.setData(prazdne);
+    }
+    async function ukazTrasu(i: number) {
+      if (!poloha) { najdiPolohu(() => ukazTrasu(i)); return; }
+      const b = body[i];
+      cekaTrasa = true; vykresli();
+      let cara: [number, number][] = [[poloha.lon, poloha.lat], [b[0], b[1]]];
+      let vysledek: { m: number; s: number; vzduchem: boolean };
+      try {
+        if (!N.trasy) throw new Error('bez Workeru');
+        const u = new URL(N.trasy);
+        u.searchParams.set('trasa', '1');
+        u.searchParams.set('z', `${poloha.lon.toFixed(4)},${poloha.lat.toFixed(4)}`);
+        u.searchParams.set('do', `${b[0]},${b[1]}`);
+        u.searchParams.set('typ', rezim === 'pesky' ? 'foot_fast' : 'car_fast');
+        const odp = await fetch(u);
+        if (!odp.ok) throw new Error(String(odp.status));
+        const j = await odp.json();
+        if (!Array.isArray(j.cara) || j.cara.length < 2) throw new Error('bez čáry');
+        cara = j.cara;
+        vysledek = { m: j.m, s: j.s, vzduchem: false };
+        casy.set(klicCasu(i), { m: j.m, s: j.s });
+      } catch {
+        // Bez trasy po silnici aspoň přímá čára a odhad času (pěšky 4,5 km/h, autem 40 km/h po městě)
+        const m = odMe(i);
+        vysledek = { m, s: m / (rezim === 'pesky' ? 1.25 : 11), vzduchem: true };
+      }
+      cekaTrasa = false;
+      if (vybrana !== i) return;
+      trasa = { i, rezim, ...vysledek };
+      map.setPaintProperty('trasa', 'line-dasharray', rezim === 'pesky' || vysledek.vzduchem ? [0.1, 1.9] : [1, 0]);
+      (map.getSource('trasa') as maplibregl.GeoJSONSource).setData({ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: cara } } as any);
+      vykresli();
+      vysun('stred', false);
+      requestAnimationFrame(() => priblizNa(cara, 16.5, 800));
+    }
+
+    async function sdilej(i: number) {
+      const b = body[i];
+      const url = `${location.origin}${location.pathname}#prodejna=${b[7]}`;
+      const titul = `${nazevProdejny(b)}${adresa(b) ? `, ${adresa(b)}` : ''}`;
+      try {
+        if (navigator.share && mobil.matches) { await navigator.share({ title: titul, url }); return; }
+        await navigator.clipboard.writeText(url);
+        oznam('Odkaz na prodejnu je zkopírovaný');
+      } catch {}
     }
 
     vysledkyEl.addEventListener('click', (e) => {
       const t = e.target as HTMLElement;
       const polozka = t.closest<HTMLElement>('[data-i]');
       if (polozka) return vyber(Number(polozka.dataset.i));
-      if (t.closest('[data-zpet]')) { zrusVyber(); zobrazSeznamNaMape(); return; }
+      if (t.closest('[data-zavrit]')) { zrusVyber(); if (ref) zobrazSeznamNaMape(); return; }
+      if (t.closest('[data-zrusit]')) { pole.value = ''; smazat.hidden = true; nastavRef(null); seznam = []; vykresli(); vysun('nizko'); return; }
+      if (t.closest('[data-trasa]')) { if (trasa?.i === vybrana) { zrusTrasu(); vykresli(); } else ukazTrasu(vybrana); return; }
+      if (t.closest('[data-oblibit]')) {
+        const id = body[vybrana][7];
+        if (oblibene.has(id)) { oblibene.delete(id); oznam('Odebráno z oblíbených'); } else { oblibene.add(id); oznam('Uloženo do oblíbených'); }
+        uloz('sm-oblibene', [...oblibene]);
+        aktualizujProdejny(); vykresli();
+        return;
+      }
+      if (t.closest('[data-navigovat]')) { nabidkaNavigace = !nabidkaNavigace; vykresli(); return; }
+      if (t.closest('[data-sdilet]')) { sdilej(vybrana); return; }
       if (t.closest('[data-dalsi]')) { kolikUkazat += 20; vykresli(); return; }
       const r = t.closest<HTMLElement>('[data-rezim]');
-      if (r && r.dataset.rezim !== rezim) { rezim = r.dataset.rezim as typeof rezim; prepocitej(); vykresli(); nactiTrasy(); }
+      if (r && r.dataset.rezim !== rezim) {
+        rezim = r.dataset.rezim as Rezim;
+        prepocitej(); vykresli(); nactiCasy(vybrana >= 0 ? [vybrana] : []);
+        if (trasa && vybrana >= 0) ukazTrasu(vybrana);
+      }
     });
 
-    // ---------- filtr řetězců ----------
-    const tlRetezcu = [...el.querySelectorAll<HTMLButtonElement>('[data-r]')], tlVse = $<HTMLButtonElement>('[data-sm-vse]');
+    // ---------- filtry nahoře ----------
+    const tlRetezcu = [...el.querySelectorAll<HTMLButtonElement>('[data-r]')];
+    const tlOtevreno = $<HTMLButtonElement>('[data-sm-otevreno]'), tlOblibene = $<HTMLButtonElement>('[data-sm-oblibene]');
     function nastavFiltr() {
-      const vse = vybrane.size === ids.length;
-      tlVse.setAttribute('aria-pressed', String(vse));
-      for (const tl of tlRetezcu) tl.setAttribute('aria-pressed', String(vse || vybrane.has(tl.dataset.r!)));
-      el.classList.toggle('je-filtr', !vse);
-      for (const v of ['obchody-tecky', 'obchody-loga']) if (map.getLayer(v)) map.setFilter(v, filtrRetezcu());
-      prepocitej(); kolikUkazat = 12; vykresli(); nactiTrasy();
-      if (vybrana < 0) zobrazSeznamNaMape();
+      for (const tl of tlRetezcu) tl.setAttribute('aria-pressed', String(vybrane.has(tl.dataset.r!)));
+      tlOtevreno.setAttribute('aria-pressed', String(jenOtevrene));
+      tlOblibene.setAttribute('aria-pressed', String(jenOblibene));
+      el.classList.toggle('je-filtr', vybrane.size > 0);
+      aktualizujProdejny();
+      prepocitej(); kolikUkazat = 12; vykresli(); nactiCasy();
+      if (vybrana < 0) {
+        if (jenOblibene) {
+          const s = oblibeneSeznam();
+          if (s.length) priblizNa(s.map((i) => [body[i][0], body[i][1]]), 15, 800);
+          vysun('stred');
+        } else zobrazSeznamNaMape();
+      }
     }
     for (const tl of tlRetezcu) tl.addEventListener('click', () => {
       const id = tl.dataset.r!;
-      if (vybrane.size === ids.length) vybrane = new Set([id]);
-      else if (vybrane.has(id)) { vybrane.delete(id); if (!vybrane.size) vybrane = new Set(ids); }
-      else vybrane.add(id);
+      if (vybrane.has(id)) vybrane.delete(id); else vybrane.add(id);
       nastavFiltr();
     });
-    tlVse.addEventListener('click', () => { vybrane = new Set(ids); nastavFiltr(); });
+    tlOtevreno.addEventListener('click', () => {
+      jenOtevrene = !jenOtevrene;
+      if (jenOtevrene) {
+        const ted = new Date();
+        otevreneTed = new Set(body.map((b, i) => [i, stavTed(nactiDobu(b[6]), ted)] as const).filter(([, s]) => s?.otevreno).map(([i]) => i));
+      }
+      nastavFiltr();
+    });
+    tlOblibene.addEventListener('click', () => { jenOblibene = !jenOblibene; if (vybrana >= 0 && jenOblibene) { vybrana = -1; (map.getSource('vybrana') as maplibregl.GeoJSONSource | undefined)?.setData(prazdne); zrusTrasu(); } nastavFiltr(); });
 
     // ---------- poloha ----------
     const tlPoloha = $<HTMLButtonElement>('[data-sm-poloha]');
-    function najdiPolohu() {
+    function najdiPolohu(potom?: () => void) {
       if (!('geolocation' in navigator)) { hlaska('Tvůj prohlížeč polohu nezjistí. Napiš obec.'); return; }
       tlPoloha.disabled = true; tlPoloha.querySelector('span')!.textContent = 'Zjišťuji polohu…';
+      el.classList.add('hleda-polohu');
       navigator.geolocation.getCurrentPosition(
         (p) => {
-          tlPoloha.disabled = false; tlPoloha.querySelector('span')!.textContent = 'Najít nejbližší podle polohy';
+          tlPoloha.disabled = false; tlPoloha.querySelector('span')!.textContent = 'Nejbližší ke mně';
+          el.classList.remove('hleda-polohu');
+          nastavPolohu(p); sleduj();
+          if (potom) { potom(); return; }
           pole.value = ''; smazat.hidden = true;
-          nastavRef({ lon: p.coords.longitude, lat: p.coords.latitude, typ: 'poloha', nazev: 'Moje poloha', dosah: 0 });
-          vybrana = -1; kolikUkazat = 12;
-          (map.getSource('vybrana') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: [] });
+          nastavRef({ lon: poloha!.lon, lat: poloha!.lat, typ: 'poloha', nazev: 'Moje poloha', dosah: 0 });
+          zrusTrasu();
+          vybrana = -1; kolikUkazat = 12; jenOblibene = false; tlOblibene.setAttribute('aria-pressed', 'false');
+          (map.getSource('vybrana') as maplibregl.GeoJSONSource | undefined)?.setData(prazdne);
           prepocitej();
           rezim = seznam.length && vzduchem(seznam[0]) < 1500 ? 'pesky' : 'autem';
-          prepocitej(); vykresli(); vysun('stred'); ukazVysledky(); zobrazSeznamNaMape(); nactiTrasy();
+          prepocitej(); vykresli(); vysun('stred'); zobrazSeznamNaMape(); nactiCasy();
         },
         (chyba) => {
-          tlPoloha.disabled = false; tlPoloha.querySelector('span')!.textContent = 'Najít nejbližší podle polohy';
-          hlaska(chyba.code === 1 ? 'Polohu jsi nepovolil(a). Povol ji v nastavení prohlížeče, nebo napiš obec.' : 'Polohu se nepodařilo zjistit. Zkus to znovu, nebo napiš obec.');
+          tlPoloha.disabled = false; tlPoloha.querySelector('span')!.textContent = 'Nejbližší ke mně';
+          el.classList.remove('hleda-polohu');
+          hlaska(chyba.code === 1 ? 'Polohu jsi nepovolil(a). Povol ji v nastavení prohlížeče, nebo nahoře napiš obec.' : 'Polohu se nepodařilo zjistit. Zkus to znovu, nebo nahoře napiš obec.');
         },
         { enableHighAccuracy: true, timeout: 12000, maximumAge: 60000 },
       );
     }
-    function hlaska(text: string) { vybrana = -1; vysledkyEl.innerHTML = `<p class="sm__tip sm__tip--chyba">${esc(text)}</p>`; vysun('stred'); }
-    tlPoloha.addEventListener('click', najdiPolohu);
-    $('[data-sm-poloha-mapa]').addEventListener('click', najdiPolohu);
+    function hlaska(text: string) {
+      vybrana = -1; el.dataset.stav = 'uvod';
+      vysledkyEl.innerHTML = `<p class="sm__tip sm__tip--chyba">${esc(text)}</p>`;
+      vysun('stred');
+    }
+    tlPoloha.addEventListener('click', () => najdiPolohu());
+    // Tlačítko na mapě: když polohu známe, jen k ní přiletí, jinak najde nejbližší
+    for (const tl of el.querySelectorAll<HTMLButtonElement>('[data-sm-ja]')) tl.addEventListener('click', () => {
+      if (poloha) map.flyTo({ center: [poloha.lon, poloha.lat], zoom: Math.max(map.getZoom(), 15), padding: odsazeni(), duration: 800 });
+      else najdiPolohu();
+    });
 
-    // ---------- hledání obce ----------
+    // ---------- hledání: obec, město, nebo řetězec („lidl“, „lidl brno“) ----------
     const TYPY = ['město', 'město', 'obec', 'část obce'];
     const DOSAH = [8000, 4000, 2500, 2000];
-    let nalezene: Obec[] = [], aktivni = -1;
+    const NAZVY_RETEZCU = N.retezce.map((r) => bezDiakritiky(r.nazev));
+    type Navrh = { obec?: Obec; retezec?: number };
+    let navrhy: Navrh[] = [], aktivni = -1;
     async function nactiObce() {
       if (obce) return;
       const d = await (await fetch('/data/obce.json')).json();
       obce = d.obce; nazvyKraju = d.kraje;
       for (const o of obce!) (o as any).hledat = bezDiakritiky(o[0]);
     }
-    pole.addEventListener('focus', () => { nactiObce(); if (mobil.matches) vysun('vysoko'); }, { once: false });
+    // „lidl brno“ → řetězec Lidl + obec Brno
+    function rozeber(text: string) {
+      const slova = bezDiakritiky(text.trim()).split(/\s+/).filter(Boolean);
+      let retezec = -1;
+      for (const k of [0, slova.length - 1]) {
+        const r = slova[k] && slova[k].length >= 3 ? NAZVY_RETEZCU.findIndex((n) => n.startsWith(slova[k])) : -1;
+        if (r >= 0) { retezec = r; slova.splice(k, 1); break; }
+      }
+      return { retezec, q: slova.join(' ') };
+    }
+    pole.addEventListener('focus', () => { nactiObce(); if (mobil.matches && panel.dataset.vyska === 'vysoko') vysun('stred'); });
     pole.addEventListener('input', async () => {
       smazat.hidden = !pole.value;
       await nactiObce();
-      const q = bezDiakritiky(pole.value.trim());
-      if (q.length < 2) return zavriNaseptavac();
+      const { retezec, q } = rozeber(pole.value);
+      if (q.length < 2 && retezec < 0) return zavriNaseptavac();
       const zacina: Obec[] = [], slovo: Obec[] = [];
-      for (const o of obce!) {
+      if (q.length >= 2) for (const o of obce!) {
         const h: string = (o as any).hledat;
         if (h.startsWith(q)) zacina.push(o);
         else if (h.includes(' ' + q) || h.includes('-' + q)) slovo.push(o);
       }
       const poradi = (a: Obec, b: Obec) => Number(bezDiakritiky(b[0]) === q) - Number(bezDiakritiky(a[0]) === q) || a[3] - b[3];
-      nalezene = [...zacina.sort(poradi), ...slovo.sort(poradi)].slice(0, 8);
-      aktivni = nalezene.length ? 0 : -1;
+      const nalezene = [...zacina.sort(poradi), ...slovo.sort(poradi)].slice(0, retezec >= 0 && !q ? 0 : 7);
+      navrhy = [
+        ...(retezec >= 0 && !q ? [{ retezec }] : []),
+        ...nalezene.map((obec) => ({ obec, retezec: retezec >= 0 ? retezec : undefined })),
+      ];
+      aktivni = navrhy.length ? 0 : -1;
       ukazNaseptavac();
     });
     function ukazNaseptavac() {
-      if (!nalezene.length) {
-        naseptavac.innerHTML = `<li class="sm__nic">Takovou obec neznám</li>`;
+      if (!navrhy.length) {
+        naseptavac.innerHTML = `<li class="sm__nic">Takovou obec ani řetězec neznám</li>`;
       } else {
-        naseptavac.innerHTML = nalezene.map((o, k) => `<li role="option" id="sm-obec-${k}" aria-selected="${k === aktivni}" data-k="${k}">
-          <strong>${esc(o[0])}</strong><span class="drobne">${TYPY[o[3]]}${o[3] === 3 && o[5] ? ` ${esc(o[5])}` : ` · ${esc(nazvyKraju[o[4]] ?? '')}`}${o[3] === 2 && o[5] ? ` · u města ${esc(o[5])}` : ''}</span></li>`).join('');
+        naseptavac.innerHTML = navrhy.map((n, k) => {
+          const r = n.retezec !== undefined ? logoHtml(n.retezec) : '<span class="sm__navrh-ikona"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg></span>';
+          if (!n.obec) return `<li role="option" id="sm-navrh-${k}" aria-selected="${k === aktivni}" data-k="${k}">${r}<span class="sm__navrh-text"><strong>Všechny prodejny ${esc(N.retezce[n.retezec!].nazev)}</strong><span class="drobne">${poloha ? 'nejbližší k tobě' : 'na mapě'}</span></span></li>`;
+          const o = n.obec;
+          const popis = `${TYPY[o[3]]}${o[3] === 3 && o[5] ? ` ${esc(o[5])}` : ` · ${esc(nazvyKraju[o[4]] ?? '')}`}${o[3] === 2 && o[5] ? ` · u města ${esc(o[5])}` : ''}`;
+          return `<li role="option" id="sm-navrh-${k}" aria-selected="${k === aktivni}" data-k="${k}">${r}<span class="sm__navrh-text"><strong>${n.retezec !== undefined ? `${esc(N.retezce[n.retezec].nazev)} · ` : ''}${esc(o[0])}</strong><span class="drobne">${popis}</span></span></li>`;
+        }).join('');
       }
       naseptavac.hidden = false;
       pole.setAttribute('aria-expanded', 'true');
-      if (aktivni >= 0) pole.setAttribute('aria-activedescendant', `sm-obec-${aktivni}`);
+      if (aktivni >= 0) pole.setAttribute('aria-activedescendant', `sm-navrh-${aktivni}`);
     }
     function zavriNaseptavac() { naseptavac.hidden = true; pole.setAttribute('aria-expanded', 'false'); pole.removeAttribute('aria-activedescendant'); }
     pole.addEventListener('keydown', (e) => {
-      if (naseptavac.hidden || !nalezene.length) return;
+      if (naseptavac.hidden || !navrhy.length) return;
       if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
         e.preventDefault();
-        aktivni = (aktivni + (e.key === 'ArrowDown' ? 1 : nalezene.length - 1)) % nalezene.length;
+        aktivni = (aktivni + (e.key === 'ArrowDown' ? 1 : navrhy.length - 1)) % navrhy.length;
         ukazNaseptavac();
-      } else if (e.key === 'Enter') { e.preventDefault(); vyberObec(nalezene[Math.max(0, aktivni)]); }
+      } else if (e.key === 'Enter') { e.preventDefault(); pouzijNavrh(navrhy[Math.max(0, aktivni)]); }
       else if (e.key === 'Escape') zavriNaseptavac();
     });
     naseptavac.addEventListener('mousedown', (e) => e.preventDefault());
     naseptavac.addEventListener('click', (e) => {
       const li = (e.target as HTMLElement).closest<HTMLElement>('[data-k]');
-      if (li) vyberObec(nalezene[Number(li.dataset.k)]);
+      if (li) pouzijNavrh(navrhy[Number(li.dataset.k)]);
     });
     pole.addEventListener('blur', () => setTimeout(zavriNaseptavac, 120));
     smazat.addEventListener('click', () => {
       pole.value = ''; smazat.hidden = true; zavriNaseptavac();
       nastavRef(null); seznam = []; zrusVyber(); pole.focus();
     });
+    function pouzijNavrh(n: Navrh) {
+      if (n.retezec !== undefined) { vybrane = new Set([ids[n.retezec]]); jenOblibene = false; }
+      if (n.obec) { vyberObec(n.obec); nastavFiltr(); return; }
+      // jen řetězec: od polohy, když ji známe, jinak od středu mapy
+      pole.value = N.retezce[n.retezec!].nazev; smazat.hidden = false; zavriNaseptavac(); pole.blur();
+      if (poloha) nastavRef({ lon: poloha.lon, lat: poloha.lat, typ: 'poloha', nazev: 'Moje poloha', dosah: 0 });
+      vybrana = -1; zrusTrasu();
+      nastavFiltr();
+      vysun('stred');
+    }
     function vyberObec(o: Obec) {
       pole.value = o[0]; smazat.hidden = false; zavriNaseptavac(); pole.blur();
       nastavRef({ lon: o[1], lat: o[2], typ: 'obec', nazev: o[0], dosah: DOSAH[o[3]] });
-      vybrana = -1; kolikUkazat = 12;
-      (map.getSource('vybrana') as maplibregl.GeoJSONSource | undefined)?.setData({ type: 'FeatureCollection', features: [] });
-      prepocitej(); vykresli(); vysun('stred'); ukazVysledky();
-      if (seznam.length) zobrazSeznamNaMape();
-      else map.flyTo({ center: [o[1], o[2]], zoom: 13 });
+      vybrana = -1; kolikUkazat = 12; zrusTrasu(); jenOblibene = false; tlOblibene.setAttribute('aria-pressed', 'false');
+      (map.getSource('vybrana') as maplibregl.GeoJSONSource | undefined)?.setData(prazdne);
+      prepocitej(); vykresli(); vysun('stred');
+      requestAnimationFrame(() => { if (seznam.length) zobrazSeznamNaMape(); else map.flyTo({ center: [o[1], o[2]], zoom: 13, padding: odsazeni() }); });
     }
 
     // ---------- panel na mobilu (vysouvací zespodu) ----------
     type Vyska = 'nizko' | 'stred' | 'vysoko';
     function vysun(v: Vyska, posunMapu = true) {
-      if (!mobil.matches) return;
+      if (!mobil.matches) { if (posunMapu) map.easeTo({ padding: odsazeni(), duration: 300 }); return; }
       if (panel.dataset.vyska === 'vysoko' && v === 'stred') return;
       if (panel.dataset.vyska === v) return;
       panel.dataset.vyska = v;
@@ -585,7 +905,7 @@ const nastaveni = JSON.stringify({
       if (!tah) return;
       const dy = tah.y - e.clientY;
       if (Math.abs(dy) > 6) tah.pohyb = true;
-      panel.style.height = `${Math.max(120, Math.min(el.clientHeight - 24, tah.h + dy))}px`;
+      panel.style.height = `${Math.max(120, Math.min(el.clientHeight - horni.offsetHeight - 16, tah.h + dy))}px`;
     });
     uchyt.addEventListener('pointerup', () => {
       if (!tah) return;
@@ -598,9 +918,9 @@ const nastaveni = JSON.stringify({
       map.easeTo({ padding: odsazeni(), duration: 320 });
       tah = null;
     });
-    map.on('dragstart', () => { if (mobil.matches && panel.dataset.vyska === 'vysoko') { panel.dataset.vyska = 'stred'; map.setPadding(odsazeni()); } });
+    map.on('dragstart', () => { if (mobil.matches && panel.dataset.vyska !== 'nizko' && vybrana < 0) { panel.dataset.vyska = 'nizko'; map.setPadding(odsazeni()); } });
 
-    // ---------- celá obrazovka ----------
+    // ---------- celá obrazovka (počítač) ----------
     const tlCela = $<HTMLButtonElement>('[data-sm-cela]');
     function nastavCelou(zapnout: boolean) {
       el.classList.toggle('je-cela', zapnout);
@@ -612,21 +932,27 @@ const nastaveni = JSON.stringify({
     tlCela.addEventListener('click', async () => {
       const zapnout = !el.classList.contains('je-cela');
       try {
-        if (zapnout && el.requestFullscreen && !mobil.matches) await el.requestFullscreen();
+        if (zapnout && el.requestFullscreen) await el.requestFullscreen();
         else if (!zapnout && document.fullscreenElement) await document.exitFullscreen();
       } catch {}
       nastavCelou(zapnout);
     });
     document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement && el.classList.contains('je-cela')) nastavCelou(false); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && el.classList.contains('je-cela') && !document.fullscreenElement) nastavCelou(false); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape' || document.activeElement === pole) return;
+      if (el.classList.contains('je-cela') && !document.fullscreenElement) nastavCelou(false);
+      else if (vybrana >= 0) zrusVyber();
+    });
 
-    // Výška mapy = okno bez hlavičky webu
+    // Výška mapy = okno bez hlavičky webu (na mobilu je hlavička nad mapou schovaná)
     const hlavicka = document.querySelector<HTMLElement>('.hlavicka');
-    const vyskaHlavicky = () => el.style.setProperty('--sm-hlavicka', `${hlavicka?.offsetHeight ?? 64}px`);
+    const vyskaHlavicky = () => el.style.setProperty('--sm-hlavicka', `${mobil.matches ? 0 : hlavicka?.offsetHeight ?? 64}px`);
     vyskaHlavicky();
-    addEventListener('resize', vyskaHlavicky);
-    mobil.addEventListener('change', () => { panel.dataset.vyska = 'nizko'; map.resize(); map.setPadding(odsazeni()); });
-    addEventListener('resize', () => map.setPadding(odsazeni()));
+    addEventListener('resize', () => { vyskaHlavicky(); map.setPadding(odsazeni()); });
+    mobil.addEventListener('change', () => { panel.dataset.vyska = 'nizko'; vyskaHlavicky(); map.resize(); map.setPadding(odsazeni()); });
+
+    // Na mobilu se hlavička a spodní lišta webu ukážou, až když člověk sjede pod mapu
+    new IntersectionObserver(([z]) => document.documentElement.classList.toggle('sm-pod-mapou', z.intersectionRatio < 0.35), { threshold: [0, 0.35, 0.7, 1] }).observe(el);
   }
 </script>
 
@@ -634,8 +960,9 @@ const nastaveni = JSON.stringify({
   /* Globální, protože obsah panelu vzniká skriptem; všechny třídy mají předponu sm__ */
   .sm {
     --sm-hlavicka: 64px;
+    --sm-modra: #1A73E8;
     position: relative;
-    height: calc(100svh - var(--sm-hlavicka) - 2.75rem);
+    height: calc(100svh - var(--sm-hlavicka));
     min-height: 520px;
     background: var(--pevnina);
     border-bottom: 1px solid var(--line);
@@ -646,6 +973,7 @@ const nastaveni = JSON.stringify({
   html.sm-cela { overflow: hidden; }
   .sm .sm__mapa { position: absolute; inset: 0; }
   .sm .sm__mapa .maplibregl-canvas { outline: none; }
+  .sm .sm__mapa .maplibregl-ctrl-bottom-right { right: 6px; bottom: 6px; }
   .sm .sm__mapa .maplibregl-ctrl-top-right { top: 64px; right: 4px; }
   .sm .sm__mapa .maplibregl-ctrl-group { border-radius: 12px; overflow: hidden; box-shadow: var(--stin-maly); background: var(--paper); }
   .sm .sm__mapa .maplibregl-ctrl-group button { width: 40px; height: 40px; }
@@ -654,61 +982,55 @@ const nastaveni = JSON.stringify({
   .sm .sm__mapa .maplibregl-ctrl-attrib { font-size: 0.7rem; background: var(--sklo); color: var(--muted); }
   .sm .sm__mapa .maplibregl-ctrl-attrib a { color: var(--muted); }
 
-  .sm .sm__nastroj {
-    position: absolute; right: 14px; z-index: 3; width: 40px; height: 40px; display: grid; place-items: center;
-    border-radius: 12px; border: 0; background: var(--paper); color: var(--navy); box-shadow: var(--stin-maly); cursor: pointer;
+  /* ---------- horní lišta: hledání a filtry ---------- */
+  .sm .sm__horni {
+    position: absolute; z-index: 6; top: 14px; left: 14px; right: 70px;
+    display: flex; align-items: center; gap: 12px; pointer-events: none;
   }
-  .sm .sm__nastroj:hover { background: var(--plocha-2); }
-  .sm .sm__cela { top: 14px; }
-  .sm .sm__ja { top: 160px; }
-  .sm .sm__ikona-zmensit { display: none; }
-  .sm.je-cela .sm__ikona-zmensit { display: block; }
-  .sm.je-cela .sm__ikona-zvetsit { display: none; }
-
-  .sm .sm__panel {
-    position: absolute; z-index: 4; top: 14px; left: 14px; bottom: 14px; width: min(392px, calc(100% - 28px));
-    display: flex; flex-direction: column; background: var(--paper); border-radius: 20px; box-shadow: var(--stin-velky);
-    overflow: hidden;
+  .sm .sm__horni > * { pointer-events: auto; }
+  .sm .sm__hledani {
+    position: relative; flex: none; width: min(392px, 100%); display: flex; align-items: center;
+    min-height: 50px; border-radius: 999px; background: var(--paper); box-shadow: var(--stin-velky);
   }
-  .sm .sm__uchyt { display: none; }
-  .sm .sm__obsah { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 1.25rem 1.25rem 1rem; display: flex; flex-direction: column; gap: 0.9rem; }
-  .sm .sm__hlava { display: flex; flex-direction: column; gap: 0.35rem; }
-  .sm .sm__titul { font-size: clamp(1.45rem, 2.2vw, 1.8rem); line-height: 1.15; letter-spacing: -0.02em; }
-  .sm .sm__fakt { color: var(--text-2); line-height: 1.55; font-size: 0.95rem; }
-  .sm .sm__fakt strong { color: var(--orange-text); }
-  html[data-tema='tmavy'] .sm .sm__fakt strong { color: var(--orange); }
-
-  .sm .sm__hledani { position: relative; }
-  .sm .sm__lupa { position: absolute; left: 0.85rem; top: 50%; translate: 0 -50%; color: var(--slate); pointer-events: none; }
+  .sm .sm__hledani:focus-within { box-shadow: 0 0 0 2px var(--navy), var(--stin-velky); }
+  .sm .sm__domu { display: none; }
+  .sm .sm__lupa { flex: none; margin-left: 1rem; color: var(--slate); }
   .sm .sm__pole {
-    width: 100%; min-height: 48px; padding: 0 2.75rem 0 2.5rem; border-radius: 14px; border: 1.5px solid var(--line-2);
-    background: var(--plocha-2); color: var(--navy); font: inherit; font-size: 1rem; font-weight: 600;
+    flex: 1; min-width: 0; height: 50px; padding: 0 0.5rem 0 0.7rem; border: 0; background: none;
+    color: var(--navy); font: inherit; font-size: 1rem; font-weight: 600;
   }
   .sm .sm__pole::placeholder { color: var(--placeholder); font-weight: 500; }
-  .sm .sm__pole:focus { outline: none; border-color: var(--navy); background: var(--paper); }
-  .sm .sm__smazat { position: absolute; right: 6px; top: 50%; translate: 0 -50%; width: 36px; height: 36px; border: 0; background: none; color: var(--slate); border-radius: 10px; cursor: pointer; display: grid; place-items: center; }
+  .sm .sm__pole:focus { outline: none; }
+  .sm .sm__smazat { flex: none; width: 40px; height: 40px; margin-right: 5px; border: 0; background: none; color: var(--slate); border-radius: 50%; cursor: pointer; display: grid; place-items: center; }
+  .sm .sm__smazat[hidden] { display: none; }
   .sm .sm__smazat:hover { background: var(--hover); color: var(--navy); }
   .sm .sm__naseptavac {
-    position: absolute; z-index: 5; left: 0; right: 0; top: calc(100% + 6px); list-style: none; margin: 0; padding: 0.35rem;
-    background: var(--paper); border: 1px solid var(--line); border-radius: 14px; box-shadow: var(--stin-velky); max-height: 320px; overflow-y: auto;
+    position: absolute; z-index: 7; left: 0; right: 0; top: calc(100% + 8px); list-style: none; margin: 0; padding: 0.35rem;
+    background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--stin-velky); max-height: min(60vh, 380px); overflow-y: auto;
   }
-  .sm .sm__naseptavac li { display: flex; flex-direction: column; gap: 0.1rem; padding: 0.55rem 0.7rem; border-radius: 10px; cursor: pointer; line-height: 1.35; }
+  .sm .sm__naseptavac li { display: flex; align-items: center; gap: 0.7rem; padding: 0.5rem 0.65rem; border-radius: 12px; cursor: pointer; line-height: 1.35; }
   .sm .sm__naseptavac li[aria-selected='true'], .sm .sm__naseptavac li:hover { background: var(--hover); }
   .sm .sm__naseptavac .sm__nic { cursor: default; color: var(--muted); }
+  .sm .sm__navrh-ikona { display: grid; place-items: center; flex: none; width: 46px; height: 30px; border-radius: 8px; background: var(--plocha-2); color: var(--slate); }
+  .sm .sm__navrh-text { display: flex; flex-direction: column; gap: 0.05rem; min-width: 0; }
 
-  .sm .sm__najdi { gap: 0.5rem; }
-
-  .sm .sm__retezce { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-  .sm .sm__retezec {
-    display: inline-flex; align-items: center; gap: 0.35rem; min-height: 40px; padding: 0.25rem;
-    border-radius: 12px; border: 1.5px solid var(--line); background: var(--paper); color: var(--navy); cursor: pointer; font: inherit;
-    font-size: 0.8rem; font-weight: 800; transition: border-color 0.15s ease, opacity 0.15s ease, background-color 0.15s ease;
+  .sm .sm__cipy {
+    flex: 1; min-width: 0; display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding: 4px 2px 6px; margin: -4px 0 -6px;
+    -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent);
   }
-  .sm .sm__retezec--vse { padding-inline: 0.8rem; }
-  .sm .sm__retezec:hover { border-color: var(--navy); }
-  .sm.je-filtr .sm__retezec[data-r][aria-pressed='true'] { border-color: var(--barva); background: color-mix(in srgb, var(--barva) 12%, var(--paper)); }
-  .sm.je-filtr .sm__retezec[data-r][aria-pressed='false'] { opacity: 0.45; }
-  .sm .sm__retezec--vse[aria-pressed='true'] { background: var(--navy); border-color: var(--navy); color: var(--cream); }
+  .sm .sm__cipy::-webkit-scrollbar { display: none; }
+  .sm .sm__cip {
+    flex: none; display: inline-flex; align-items: center; gap: 0.4rem; height: 38px; padding: 0 0.9rem; border-radius: 999px;
+    border: 0; background: var(--paper); color: var(--navy); box-shadow: var(--stin-maly); cursor: pointer; font: inherit; font-size: 0.86rem; font-weight: 700;
+    white-space: nowrap; touch-action: manipulation; transition: background-color 0.15s ease, color 0.15s ease, transform var(--stisk) var(--ease-out);
+  }
+  .sm .sm__cip:active { transform: scale(0.96); }
+  @media (hover: hover) and (pointer: fine) { .sm .sm__cip:hover { background: var(--plocha-2); } }
+  .sm .sm__cip[aria-pressed='true'] { background: var(--navy); color: var(--cream); }
+  .sm .sm__cip[data-sm-oblibene][aria-pressed='true'] svg { fill: #E5484D; stroke: #E5484D; }
+  .sm .sm__cip--retezec { padding: 0 0.3rem; }
+  .sm .sm__cip--retezec[aria-pressed='true'] { background: var(--paper); box-shadow: 0 0 0 2.5px var(--barva), var(--stin-maly); }
+  .sm.je-filtr .sm__cip--retezec[aria-pressed='false'] { opacity: 0.6; }
 
   .sm .sm__logo {
     display: inline-flex; align-items: center; justify-content: center; flex: none; width: 46px; height: 30px; padding: 2px 4px; border-radius: 8px;
@@ -718,15 +1040,56 @@ const nastaveni = JSON.stringify({
   .sm .sm__logo--tmave { background: #1B2A4A; }
   /* Logo vždy uvnitř rámečku: pevná velikost a object-fit, čtvercová loga (Penny, Lidl, Kaufland) se zmenší */
   .sm .sm__logo img { display: block; width: 100%; height: 100%; object-fit: contain; }
+  .sm .sm__logo--cip { width: 50px; height: 30px; border-radius: 999px; box-shadow: none; }
   .sm .sm__logo--velke { width: 64px; height: 44px; padding: 5px 7px; border-radius: 12px; }
 
+  /* ---------- nástroje ---------- */
+  .sm .sm__nastroj {
+    position: absolute; z-index: 3; width: 40px; height: 40px; display: grid; place-items: center;
+    border-radius: 12px; border: 0; background: var(--paper); color: var(--navy); box-shadow: var(--stin-maly); cursor: pointer;
+  }
+  .sm .sm__nastroj:hover { background: var(--plocha-2); }
+  .sm .sm__cela { top: 14px; right: 14px; }
+  .sm .sm__ja--pc { right: 14px; bottom: 102px; }
+  .sm .sm__ja--mobil { display: none; }
+  .sm.ma-polohu .sm__ja { color: var(--sm-modra); }
+  .sm.hleda-polohu .sm__ja svg { animation: sm-hleda 1s linear infinite; }
+  @keyframes sm-hleda { to { transform: rotate(360deg); } }
+  .sm .sm__ikona-zmensit { display: none; }
+  .sm.je-cela .sm__ikona-zmensit { display: block; }
+  .sm.je-cela .sm__ikona-zvetsit { display: none; }
+
+  /* Moje poloha: modré kolečko s bílým okrajem a pulzující září */
+  .sm-tecka { position: relative; width: 22px; height: 22px; pointer-events: none; }
+  .sm-tecka__bod { position: absolute; inset: 0; border-radius: 50%; background: #1A73E8; border: 3px solid #fff; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35); }
+  .sm-tecka__pulz { position: absolute; inset: -9px; border-radius: 50%; background: rgba(26, 115, 232, 0.28); animation: sm-pulz 2.2s ease-out infinite; }
+  @keyframes sm-pulz { 0% { transform: scale(0.5); opacity: 1; } 100% { transform: scale(1.7); opacity: 0; } }
+
+  /* ---------- panel ---------- */
+  .sm .sm__panel {
+    position: absolute; z-index: 4; top: 76px; left: 14px; width: min(392px, calc(100% - 28px)); max-height: calc(100% - 90px);
+    display: flex; flex-direction: column;
+  }
+  .sm:not([data-stav='uvod']) .sm__panel { bottom: 14px; }
+  .sm .sm__karta { flex: 1; min-height: 0; display: flex; flex-direction: column; background: var(--paper); border-radius: 20px; box-shadow: var(--stin-velky); overflow: hidden; }
+  .sm .sm__uchyt { display: none; }
+  .sm .sm__obsah { flex: 1; overflow-y: auto; overscroll-behavior: contain; padding: 1.15rem 1.2rem 1rem; display: flex; flex-direction: column; gap: 0.9rem; }
+  .sm .sm__hlava { display: flex; flex-direction: column; gap: 0.6rem; }
+  .sm:not([data-stav='uvod']) .sm__hlava { display: none; }
+  .sm .sm__titul { font-size: clamp(1.35rem, 2vw, 1.6rem); line-height: 1.15; letter-spacing: -0.02em; }
+  .sm .sm__fakt { color: var(--text-2); line-height: 1.5; font-size: 0.92rem; }
+  .sm .sm__fakt strong { color: var(--orange-text); }
+  html[data-tema='tmavy'] .sm .sm__fakt strong { color: var(--orange); }
+  .sm .sm__najdi { gap: 0.5rem; }
+  .sm .sm__vysledky:empty { display: none; }
+
   .sm .sm__vysledky { display: flex; flex-direction: column; gap: 0.75rem; }
-  .sm .sm__tip { color: var(--muted); line-height: 1.6; font-size: 0.92rem; }
+  .sm .sm__tip { color: var(--muted); line-height: 1.6; font-size: 0.9rem; }
   .sm .sm__tip--chyba { color: var(--navy); background: var(--oranzova-svetla); padding: 0.75rem 0.9rem; border-radius: 12px; }
-  .sm .sm__vysledky-hlava { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem; }
-  .sm .sm__vysledky-hlava h2 { font-size: 1.05rem; line-height: 1.3; }
+  .sm .sm__vysledky-hlava { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.6rem; }
+  .sm .sm__vysledky-hlava h2 { flex: 1; min-width: 10ch; font-size: 1.05rem; line-height: 1.3; }
+  .sm .sm__vysledky-hlava .sm__zavrit--maly { order: 3; }
   .sm .sm__poznamka { margin-top: -0.35rem; }
-  .sm .sm__rezim button { min-height: 34px; padding-inline: 0.75rem; font-size: 0.82rem; }
   .sm .sm__seznam, .sm .sm__kazdy { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; }
   .sm .sm__polozka {
     width: 100%; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.7rem; text-align: left;
@@ -736,13 +1099,14 @@ const nastaveni = JSON.stringify({
   .sm .sm__polozka-text { display: flex; flex-direction: column; gap: 0.12rem; min-width: 0; line-height: 1.35; }
   .sm .sm__polozka-text strong { font-size: 0.93rem; }
   .sm .sm__polozka-text .drobne { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sm .sm__srdicko { color: #E5484D; }
   .sm .sm__vzd { display: flex; flex-direction: column; align-items: flex-end; gap: 0.05rem; font-size: 0.82rem; white-space: nowrap; text-align: right; line-height: 1.3; color: var(--text-2); }
   .sm .sm__vzd strong { font-size: 0.95rem; color: var(--navy); font-variant-numeric: tabular-nums; }
-  .sm .sm__stav { font-size: 0.78rem; font-weight: 700; }
+  .sm .sm__stav { font-size: 0.8rem; font-weight: 700; }
   .sm .sm__stav.je-otevreno { color: var(--teal); }
   .sm .sm__stav.je-zavreno { color: var(--orange-text); }
   html[data-tema='tmavy'] .sm .sm__stav.je-zavreno { color: var(--na-panelu-akcent); }
-  .sm .sm__mezinadpis { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-top: 0.5rem; }
+  .sm .sm__mezinadpis { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-top: 0.4rem; }
   .sm .sm__kazdy { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 0.4rem; }
   .sm .sm__kazdy-tl {
     width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 0.35rem; padding: 0.55rem; border-radius: 12px;
@@ -751,51 +1115,109 @@ const nastaveni = JSON.stringify({
   .sm .sm__kazdy-tl:hover { border-color: var(--navy); }
   .sm .sm__kazdy-tl .sm__vzd { align-items: flex-start; text-align: left; }
 
-  .sm .sm__zpet { align-self: flex-start; border: 0; background: none; padding: 0.25rem 0; color: var(--navy); font: inherit; font-weight: 800; cursor: pointer; }
-  .sm .sm__detail { display: flex; flex-direction: column; gap: 0.85rem; }
-  .sm .sm__detail-hlava { display: flex; gap: 0.85rem; align-items: center; }
-  .sm .sm__detail-hlava h2 { font-size: 1.25rem; line-height: 1.2; }
-  .sm .sm__detail-hlava p { color: var(--text-2); margin-top: 0.2rem; line-height: 1.4; }
-  .sm .sm__detail-vzd { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.75rem 0.9rem; border-radius: 14px; background: var(--plocha-2); }
-  .sm .sm__detail-vzd .sm__vzd { align-items: flex-start; text-align: left; font-size: 0.9rem; }
-  .sm .sm__detail-vzd .sm__vzd strong { font-size: 1.15rem; }
-  .sm .sm__detail .sm__stav { font-size: 0.9rem; }
-  .sm .sm__doba h3 { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
+  /* ---------- karta prodejny ---------- */
+  .sm .sm__detail { display: flex; flex-direction: column; gap: 1rem; }
+  .sm .sm__detail-hlava { display: flex; gap: 0.8rem; align-items: flex-start; }
+  .sm .sm__detail-nazev { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+  .sm .sm__detail-nazev h2 { font-size: 1.3rem; line-height: 1.2; }
+  .sm .sm__detail-nazev p { color: var(--text-2); line-height: 1.4; font-size: 0.92rem; }
+  .sm .sm__zavrit {
+    flex: none; display: grid; place-items: center; width: 38px; height: 38px; margin: -4px -6px 0 0; border: 0; border-radius: 50%;
+    background: var(--plocha-2); color: var(--navy); cursor: pointer; transition: background-color 0.15s ease, transform var(--stisk) var(--ease-out);
+  }
+  .sm .sm__zavrit:hover { background: var(--hover); }
+  .sm .sm__zavrit:active { transform: scale(0.92); }
+  .sm .sm__zavrit--maly { width: 34px; height: 34px; margin: 0; }
+  .sm .sm__akce { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.25rem; padding-bottom: 0.9rem; border-bottom: 1px solid var(--line-jemna); }
+  .sm .sm__akce-tl {
+    display: flex; flex-direction: column; align-items: center; gap: 0.35rem; padding: 0.15rem 0; border: 0; background: none;
+    color: var(--navy); font: inherit; font-size: 0.78rem; font-weight: 700; cursor: pointer; text-decoration: none; touch-action: manipulation;
+  }
+  .sm .sm__akce-kruh {
+    display: grid; place-items: center; width: 46px; height: 46px; border-radius: 50%; border: 1.5px solid var(--line-2); color: var(--sm-modra);
+    background: var(--paper); transition: background-color 0.15s ease, transform var(--stisk) var(--ease-out);
+  }
+  html[data-tema='tmavy'] .sm .sm__akce-kruh { color: #8AB4F8; }
+  .sm .sm__akce-tl:active .sm__akce-kruh { transform: scale(0.92); }
+  @media (hover: hover) and (pointer: fine) { .sm .sm__akce-tl:hover .sm__akce-kruh { background: var(--plocha-2); } }
+  .sm .sm__akce-tl--hlavni .sm__akce-kruh { background: var(--sm-modra); border-color: var(--sm-modra); color: #fff; }
+  html[data-tema='tmavy'] .sm .sm__akce-tl--hlavni .sm__akce-kruh { background: #8AB4F8; border-color: #8AB4F8; color: #0E1628; }
+  @media (hover: hover) and (pointer: fine) { .sm .sm__akce-tl--hlavni:hover .sm__akce-kruh { background: #1765CC; } }
+  .sm .sm__akce-tl[data-oblibit][aria-pressed='true'] .sm__akce-kruh { color: #E5484D; border-color: #E5484D; }
+  .sm .sm__akce-tl:disabled { opacity: 0.6; cursor: progress; }
+  .sm .sm__navigace { display: flex; flex-direction: column; gap: 0.5rem; padding: 0.8rem 0.9rem; border-radius: 14px; background: var(--plocha-2); }
+  .sm .sm__navigace-tl { display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem; }
+  .sm .sm__cesta { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem; padding: 0.75rem 0.9rem; border-radius: 14px; background: var(--plocha-2); }
+  .sm .sm__cesta .sm__vzd { align-items: flex-start; text-align: left; font-size: 0.9rem; }
+  .sm .sm__cesta .sm__vzd strong { font-size: 1.15rem; }
+  .sm .sm__cesta.je-trasa { background: color-mix(in srgb, var(--sm-modra) 9%, var(--paper)); }
+  .sm .sm__cesta-ikona { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--sm-modra); color: #fff; flex: none; }
+  .sm .sm__cesta-text { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.1rem 0.5rem; line-height: 1.3; }
+  .sm .sm__cesta-text strong { font-size: 1.2rem; color: var(--navy); }
+  .sm .sm__cesta-text span:not(.drobne) { color: var(--text-2); font-weight: 700; }
+  .sm .sm__poznamka-trasy { margin-top: -0.6rem; line-height: 1.5; }
+  .sm .sm__rezim button { min-height: 32px; }
+  .sm .sm__doba h3 { font-size: 0.82rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 0.35rem; }
   .sm .sm__doba ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.2rem; font-variant-numeric: tabular-nums; }
-  .sm .sm__detail-akce { display: flex; flex-direction: column; gap: 0.5rem; }
 
   .sm .sm__pata { margin-top: auto; padding-top: 0.75rem; border-top: 1px solid var(--line-jemna); line-height: 1.55; }
+  .sm[data-stav='uvod'] .sm__pata { margin-top: 0; }
 
   .sm .sm__dolu {
-    position: absolute; z-index: 3; left: 50%; bottom: 14px; translate: -50% 0; display: inline-flex; align-items: center; gap: 0.35rem;
+    position: absolute; z-index: 3; left: calc(50% + 200px); bottom: 14px; translate: -50% 0; display: inline-flex; align-items: center; gap: 0.35rem;
     padding: 0.5rem 0.95rem; border-radius: 999px; background: var(--paper); color: var(--navy); box-shadow: var(--stin-maly);
     font-size: 0.85rem; font-weight: 800; text-decoration: none;
   }
   .sm.je-cela .sm__dolu { display: none; }
- @media (min-width: 761px) { .sm__dolu { left: calc(50% + 200px); } }
-
- @media (max-width: 760px) {
-    /* nad spodní lištou webu (88 px), ať panel nezakrývá */
-    .sm { height: calc(100svh - var(--sm-hlavicka) - 88px - env(safe-area-inset-bottom) - 1.5rem); min-height: 460px; }
-    .sm.je-cela { height: 100dvh; }
-    .sm .sm__dolu { display: none; }
-    .sm .sm__cela { top: 12px; right: 12px; }
-    .sm .sm__ja { top: 158px; right: 12px; }
-    .sm .sm__mapa .maplibregl-ctrl-top-right { top: 60px; right: 2px; }
-    .sm .sm__panel {
-      top: auto; left: 0; right: 0; bottom: 0; width: auto; border-radius: 22px 22px 0 0;
-      height: 214px; transition: height 0.32s cubic-bezier(0.32, 0.72, 0, 1);
-    }
-    .sm .sm__panel.je-tazen { transition: none; }
-    .sm .sm__panel[data-vyska='stred'] { height: 56%; }
-    .sm .sm__panel[data-vyska='vysoko'] { height: calc(100% - 12px); }
-    .sm .sm__uchyt { display: grid; place-items: center; flex: none; height: 26px; border: 0; background: none; cursor: grab; touch-action: none; }
-    .sm .sm__uchyt span { width: 42px; height: 5px; border-radius: 999px; background: var(--line-2); }
-    .sm .sm__obsah { padding: 0 1rem 1rem; gap: 0.75rem; }
-    .sm .sm__hlava .nadhlavi { display: none; }
-    .sm .sm__panel[data-vyska='nizko'] .sm__fakt { display: none; }
-    .sm .sm__titul { font-size: 1.25rem; }
-    .sm .sm__fakt { font-size: 0.88rem; }
+  .sm .sm__oznameni {
+    position: absolute; z-index: 9; left: 50%; bottom: 24px; translate: -50% 0; padding: 0.65rem 1.1rem; border-radius: 999px;
+    background: var(--navy); color: var(--cream); font-size: 0.88rem; font-weight: 700; box-shadow: var(--stin-velky); white-space: nowrap;
+    animation: sm-oznameni 0.25s var(--ease-out);
   }
- @media (prefers-reduced-motion: reduce) { .sm__panel { transition: none; } }
+  @keyframes sm-oznameni { from { opacity: 0; transform: translateY(8px); } }
+
+  /* ---------- mobil: mapa přes celou obrazovku jako v aplikaci ---------- */
+  @media (max-width: 760px) {
+    /* Hlavička a spodní lišta webu se schovají, ukážou se až pod mapou */
+    html:has(#mapa-prodejen) .hlavicka { position: fixed; top: 0; left: 0; right: 0; transform: translateY(-110%); transition: transform 0.3s var(--ease-out), box-shadow 0.25s ease; }
+    html.sm-pod-mapou:has(#mapa-prodejen) .hlavicka { transform: none; }
+    html:has(#mapa-prodejen) .dok { transition: transform 0.3s var(--ease-out), opacity 0.3s ease; }
+    html:has(#mapa-prodejen):not(.sm-pod-mapou) .dok { transform: translateY(calc(100% + 30px)); opacity: 0; pointer-events: none; }
+
+    .sm { height: 100dvh; min-height: 480px; }
+    .sm .sm__horni { top: calc(10px + env(safe-area-inset-top)); left: 10px; right: 10px; flex-direction: column; align-items: stretch; gap: 8px; }
+    .sm .sm__hledani { width: 100%; min-height: 50px; }
+    .sm .sm__domu { display: grid; place-items: center; flex: none; width: 44px; height: 44px; margin-left: 3px; border-radius: 50%; color: var(--navy); }
+    .sm .sm__domu:active { background: var(--hover); }
+    .sm .sm__lupa { display: none; }
+    .sm .sm__pole { padding-left: 0.25rem; font-size: 16px; }
+    .sm .sm__cipy { margin: -4px -10px -6px; padding: 4px 10px 6px; -webkit-mask-image: none; mask-image: none; }
+    .sm .sm__cip { height: 36px; font-size: 0.84rem; }
+    .sm .sm__cela, .sm .sm__ja--pc, .sm .sm__dolu { display: none; }
+    .sm .sm__mapa .maplibregl-ctrl-bottom-right { display: none; }
+    .sm .sm__mapa .maplibregl-ctrl-top-right { top: calc(112px + env(safe-area-inset-top)); right: 2px; }
+
+    .sm .sm__panel {
+      top: auto; left: 0; right: 0; bottom: 0; width: auto; max-height: none;
+      height: 172px; transition: height 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+    }
+    .sm:not([data-stav='uvod']) .sm__panel { bottom: 0; }
+    .sm .sm__panel.je-tazen { transition: none; }
+    .sm .sm__panel[data-vyska='stred'] { height: 50%; }
+    .sm .sm__panel[data-vyska='vysoko'] { height: calc(100% - 118px - env(safe-area-inset-top)); }
+    .sm .sm__karta { border-radius: 22px 22px 0 0; box-shadow: 0 -6px 24px -10px rgba(var(--stin-barva), 0.35); }
+    .sm .sm__ja--mobil { display: grid; position: absolute; top: -56px; right: 12px; width: 44px; height: 44px; border-radius: 50%; box-shadow: var(--stin-velky); }
+    .sm .sm__panel[data-vyska='vysoko'] .sm__ja--mobil { opacity: 0; pointer-events: none; }
+    .sm .sm__uchyt { display: grid; place-items: center; flex: none; height: 24px; border: 0; background: none; cursor: grab; touch-action: none; }
+    .sm .sm__uchyt span { width: 40px; height: 5px; border-radius: 999px; background: var(--line-2); }
+    .sm .sm__obsah { padding: 0 1rem calc(1rem + env(safe-area-inset-bottom)); gap: 0.75rem; }
+    .sm .sm__titul { font-size: 1.2rem; }
+    .sm .sm__fakt { font-size: 0.86rem; }
+    .sm .sm__panel[data-vyska='nizko'] .sm__fakt { display: none; }
+    .sm .sm__detail-nazev h2 { font-size: 1.2rem; }
+    .sm .sm__oznameni { bottom: auto; top: calc(120px + env(safe-area-inset-top)); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .sm__panel, .sm-tecka__pulz, html:has(#mapa-prodejen) .hlavicka, html:has(#mapa-prodejen) .dok { transition: none; animation: none; }
+  }
 </style>

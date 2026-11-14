@@ -24,10 +24,10 @@ Po `git push` do větve main se web sám nasadí.
 | Ostatní série a samostatná videa | `src/data/serie.ts` (série, díly, témata, odkazy na reely), stránka `src/pages/videa.astro` |
 | Náhledovky videí | `public/videa/{id}.webp` (id videa ze `serie.ts`, díly Česko vs. svět `cesko-vs-svet-11.webp`) |
 | Konflikty na glóbusu | `src/data/konflikty.ts` (návod na aktualizaci je nahoře v souboru) |
-| Mapa supermarketů | `src/components/SupermarketyMapa.astro` (podklad OpenFreeMap v barvách webu: `src/lib/mapa-styl.ts`, otevírací doba: `src/lib/oteviraci.ts`). Odkazy `#obec=Brno` a `#poloha` otevřou mapu rovnou na obci nebo u polohy |
+| Mapa supermarketů | `src/components/SupermarketyMapa.astro`, ovládání jako Google Maps: nahoře hledání (obec i řetězec, třeba „lidl brno“) a filtry, karta prodejny s trasou, oblíbenými (pamatuje si je prohlížeč), navigací a sdílením; na mobilu přes celou obrazovku bez hlavičky webu. Podklad OpenFreeMap v barvách webu: `src/lib/mapa-styl.ts`, otevírací doba: `src/lib/oteviraci.ts`. Odkazy `#obec=Brno`, `#poloha` a `#prodejna=n123` otevřou mapu rovnou na obci, u polohy nebo na prodejně |
 | Blok supermarketů na úvodu | `src/components/uvod/SupermarketyUpoutavka.astro` (hledání obce, poloha, všechny prodejny jako tečky na mapě Česka); v menu je mapa jako „Supermarkety“, v liště na telefonu „Obchody“ |
 | Prodejny a obce na mapě | `public/data/obchody.json` a `public/data/obce.json` z OpenStreetMap. Obnovuje je jednou měsíčně Action „Supermarkety z OpenStreetMap“ jako návrh ke schválení, ručně `python3 skripty/data_obchody.py export.json` (postup v hlavičce skriptu) |
-| Trasy pěšky a autem (Mapy.com) | Cloudflare Worker v `navody/trasy/` (návod v README tam), jeho adresu vlož do `src/data/web.ts` jako `trasy` |
+| Trasy pěšky a autem (Mapy.com) | Cloudflare Worker v `navody/trasy/` (časy k prodejnám i čára trasy na mapu, návod v README tam), jeho adresu vlož do `src/data/web.ts` jako `trasy` |
 | Sídla největších firem | tabulka `SIDLA` v `src/components/FirmyNaMape.astro` |
 | Loga firem a obchodů | `public/loga/{název bez diakritiky}.png`, třeba `penny.png`, `skoda-auto.png`; v grafech a mapách se ukážou samy |
 | Hlasování o dalším dílu | `src/data/hlasovani.ts`, skript `navody/hlasovani-apps-script.gs` |
