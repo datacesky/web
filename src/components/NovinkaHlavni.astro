@@ -1,8 +1,9 @@
 ---
-// Hlavní novinka měsíce: velká karta nahoře na stránce novinek. Vlevo číslo a text, vpravo velký graf.
-// Volitelně obrázek nahoře (pole obrazek, soubor v public/novinky/) a delší text (pole pribeh).
+// Hlavní novinka měsíce: velká karta nahoře na stránce novinek. Nahoře široký náhled (ilustrace s mapou,
+// nebo vlastní obrázek: pole obrazek či soubor public/novinky/{id}.webp), pod ním vlevo číslo a text, vpravo velký graf.
+// Delší text: pole pribeh.
 import MiniGraf from './MiniGraf.astro';
-import IkonaZare from './IkonaZare.astro';
+import NahledNovinky from './NahledNovinky.astro';
 import type { Novinka } from '../lib/novinky';
 import { OBLASTI } from '../lib/novinky';
 import { nezalomit } from '../lib/format';
@@ -18,11 +19,9 @@ const odstavce = nezalomit(p.pribeh ?? p.text).split(/\n\s*\n/);
 ---
 
 <article class="hn odhal" id={`n-${p.id}`} data-oblast={p.oblast} aria-label={`Hlavní novinka měsíce, ${vydani}`}>
-  {p.obrazek && (
-    <figure class="hn__obrazek">
-      <img src={p.obrazek} alt={p.obrazekPopis ?? ''} loading="eager" decoding="async" />
-    </figure>
-  )}
+  <figure class="hn__obrazek">
+    <NahledNovinky id={p.id} ikona={p.ikona} oblast={p.oblast} obrazek={p.obrazek} popis={p.obrazekPopis ?? ''} siroky nacitat="eager" />
+  </figure>
   <div class="hn__mrizka">
     <div class="hn__text">
       <span class="hn__nadhlavi">
@@ -30,7 +29,6 @@ const odstavce = nezalomit(p.pribeh ?? p.text).split(/\n\s*\n/);
         Hlavní novinka měsíce
       </span>
       <div class="hn__hlava">
-        <IkonaZare id={p.ikona} velikost={46} />
         <div class="hn__stitky">
           <span class="hn__oblast"><span class:list={['oblast-tecka', `oblast-tecka--${p.oblast}`]}></span>{OBLASTI[p.oblast]} · {p.stitek ?? p.zdroj}</span>
           {p.zmena && (
@@ -70,12 +68,12 @@ const odstavce = nezalomit(p.pribeh ?? p.text).split(/\n\s*\n/);
     content: ''; position: absolute; z-index: -2; inset: 0; pointer-events: none;
     background: url('/vrstevnice.svg') center / cover no-repeat; opacity: calc(0.35 * var(--vrstevnice-sila));
   }
-  .hn__obrazek { margin: 0; aspect-ratio: 21 / 8; max-height: 300px; width: 100%; overflow: hidden; border-bottom: 1px solid var(--line); }
-  .hn__obrazek img { display: block; width: 100%; height: 100%; object-fit: cover; }
+  .hn__obrazek { margin: 0; aspect-ratio: 3 / 1; max-height: 260px; width: 100%; overflow: hidden; border-bottom: 1px solid var(--line); }
+  .hn__obrazek :global(.nn) { aspect-ratio: auto; width: 100%; height: 100%; }
   .hn__mrizka { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center; padding: clamp(1.4rem, 3.5vw, 2.6rem); }
   .hn__text { display: flex; flex-direction: column; gap: 0.85rem; min-width: 0; }
   .hn__nadhlavi { display: inline-flex; align-items: center; gap: 0.45rem; align-self: flex-start; padding: 0.35rem 0.75rem; border-radius: 999px; background: var(--oranzova-svetla); color: var(--orange-text); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
-  .hn__hlava { display: flex; align-items: center; gap: 0.85rem; margin-top: 0.2rem; }
+  .hn__hlava { display: flex; align-items: center; gap: 0.85rem; }
   .hn__stitky { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; min-width: 0; }
   .hn__oblast { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
   .hn__zmena { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.22rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 800; white-space: nowrap; background: var(--bezova); color: var(--text-2); font-variant-numeric: tabular-nums; }
@@ -94,7 +92,7 @@ const odstavce = nezalomit(p.pribeh ?? p.text).split(/\n\s*\n/);
 
   @media (max-width: 900px) {
     .hn__mrizka { grid-template-columns: 1fr; }
-    .hn__obrazek { aspect-ratio: 16 / 9; }
+    .hn__obrazek { aspect-ratio: 2 / 1; }
   }
   .hn__graf-maly { display: none; }
   @media (max-width: 560px) {

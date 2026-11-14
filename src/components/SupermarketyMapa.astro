@@ -241,7 +241,26 @@ const nastaveni = JSON.stringify({
       el.classList.add('je-nacteno');
       const m = /prodejna=([nwr]\d+)/.exec(location.hash);
       if (m) { const i = body.findIndex((b) => b[7] === m[1]); if (i >= 0) vyber(i, true); }
+      else zHashe();
+      // odkaz s #obec / #poloha otevřený, když už je mapa načtená
+      window.addEventListener('hashchange', zHashe);
     });
+
+    // Odkaz z úvodní stránky: #obec=Brno (i=pořadí v obce.json, když je víc obcí stejného jména) nebo #poloha
+    async function zHashe() {
+      const h = new URLSearchParams(location.hash.slice(1));
+      if (h.has('poloha')) { najdiPolohu(); return; }
+      const nazev = h.get('obec')?.trim();
+      if (!nazev) return;
+      await nactiObce();
+      const i = Number(h.get('i'));
+      const q = bezDiakritiky(nazev);
+      const o = (Number.isInteger(i) && obce![i] && bezDiakritiky(obce![i][0]) === q ? obce![i] : null)
+        ?? obce!.filter((x) => bezDiakritiky(x[0]) === q).sort((a, b) => a[3] - b[3])[0]
+        ?? obce!.filter((x) => bezDiakritiky(x[0]).startsWith(q)).sort((a, b) => a[3] - b[3])[0];
+      if (o) vyberObec(o);
+      else { pole.value = nazev; smazat.hidden = false; hlaska(`Obec „${nazev}“ neznám. Zkus napsat jiný název, nebo si nech najít nejbližší prodejny podle polohy.`); }
+    }
 
     map.on('error', (e: any) => {
       if (bezPodkladu || e?.sourceId !== 'openmaptiles') return;

@@ -24,7 +24,8 @@ Po `git push` do větve main se web sám nasadí.
 | Ostatní série a samostatná videa | `src/data/serie.ts` (série, díly, témata, odkazy na reely), stránka `src/pages/videa.astro` |
 | Náhledovky videí | `public/videa/{id}.webp` (id videa ze `serie.ts`, díly Česko vs. svět `cesko-vs-svet-11.webp`) |
 | Konflikty na glóbusu | `src/data/konflikty.ts` (návod na aktualizaci je nahoře v souboru) |
-| Mapa supermarketů | `src/components/SupermarketyMapa.astro` (podklad OpenFreeMap v barvách webu: `src/lib/mapa-styl.ts`, otevírací doba: `src/lib/oteviraci.ts`) |
+| Mapa supermarketů | `src/components/SupermarketyMapa.astro` (podklad OpenFreeMap v barvách webu: `src/lib/mapa-styl.ts`, otevírací doba: `src/lib/oteviraci.ts`). Odkazy `#obec=Brno` a `#poloha` otevřou mapu rovnou na obci nebo u polohy |
+| Blok supermarketů na úvodu | `src/components/uvod/SupermarketyUpoutavka.astro` (hledání obce, poloha, všechny prodejny jako tečky na mapě Česka); v menu je mapa jako „Supermarkety“, v liště na telefonu „Obchody“ |
 | Prodejny a obce na mapě | `public/data/obchody.json` a `public/data/obce.json` z OpenStreetMap. Obnovuje je jednou měsíčně Action „Supermarkety z OpenStreetMap“ jako návrh ke schválení, ručně `python3 skripty/data_obchody.py export.json` (postup v hlavičce skriptu) |
 | Trasy pěšky a autem (Mapy.com) | Cloudflare Worker v `navody/trasy/` (návod v README tam), jeho adresu vlož do `src/data/web.ts` jako `trasy` |
 | Sídla největších firem | tabulka `SIDLA` v `src/components/FirmyNaMape.astro` |
@@ -33,7 +34,8 @@ Po `git push` do větve main se web sám nasadí.
 | Ověření pro Google, Seznam a měření návštěvnosti | `src/data/web.ts` |
 | Náhledové obrázky pro sdílení | `public/og/` |
 | Vývoj v čase a „Porovnej se“ u grafů | `src/data/grafy/*.json`, obnoví je `python3 skripty/data_grafu.py` |
-| Novinky z dat | `src/content/novinky/RRRR-MM.md`, připravuje je `skripty/novinky.py`, stránka `src/pages/novinky.astro`, hlavní novinka `src/components/NovinkaHlavni.astro` |
+| Novinky z dat | `src/content/novinky/RRRR-MM.md`, připravuje je `skripty/novinky.py`, stránka `src/pages/novinky.astro`, karta `src/components/NovinkaKarta.astro`, hlavní novinka `src/components/NovinkaHlavni.astro` |
+| Náhledy novinek | `src/components/NahledNovinky.astro`, ilustrace podle ikony `src/lib/ilustrace.ts`, siluety map `public/novinky/mapy/` (vyrábí `skripty/mapy_novinek.py`) |
 | 3D model Česka | `public/data/cesko3d.json`, obnoví ho `python3 skripty/data_3d.py` |
 | Vlaky za 24 hodin (Mapa Česka) | `public/data/vlaky.json`, vyrobí ho `python3 skripty/data_vlaky.py` z GTFS jízdního řádu (postup je v hlavičce skriptu) |
 | Cesta čápů (Svět) | `src/data/capi.json`, vyrobí ho `python3 skripty/data_capi.py` ze zamčených dat `skripty/capi_data.py` |
@@ -67,13 +69,22 @@ Sleduje tyhle ukazatele (ukazatel, který od minulého vydání nemá nová data
 Česko / Evropa / Svět a dole **archiv starších vydání** (rozbalovací, nic se nemaže). Úvodní stránka ukazuje
 šest nejčerstvějších položek napříč vydáními, hlavní novinka je první.
 
+**Karty novinek:** nahoře náhledový obrázek, pod ním číslo, nadpis a tři řádky textu. Klik na kartu otevře detail
+s grafem, celým textem a zdrojem (na stránce Novinky jde poslat odkaz rovnou na detail: `/novinky/#n-inflace`).
+Náhled se skládá sám: ilustrace podle `ikona:` (pumpa, cenovka, kufr, továrna…) na siluetě Česka, Evropy nebo glóbu
+podle `oblast:`. **Vlastní obrázek** místo ilustrace:
+
+- pro ukazatel natrvalo (každý měsíc): soubor `public/novinky/{id}.webp` (nebo .jpg, .png), třeba
+  `public/novinky/pohonne-hmoty.jpg`, ideálně 1200 × 750 px (u hlavní novinky se ořízne na široký pruh 3 : 1);
+- jen pro jedno vydání: soubor do `public/novinky/` a k položce řádek `obrazek: "/novinky/nazev.jpg"`.
+
 Úpravy v souboru vydání `src/content/novinky/…md` (v návrhu: Files changed → tři tečky → Edit file):
 
 - **Jiná hlavní novinka:** v řádku `hlavni:` přepiš id na id jiné položky. Skript vybírá nejzajímavější položku,
   ale nikdy stejný ukazatel jako minulý měsíc.
 - **Delší text k hlavní novince:** pod její `text:` přidej `pribeh: "…"` (odstavce odděl `\n\n`).
-- **Obrázek k hlavní novince:** soubor dej do `public/novinky/` (JPG nebo WebP, ideálně 2100 × 800 px) a k položce
-  přidej `obrazek: "/novinky/nazev.jpg"` a `obrazekPopis: "co je na obrázku"`. Bez obrázku je vedle textu velký graf.
+- **Obrázek k hlavní novince:** soubor dej do `public/novinky/` (JPG nebo WebP, ideálně 2100 × 700 px) a k položce
+  přidej `obrazek: "/novinky/nazev.jpg"` a `obrazekPopis: "co je na obrázku"`. Bez obrázku je nahoře ilustrace.
 - **Smazání položky:** odstraň celý její blok od `- id:` po `graf:` včetně.
 
 Každá položka má v souboru i řádek `graf:` s daty pro graf (JSON na jednom řádku) a `oblast:` (cesko, evropa, svet).
@@ -99,7 +110,8 @@ Samotný model je v `src/lib/cesko3d.ts` (three.js) a `src/components/Cesko3D.as
 
 ## Videa a náhledovky
 
-Stránka Videa (`/videa/`, stará adresa `/serie/` na ni přesměruje) vypadá jako profil na Instagramu: nahoře profil,
+Stránka Videa (`/videa/`, stará adresa `/serie/` na ni přesměruje) už není v menu, vede na ni tlačítko „Všechna videa“
+u nejnovějších videí na úvodu a hledání. Vypadá jako profil na Instagramu: nahoře profil,
 pod ním série jako kroužky a hustá mřížka všech videí od nejnovějšího. Klik na kroužek ukáže jen jednu sérii,
 nad mřížkou je hledání, téma a řazení.
 Filtr jde poslat odkazem: `/videa/#ceske-rody`, `/videa/#t=historie`, `/videa/#q=brno`.

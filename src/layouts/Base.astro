@@ -25,6 +25,10 @@ const kanonicka = new URL(Astro.url.pathname, Astro.site);
 const ogObrazek = new URL(obrazek ?? '/og/uvod.png', Astro.site);
 const cesta = Astro.url.pathname;
 const aktivni = (prefix: string) => (cesta.startsWith(prefix) ? 'page' : undefined);
+// Mapa supermarketů má vlastní položku v navigaci: přes ni na web chodí nejvíc lidí
+const SUPERMARKETY = '/grafy/supermarkety-v-cesku/';
+const supermarkety = cesta.startsWith(SUPERMARKETY) ? 'page' : undefined;
+const KOSIK = 'M2.5 3.5h2.6l2.2 11.2a1.6 1.6 0 0 0 1.6 1.3h8.7a1.6 1.6 0 0 0 1.6-1.2l1.7-6.8H6.2 M9.6 20a1.6 1.6 0 1 0 0 .01 M17.2 20a1.6 1.6 0 1 0 0 .01';
 const rok = new Date().getFullYear();
 
 const IG = 'https://www.instagram.com/data.cesky/';
@@ -41,10 +45,10 @@ const SITE = [
 // Spodní lišta na telefonu: pět hlavních míst webu
 const DOK = [
   { href: '/novinky/', nazev: 'Novinky', aktivni: aktivni('/novinky'), d: 'M13 3L4 14h7l-1 7 9-11h-7z' },
-  { href: '/zebricky/', nazev: 'Žebříčky', aktivni: aktivni('/zebricky') ?? aktivni('/grafy'), d: 'M4 5h10 M4 10h16 M4 15h13 M4 20h7' },
+  { href: '/zebricky/', nazev: 'Žebříčky', aktivni: supermarkety ? undefined : aktivni('/zebricky') ?? aktivni('/grafy'), d: 'M4 5h10 M4 10h16 M4 15h13 M4 20h7' },
   { href: '/mapa/', nazev: 'Mapa', aktivni: aktivni('/mapa'), d: 'M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z M9 4v13 M15 7v13' },
   { href: '/svet/', nazev: 'Svět', aktivni: aktivni('/svet'), d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M3.6 9h16.8 M3.6 15h16.8 M11.5 3a17 17 0 0 0 0 18 M12.5 3a17 17 0 0 1 0 18' },
-  { href: '/videa/', nazev: 'Videa', aktivni: aktivni('/videa'), d: 'M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z M10 9.5v5l4.5-2.5z' },
+  { href: SUPERMARKETY, nazev: 'Obchody', aktivni: supermarkety, d: KOSIK },
 ];
 const LUPA = 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6';
 const MESIC = 'M12 3c.13 0 .26 0 .39 0a7.5 7.5 0 0 0 7.92 12.45A9 9 0 1 1 12 3z';
@@ -102,11 +106,13 @@ const VZHLED = [
         <a class="logo" href="/" aria-label="data.cesky, úvodní stránka">data<span class="logo__cesky">.cesky</span></a>
         <nav class="navigace" aria-label="Hlavní navigace">
           <a href="/novinky/" aria-current={aktivni('/novinky')}>Novinky</a>
-          <a href="/zebricky/" aria-current={aktivni('/zebricky') ?? aktivni('/grafy')}>Žebříčky</a>
+          <a href="/zebricky/" aria-current={supermarkety ? undefined : aktivni('/zebricky') ?? aktivni('/grafy')}>Žebříčky</a>
           <a href="/mapa/" aria-current={aktivni('/mapa')}>Mapa Česka</a>
           <a href="/svet/" aria-current={aktivni('/svet')}>Svět</a>
-          <a href="/videa/" aria-current={aktivni('/videa')}>Videa</a>
-          <a href="/metodika/" aria-current={aktivni('/metodika')}>Metodika</a>
+          <a href={SUPERMARKETY} class="navigace__obchody" aria-current={supermarkety}>
+            <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d={KOSIK} /></svg><span class="navigace__dlouhe">Supermarkety</span><span class="navigace__kratke">Obchody</span>
+          </a>
+          <a href="/metodika/" class="navigace__metodika" aria-current={aktivni('/metodika')}>Metodika</a>
         </nav>
         <div class="hlavicka__akce">
           <button type="button" class="hlavicka__hledat" data-hledat aria-label="Hledat na webu" aria-keyshortcuts="Control+K Meta+K">
@@ -157,7 +163,7 @@ const VZHLED = [
               <li><a href="/zebricky/">Žebříčky a grafy</a></li>
               <li><a href="/mapa/">Mapa Česka</a></li>
               <li><a href="/svet/">Svět</a></li>
-              <li><a href="/videa/">Videa</a></li>
+              <li><a href={SUPERMARKETY}>Mapa supermarketů</a></li>
               {hlasovaniZapnute && <li><a href="/hlasovani/">Hlasuj o dalším dílu</a></li>}
             </ul>
           </div>

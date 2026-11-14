@@ -363,6 +363,9 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
 @media (hover: hover) and (pointer: fine) { .navigace a:hover { background: var(--hover); color: var(--navy); } }
 .navigace a:active { transform: scale(0.97); }
 .navigace a[aria-current='page'] { background: var(--paper); color: var(--navy); box-shadow: 0 0 0 1px var(--line), 0 2px 6px -3px rgba(var(--stin-barva), 0.25); }
+/* Supermarkety: nejhledanější stránka webu, v menu s oranžovým košíkem */
+.navigace__obchody { gap: 0.35rem; }
+.navigace__obchody svg { color: var(--orange); flex-shrink: 0; }
 .navigace a[aria-current='page']::after { content: ''; position: absolute; left: 50%; bottom: 5px; width: 4px; height: 4px; margin-left: -2px; border-radius: 50%; background: var(--orange); }
 .hlavicka__akce { display: flex; align-items: center; gap: 0.6rem; }
 .hlavicka__hledat {
@@ -414,6 +417,22 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
   .hlavicka__hledat { width: 38px; padding: 0; justify-content: center; }
   .hlavicka__hledat-text, .hlavicka__zkratka { display: none; }
   .navigace a { padding: 0 0.6rem; }
+}
+/* Užší okno: „Obchody“ místo „Supermarkety“, na tabletu ještě bez Metodiky (je v patičce), ať se menu vejde */
+.navigace__kratke { display: none; }
+@media (max-width: 1100px) {
+  .navigace__dlouhe { display: none; }
+  .navigace__kratke { display: inline; }
+}
+@media (max-width: 900px) {
+  .hlavicka__obsah { column-gap: 0.75rem; }
+  .navigace { font-size: 0.88rem; }
+  .navigace a { padding: 0 0.42rem; }
+  .navigace__metodika { display: none !important; }
+}
+@media (max-width: 800px) {
+  .navigace a { padding: 0 0.36rem; }
+  .navigace__obchody svg { display: none; }
 }
 /* Telefon: nahoře jen logo, lupa a Hlasuj; menu je ve spodní liště */
 @media (max-width: 760px) {

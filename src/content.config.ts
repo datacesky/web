@@ -86,8 +86,10 @@ const novinky = defineCollection({
           ikona: z.string().optional(),
           // čeho se novinka týká: Česko (data ČSÚ), Evropa (srovnání zemí EU), Svět (srovnání zemí světa)
           oblast: z.enum(['cesko', 'evropa', 'svet']).default('cesko'),
-          // jen u hlavní novinky: delší text místo pole text a obrázek (soubor v public/novinky/)
+          // jen u hlavní novinky: delší text místo pole text
           pribeh: z.string().optional(),
+          // vlastní náhledový obrázek jen pro toto vydání (soubor v public/novinky/), jinak ilustrace podle ikony,
+          // nebo public/novinky/{id}.webp, když je (viz src/components/NahledNovinky.astro)
           obrazek: z.string().optional(),
           obrazekPopis: z.string().optional(),
           // malý graf nad textem: cara (vývoj), sloupce (období), zeme (srovnání zemí EU)

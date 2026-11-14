@@ -1,0 +1,192 @@
+---
+// Mapa supermarketů na úvodní stránce: přes ni na web chodí nejvíc lidí, proto má vlastní velký blok hned pod úvodem.
+// Vlevo hledání obce a poloha (otevřou mapu s #obec=… nebo #poloha), vpravo všechny prodejny jako tečky na mapě Česka.
+// Tečky i počty se skládají při sestavení webu z public/data/obchody.json, takže sedí s mapou.
+import geo from '../../data/kraje.json';
+import podklad from '../../data/cesko-mapa.json';
+import { logo } from '../../lib/loga';
+import { cislo } from '../../lib/format';
+import { nactiObchody, BARVY_RETEZCU, BARVY_RETEZCU_TMAVE } from '../../lib/obchody';
+
+const MAPA = '/grafy/supermarkety-v-cesku/';
+const data = nactiObchody();
+const celkem = data.body.length;
+const retezce = data.retezce.map((r, i) => ({ ...r, i, logo: logo(r.nazev) })).sort((a, b) => b.pocet - a.pocet);
+const vycet = (() => {
+  const n = retezce.map((r) => r.nazev);
+  return `${n.slice(0, -1).join(', ')} a ${n[n.length - 1]}`;
+})();
+
+// Stejná projekce jako SVG mapa Česka (src/data/cesko-mapa.json), plátno 1000 × 578
+const P = podklad.projekce;
+const x = (lon: number) => P.tx + P.k * (lon * Math.PI) / 180;
+const y = (lat: number) => P.ty - P.k * Math.log(Math.tan(Math.PI / 4 + (lat * Math.PI) / 360));
+// Tečky jednoho řetězce jako jedna cesta (kulaté konce úseček nulové délky), ať je stránka lehká
+const tecky = retezce.map((r) => ({
+  ...r,
+  d: data.body.filter((b) => b[2] === r.i).map((b) => `M${x(b[0]).toFixed(1)} ${y(b[1]).toFixed(1)}h0`).join(''),
+}));
+// Nejmenší řetězce kreslíme navrch, ať nezapadnou
+const poradiKresleni = [...tecky].sort((a, b) => b.pocet - a.pocet);
+const barvy = (id: string) => `--barva: ${BARVY_RETEZCU[id]}; --barva-tmava: ${BARVY_RETEZCU_TMAVE[id]};`;
+---
+
+<section class="obal sekce--mala">
+  <div class="smu odhal" data-smu>
+    <div class="smu__text">
+      <span class="nadhlavi nadhlavi--zive">Mapa supermarketů</span>
+      <h2 class="smu__titul">Kde je nejbližší supermarket?</h2>
+      <p class="smu__perex">
+        Všech <strong>{cislo(celkem)} prodejen</strong> {vycet} na jedné mapě. S otevírací dobou a cestou pěšky i autem.
+      </p>
+
+      <div class="smu__hledani" data-smu-hledani data-mapa={MAPA}>
+        <label class="smu__popisek" for="smu-obec">Najdi supermarkety v obci</label>
+        <div class="hledani">
+          <div class="hledani__pole">
+            <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6" /></svg>
+            <input id="smu-obec" type="text" inputmode="search" enterkeyhint="search" autocomplete="off" spellcheck="false" placeholder="Napiš obec, třeba Brno" />
+          </div>
+          <ul class="naseptavac" hidden></ul>
+        </div>
+      </div>
+
+      <div class="smu__akce">
+        <a class="tlacitko tlacitko--oranzovy" href={`${MAPA}#poloha`}>
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
+          Najít nejbližší podle polohy
+        </a>
+        <a class="smu__odkaz" href={MAPA}>Otevřít celou mapu →</a>
+      </div>
+    </div>
+
+    <div class="smu__vizual">
+      <a class="smu__mapa" href={MAPA} aria-label={`Otevřít mapu supermarketů, ${cislo(celkem)} prodejen`}>
+        <svg viewBox="0 0 1000 578" aria-hidden="true">
+          <g class="smu__kraje">{geo.kraje.map((k) => <path d={k.d} />)}</g>
+          <g class="smu__tecky">
+            {poradiKresleni.map((r) => <path class="smu__retezec" data-r={r.id} d={r.d} style={barvy(r.id)} />)}
+          </g>
+        </svg>
+        <span class="smu__znacka znacka">@data<span>.cesky</span></span>
+      </a>
+      <ul class="smu__legenda" aria-label="Řetězce na mapě">
+        {retezce.map((r) => (
+          <li>
+            <button type="button" class="smu__chip" data-r={r.id} aria-pressed="false" style={barvy(r.id)} title={`Ukázat jen ${r.nazev}`}>
+              <span class:list={['smu__logo', { 'smu__logo--tmave': r.logo?.tmave }]}>
+                {r.logo ? <img src={r.logo.src} alt={r.nazev} width="44" height="22" loading="lazy" /> : r.nazev}
+              </span>
+              <span class="smu__pocet">{cislo(r.pocet)}</span>
+            </button>
+          </li>
+        ))}
+      </ul>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { naseptavac, type Polozka } from '../../lib/naseptavac';
+
+  const koren = document.querySelector<HTMLElement>('[data-smu]');
+  if (koren) {
+    // Klik na logo zvýrazní jeden řetězec, další klik zase všechny
+    const tecky = koren.querySelectorAll<SVGPathElement>('.smu__retezec');
+    const chipy = koren.querySelectorAll<HTMLButtonElement>('.smu__chip');
+    let vybrany = '';
+    for (const chip of chipy) chip.addEventListener('click', () => {
+      vybrany = vybrany === chip.dataset.r ? '' : chip.dataset.r!;
+      koren.classList.toggle('je-vyber', !!vybrany);
+      for (const c of chipy) c.setAttribute('aria-pressed', String(c.dataset.r === vybrany));
+      for (const t of tecky) t.classList.toggle('je-vybrany', t.dataset.r === vybrany);
+    });
+
+    // Hledání obce: seznam obcí se stáhne až při prvním psaní, pak otevře mapu rovnou na té obci
+    const box = koren.querySelector<HTMLElement>('[data-smu-hledani]')!;
+    const vstup = box.querySelector('input')!;
+    const TYPY = ['město', 'město', 'obec', 'část obce'];
+    let nacteno: Promise<void> | null = null;
+    const nacti = () => (nacteno ??= fetch('/data/obce.json').then((r) => r.json()).then((d: { obce: [string, number, number, number, number, string][]; kraje: string[] }) => {
+      const polozky: Polozka[] = d.obce.map((o, i) => ({
+        kod: String(i),
+        nazev: o[0],
+        popis: o[3] === 3 && o[5] ? `část obce ${o[5]}` : `${TYPY[o[3]]} · ${d.kraje[o[4]] ?? ''}`,
+      }));
+      const { nabidni } = naseptavac(vstup, box.querySelector('.naseptavac')!, polozky, (p) => {
+        location.href = `${box.dataset.mapa}#obec=${encodeURIComponent(p.nazev)}&i=${p.kod}`;
+      });
+      if (document.activeElement === vstup && vstup.value.trim()) nabidni();
+    }));
+    vstup.addEventListener('focus', nacti, { once: true });
+    vstup.addEventListener('input', nacti, { once: true });
+  }
+</script>
+
+<style>
+  .smu {
+    position: relative; isolation: isolate; overflow: hidden;
+    display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center;
+    padding: clamp(1.4rem, 3.5vw, 2.6rem); border-radius: 28px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin);
+  }
+  .smu::before {
+    content: ''; position: absolute; z-index: -1; inset: auto -10% -45% auto; width: 60%; aspect-ratio: 1; pointer-events: none;
+    background: radial-gradient(circle, rgba(240, 136, 41, 0.14), rgba(240, 136, 41, 0) 62%);
+  }
+  .smu::after {
+    content: ''; position: absolute; z-index: -2; inset: 0; pointer-events: none;
+    background: url('/vrstevnice.svg') center / cover no-repeat; opacity: calc(0.3 * var(--vrstevnice-sila));
+  }
+  .smu__text { display: flex; flex-direction: column; gap: 1rem; align-items: flex-start; min-width: 0; }
+  .smu__titul { font-size: clamp(1.7rem, 3.4vw, 2.5rem); line-height: 1.12; text-wrap: balance; }
+  .smu__perex { font-size: 1rem; line-height: 1.6; color: var(--text-2); max-width: 46ch; text-wrap: pretty; }
+  .smu__perex strong { color: var(--orange-text); font-weight: 800; }
+  .smu__hledani { display: flex; flex-direction: column; gap: 0.45rem; width: min(100%, 420px); position: relative; z-index: 5; margin-top: 0.25rem; }
+  .smu__hledani .hledani { width: 100%; }
+  .smu__popisek { font-size: 0.88rem; font-weight: 800; color: var(--navy); }
+  .smu__akce { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.25rem; }
+  .smu__odkaz { font-size: 0.92rem; font-weight: 800; color: var(--orange-text); text-decoration: none; }
+  @media (hover: hover) and (pointer: fine) { .smu__odkaz:hover { text-decoration: underline; } }
+
+  .smu__vizual { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+  .smu__mapa { position: relative; display: block; border-radius: 20px; background: var(--plocha-2); border: 1px solid var(--line-jemna); padding: clamp(0.5rem, 2vw, 1rem); -webkit-touch-callout: none; transition: transform 0.2s var(--ease-out), box-shadow 0.25s var(--ease-out); }
+  @media (hover: hover) and (pointer: fine) { .smu__mapa:hover { box-shadow: var(--stin-maly); } }
+  .smu__mapa:active { transform: scale(0.99); }
+  .smu__mapa svg { display: block; width: 100%; height: auto; }
+  .smu__kraje path { fill: var(--zeme); stroke: var(--paper); stroke-width: 2; stroke-linejoin: round; }
+  .smu__retezec { fill: none; stroke: var(--barva); stroke-width: 8; stroke-linecap: round; transition: opacity 0.3s ease; }
+  :global([data-tema='tmavy']) .smu__retezec { stroke: var(--barva-tmava); }
+  .smu.je-vyber .smu__retezec:not(.je-vybrany) { opacity: 0.1; }
+  .smu__znacka { position: absolute; right: 0.75rem; bottom: 0.65rem; }
+
+  .smu__legenda { display: flex; flex-wrap: wrap; justify-content: center; gap: 0.45rem; list-style: none; margin: 0; padding: 0; }
+  .smu__chip {
+    display: inline-flex; align-items: center; gap: 0.45rem; min-height: 38px; padding: 0 0.7rem 0 0.4rem; border-radius: 999px;
+    border: 1px solid var(--line); background: var(--paper); color: var(--navy); font-family: inherit; font-size: 0.82rem; font-weight: 800; cursor: pointer;
+    font-variant-numeric: tabular-nums; touch-action: manipulation;
+    box-shadow: inset 0 -3px 0 var(--barva); transition: border-color 0.2s ease, transform var(--stisk) var(--ease-out), opacity 0.2s ease;
+  }
+  :global([data-tema='tmavy']) .smu__chip { box-shadow: inset 0 -3px 0 var(--barva-tmava); }
+  @media (hover: hover) and (pointer: fine) { .smu__chip:hover { border-color: var(--line-2); } }
+  .smu__chip:active { transform: scale(0.96); }
+  .smu.je-vyber .smu__chip[aria-pressed='false'] { opacity: 0.55; }
+  .smu__chip[aria-pressed='true'] { border-color: var(--navy); }
+  .smu__logo { display: grid; place-items: center; height: 28px; min-width: 48px; padding: 0 0.3rem; border-radius: 8px; background: #fff; }
+  .smu__logo img { display: block; max-width: 52px; max-height: 22px; width: auto; height: auto; }
+  .smu__logo--tmave { background: #1B2A4A; }
+
+  @media (max-width: 900px) {
+    .smu { grid-template-columns: 1fr; }
+    .smu__text { align-items: center; text-align: center; }
+    .smu__hledani { text-align: left; }
+    .smu__akce { justify-content: center; }
+  }
+  @media (max-width: 560px) {
+    .smu { border-radius: 22px; padding: 1.25rem 1rem; gap: 1.25rem; }
+    .smu__akce { width: 100%; }
+    .smu__akce .tlacitko { width: 100%; }
+    .smu__mapa { margin-inline: -0.25rem; }
+    .smu__znacka { display: none; }
+  }
+  @media (prefers-reduced-motion: reduce) { .smu__retezec, .smu__chip, .smu__mapa { transition: none; } }
+</style>

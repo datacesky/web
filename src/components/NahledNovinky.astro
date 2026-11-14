@@ -1,0 +1,119 @@
+---
+// Náhledový obrázek novinky: krémový podklad s vrstevnicemi, silueta Česka, Evropy nebo glóbu (podle oblasti,
+// Česko je v Evropě a na glóbu oranžové), oranžová záře a velká ilustrace podle ikony (src/lib/ilustrace.ts).
+// Siluety jsou masky v public/novinky/mapy/ (vyrábí skripty/mapy_novinek.py), barvu jim dává web.
+//
+// Vlastní obrázek místo ilustrace: soubor public/novinky/{id}.webp (nebo .jpg, .png), třeba pohonne-hmoty.jpg,
+// platí pro ukazatel každý měsíc. Jen pro jedno vydání: u položky v src/content/novinky/…md řádek obrazek: "/novinky/soubor.jpg".
+import fs from 'node:fs';
+import path from 'node:path';
+import { ilustrace } from '../lib/ilustrace';
+
+interface Props {
+  id: string;
+  ikona?: string;
+  oblast?: 'cesko' | 'evropa' | 'svet';
+  obrazek?: string;
+  popis?: string;
+  // široký pruh nahoře u hlavní novinky
+  siroky?: boolean;
+  nacitat?: 'lazy' | 'eager';
+}
+const { id, ikona, oblast = 'cesko', obrazek, popis = '', siroky = false, nacitat = 'lazy' } = Astro.props;
+
+const vlastni = obrazek
+  ?? ['webp', 'jpg', 'jpeg', 'png'].map((p) => `/novinky/${id}.${p}`).find((s) => fs.existsSync(path.join(process.cwd(), 'public', s)));
+const VRSTVY = {
+  cesko: ['cesko', 'cesko-kraje'],
+  evropa: ['evropa', 'evropa-hranice', 'evropa-cz'],
+  svet: ['svet-koule', 'svet', 'svet-cz'],
+} as const;
+---
+
+<div class:list={['nn', `nn--${oblast}`, { 'nn--siroky': siroky, 'nn--foto': vlastni }]}>
+  {vlastni ? (
+    <img class="nn__foto" src={vlastni} alt={popis} loading={nacitat} decoding="async" />
+  ) : (
+    <>
+      <span class="nn__mapy" aria-hidden="true">
+        {VRSTVY[oblast].map((v) => <span class:list={['nn__mapa', `nn__mapa--${v}`]} style={`--maska: url('/novinky/mapy/${v}.svg');`}></span>)}
+      </span>
+      <svg class="nn__il" viewBox="0 0 200 160" aria-hidden="true" set:html={ilustrace(ikona)} />
+    </>
+  )}
+</div>
+
+<style>
+  .nn {
+    --nn-zeme: color-mix(in srgb, var(--navy) 7%, transparent);
+    --nn-cz: color-mix(in srgb, var(--orange) 55%, transparent);
+    position: relative; isolation: isolate; overflow: hidden; aspect-ratio: 16 / 10; background: var(--plocha-2);
+  }
+  .nn--siroky { aspect-ratio: 3 / 1; }
+  /* záře za ilustrací a vrstevnice */
+  .nn::before {
+    content: ''; position: absolute; z-index: 1; left: var(--il-x, 50%); top: 54%; width: 78%; aspect-ratio: 1; translate: -50% -50%; pointer-events: none;
+    background: radial-gradient(circle, rgba(240, 136, 41, 0.3), rgba(240, 136, 41, 0) 58%);
+  }
+  .nn::after {
+    content: ''; position: absolute; z-index: 0; inset: 0; pointer-events: none;
+    background: url('/vrstevnice.svg') center / cover no-repeat; opacity: calc(0.32 * var(--vrstevnice-sila));
+  }
+  .nn--foto::before, .nn--foto::after { display: none; }
+  .nn__foto { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+  :global([data-tema='tmavy']) .nn__foto { filter: brightness(0.9); }
+
+  .nn__mapy { position: absolute; z-index: 0; inset: 0; }
+  .nn__mapa {
+    position: absolute; inset: 0; background: var(--nn-zeme);
+    -webkit-mask: var(--maska) center / contain no-repeat; mask: var(--maska) center / contain no-repeat;
+  }
+  /* hranice krajů a států v barvě podkladu */
+  .nn__mapa--cesko-kraje, .nn__mapa--evropa-hranice { background: var(--plocha-2); opacity: 0.9; }
+  .nn__mapa--evropa-cz, .nn__mapa--svet-cz { background: var(--nn-cz); }
+  .nn__mapa--svet-koule { background: color-mix(in srgb, var(--more) 34%, transparent); }
+  .nn__mapa--svet { background: color-mix(in srgb, var(--navy) 9%, transparent); }
+
+  /* Česko přes celou šířku, ilustrace uprostřed */
+  .nn--cesko .nn__mapy { inset: 9% 3% 5%; }
+  /* Evropa vyplní celý obrázek, Česko je vpravo od ilustrace */
+  .nn--evropa .nn__mapa { -webkit-mask-size: cover; mask-size: cover; }
+  .nn--evropa { --il-x: 37%; }
+  /* Glóbus vpravo, ilustrace vlevo */
+  .nn--svet .nn__mapy { inset: -4% -14% -40% 34%; }
+  .nn--svet { --il-x: 34%; }
+
+  .nn__il {
+    position: absolute; z-index: 2; left: var(--il-x, 50%); top: 52%; height: 82%; width: auto; translate: -50% -50%; overflow: visible;
+    transition: transform 0.6s var(--ease-out);
+  }
+  .nn--evropa .nn__il, .nn--svet .nn__il { height: 76%; }
+
+  /* široký pruh u hlavní novinky: mapa vpravo, ilustrace vlevo od středu */
+  .nn--siroky .nn__il { height: 82%; }
+  .nn--siroky.nn--cesko { --il-x: 30%; }
+  .nn--siroky.nn--cesko .nn__mapy { inset: 6% 6% 6% 40%; }
+  .nn--siroky.nn--evropa { --il-x: 30%; }
+  .nn--siroky.nn--evropa .nn__mapy { inset: -30% 0 -30% 30%; }
+  .nn--siroky.nn--svet { --il-x: 30%; }
+  .nn--siroky.nn--svet .nn__mapy { inset: 4% 4% -90% 46%; }
+
+  /* barvy ilustrací */
+  .nn__il :global(.n) { fill: var(--navy); }
+  .nn__il :global(.o) { fill: var(--orange); }
+  .nn__il :global(.os) { fill: #F6C08C; }
+  .nn__il :global(.m) { fill: #E9B23C; }
+  .nn__il :global(.p) { fill: var(--paper); }
+  .nn__il :global(.b) { fill: var(--bezova); }
+  .nn__il :global(.t) { fill: var(--teal); }
+  .nn__il :global(.s) { fill: var(--slate); }
+  .nn__il :global(.sh) { fill: color-mix(in srgb, var(--navy) 12%, transparent); }
+  .nn__il :global(.k) { stroke: var(--navy); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+  .nn__il :global(.l) { fill: none; stroke: var(--navy); stroke-width: 5; stroke-linejoin: round; stroke-linecap: round; }
+  .nn__il :global(.l--tenka) { stroke-width: 3.5; }
+  .nn__il :global(.l--silna) { stroke-width: 8; }
+  .nn__il :global(.l--p) { stroke: var(--paper); stroke-width: 6; }
+  .nn__il :global(.l--carkovana) { stroke-width: 3; stroke-dasharray: 2 8; opacity: 0.55; }
+  :global([data-tema='tmavy']) .nn__il :global(.os) { fill: #C98A4E; }
+  :global([data-tema='tmavy']) .nn__il :global(.m) { fill: #D9A436; }
+</style>

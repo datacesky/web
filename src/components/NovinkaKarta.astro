@@ -1,16 +1,17 @@
 ---
-// Jedna novinka z dat: nahoře ikonka a malý animovaný graf, pod ním velké číslo, nadpis, text a zdroj.
+// Jedna novinka z dat: nahoře náhledový obrázek (ilustrace nebo vlastní fotka, NahledNovinky.astro),
+// pod ním štítek se změnou, velké číslo, nadpis a krátký text. Klik na kartu otevře detail s grafem, celým textem a zdrojem.
 import MiniGraf from './MiniGraf.astro';
-import IkonaZare from './IkonaZare.astro';
+import NahledNovinky from './NahledNovinky.astro';
 import { nezalomit } from '../lib/format';
 
 interface Props {
   p: {
     id: string; nadpis: string; cislo: string; popisCisla?: string; text: string; zdroj: string; sada: string; url: string;
     stitek?: string; zmena?: string; smer?: 'nahoru' | 'dolu' | 'stejne'; ikona?: string; graf?: any;
-    oblast?: 'cesko' | 'evropa' | 'svet';
+    oblast?: 'cesko' | 'evropa' | 'svet'; obrazek?: string;
   };
-  // kotva pro přímé odkazy na novinku (jen na stránce novinek)
+  // kotva pro přímé odkazy na novinku (jen na stránce novinek), #n-id otevře rovnou detail
   kotva?: boolean;
   // štítek „Hlavní novinka“ (úvodní stránka)
   hlavni?: boolean;
@@ -19,12 +20,20 @@ const { p, kotva = false, hlavni = false } = Astro.props;
 const SIPKA = { nahoru: 'M12 19V5 M6 11l6-6 6 6', dolu: 'M12 5v14 M6 13l6 6 6-6', stejne: 'M5 12h14' };
 const OBLAST = { cesko: 'Česko', evropa: 'Evropa', svet: 'Svět' };
 const oblast = p.oblast ?? 'cesko';
+const idDetailu = `nkd-${p.id}-${Math.random().toString(36).slice(2, 7)}`;
 ---
 
 <li class:list={['nk', { 'nk--hlavni': hlavni }]} id={kotva ? `n-${p.id}` : undefined} data-oblast={oblast}>
-  <div class="nk__vizual">
-    <div class="nk__hlava">
-      <IkonaZare id={p.ikona} velikost={34} />
+  <button type="button" class="nk__otevrit" data-nk-otevri aria-haspopup="dialog" aria-controls={idDetailu}>
+    <span class="sr-only">{p.nadpis}: otevřít graf a detail</span>
+  </button>
+  <div class="nk__nahled">
+    <NahledNovinky id={p.id} ikona={p.ikona} oblast={oblast} obrazek={p.obrazek} popis={p.nadpis} />
+    <span class="nk__oblast"><span class:list={['oblast-tecka', `oblast-tecka--${oblast}`]}></span>{OBLAST[oblast]}</span>
+    {hlavni && <span class="nk__hlavni">Hlavní novinka</span>}
+  </div>
+  <div class="nk__telo">
+    <div class="nk__radek">
       <span class="nk__stitek">{p.stitek ?? p.zdroj}</span>
       {p.zmena && (
         <span class:list={['nk__zmena', `nk__zmena--${p.smer ?? 'stejne'}`]}>
@@ -33,38 +42,154 @@ const oblast = p.oblast ?? 'cesko';
         </span>
       )}
     </div>
-    {p.graf && <MiniGraf graf={p.graf} />}
-  </div>
-  <div class="nk__telo">
-    <p class="nk__oblast">
-      <span class:list={['oblast-tecka', `oblast-tecka--${oblast}`]}></span>{OBLAST[oblast]}
-      {hlavni && <span class="nk__hlavni">Hlavní novinka</span>}
-    </p>
-    <h3 class="nk__nadpis">{p.nadpis}</h3>
     <p class="nk__cislo"><span data-pocitej>{p.cislo}</span>{p.popisCisla && <small>{p.popisCisla}</small>}</p>
+    <h3 class="nk__nadpis">{p.nadpis}</h3>
     <p class="nk__text">{nezalomit(p.text)}</p>
-    <p class="nk__zdroj">Zdroj: <a href={p.url}>{p.zdroj} ({p.sada})</a></p>
+    <p class="nk__pata">
+      <span class="nk__zdroj">{p.zdroj}</span>
+      <span class="nk__vice">{p.graf ? 'Graf a detail' : 'Celý text'}<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></span>
+    </p>
   </div>
+
+  <dialog class="nkd" id={idDetailu} aria-labelledby={`${idDetailu}-t`}>
+    <div class="nkd__obal">
+      <div class="nkd__hlava">
+        <span class="nkd__kde"><span class:list={['oblast-tecka', `oblast-tecka--${oblast}`]}></span>{OBLAST[oblast]} · {p.stitek ?? p.zdroj}</span>
+        <button type="button" class="nkd__zavrit" data-nk-zavri aria-label="Zavřít">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </button>
+      </div>
+      <h3 class="nkd__nadpis" id={`${idDetailu}-t`}>{p.nadpis}</h3>
+      <div class="nkd__cisla">
+        <p class="nkd__cislo">{p.cislo}{p.popisCisla && <small>{p.popisCisla}</small>}</p>
+        {p.zmena && (
+          <span class:list={['nk__zmena', `nk__zmena--${p.smer ?? 'stejne'}`]}>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={SIPKA[p.smer ?? 'stejne']} /></svg>
+            {p.zmena}
+          </span>
+        )}
+      </div>
+      {p.graf && <div class="nkd__graf"><MiniGraf graf={p.graf} sirka={420} vyska={190} /></div>}
+      <p class="nkd__text">{nezalomit(p.text)}</p>
+      <p class="nkd__zdroj">Zdroj: <a href={p.url}>{p.zdroj} ({p.sada})</a></p>
+    </div>
+  </dialog>
 </li>
 
+<script>
+  // Detail novinky v okně: otevře se klikem na kartu, zavře křížkem, klikem vedle nebo klávesou Esc.
+  // Na stránce novinek se do adresy zapíše #n-id, takže jde poslat odkaz rovnou na jednu novinku.
+  const otevri = (karta: HTMLElement) => {
+    const d = karta.querySelector<HTMLDialogElement>('dialog.nkd');
+    if (!d || d.open) return;
+    d.showModal();
+    if (karta.id) history.replaceState(null, '', `#${karta.id}`);
+  };
+  document.addEventListener('click', (e) => {
+    const t = e.target as HTMLElement;
+    const tlacitko = t.closest('[data-nk-otevri]');
+    if (tlacitko) { otevri(tlacitko.closest<HTMLElement>('.nk')!); return; }
+    const d = t.closest<HTMLDialogElement>('dialog.nkd');
+    if (d && (t === d || t.closest('[data-nk-zavri]'))) d.close();
+  });
+  document.addEventListener('close', (e) => {
+    const d = e.target as HTMLElement;
+    if (!d.matches?.('dialog.nkd')) return;
+    const karta = d.closest<HTMLElement>('.nk');
+    if (karta?.id && location.hash === `#${karta.id}`) history.replaceState(null, '', location.pathname + location.search);
+    karta?.querySelector<HTMLElement>('[data-nk-otevri]')?.focus({ preventScroll: true });
+  }, true);
+  const zHashe = () => {
+    const m = /^#(n-[\w-]+)$/.exec(location.hash);
+    const karta = m && document.getElementById(m[1]);
+    if (!karta?.classList.contains('nk')) return;
+    // novinka ve sbaleném archivu: nejdřív rozbalit
+    const archiv = karta.closest('details');
+    if (archiv && !archiv.open) archiv.open = true;
+    karta.scrollIntoView({ block: 'center' });
+    otevri(karta);
+  };
+  zHashe();
+  window.addEventListener('hashchange', zHashe);
+</script>
+
 <style>
-  .nk { display: flex; flex-direction: column; border-radius: 22px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); overflow: hidden; transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out); }
-  @media (hover: hover) and (pointer: fine) { .nk:hover { transform: translateY(-3px); box-shadow: var(--stin); } }
-  .nk__vizual { display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 1.1rem 0.85rem; background: var(--plocha-2); border-bottom: 1px solid var(--line-jemna); }
-  .nk__hlava { display: flex; align-items: center; gap: 0.65rem; min-width: 0; }
-  .nk__stitek { flex: 1 1 auto; min-width: 0; font-size: 0.86rem; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .nk__zmena { display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 800; white-space: nowrap; background: var(--bezova); color: var(--text-2); font-variant-numeric: tabular-nums; }
+  .nk {
+    position: relative; display: flex; flex-direction: column; border-radius: 22px; background: var(--paper); border: 1px solid var(--line);
+    box-shadow: var(--stin-maly); overflow: hidden; transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .nk:hover { transform: translateY(-3px); box-shadow: var(--stin); }
+    .nk:hover :global(.nn__il) { transform: scale(1.04) rotate(-1.5deg); }
+    .nk:hover .nk__vice { gap: 0.4rem; }
+  }
+  .nk:active { transform: scale(0.99); }
+  /* celá karta je tlačítko, odkaz na zdroj je až v detailu */
+  .nk__otevrit { position: absolute; inset: 0; z-index: 3; width: 100%; border: 0; padding: 0; background: none; border-radius: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  .nk__otevrit:focus-visible { outline: 3px solid var(--orange); outline-offset: -3px; }
+
+  .nk__nahled { position: relative; border-bottom: 1px solid var(--line-jemna); }
+  .nk__oblast, .nk__hlavni {
+    position: absolute; z-index: 2; top: 0.7rem; display: inline-flex; align-items: center; gap: 0.35rem; padding: 0.28rem 0.6rem; border-radius: 999px;
+    font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; line-height: 1.2;
+  }
+  .nk__oblast { left: 0.7rem; background: color-mix(in srgb, var(--paper) 88%, transparent); color: var(--text-2); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: 0 1px 2px rgba(var(--stin-barva), 0.08); }
+  .nk__hlavni { right: 0.7rem; background: var(--orange); color: #fff; letter-spacing: 0.04em; }
+  .nk--hlavni { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--orange) 55%, transparent), var(--stin-maly); }
+
+  .nk__telo { flex-grow: 1; display: flex; flex-direction: column; gap: 0.4rem; padding: 0.95rem 1.15rem 1rem; }
+  .nk__radek { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
+  .nk__stitek { flex: 1 1 auto; min-width: 0; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nk__zmena { flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 800; white-space: nowrap; background: var(--bezova); color: var(--text-2); font-variant-numeric: tabular-nums; }
   .nk__zmena--nahoru { background: var(--oranzova-svetla); color: var(--orange-text); }
   .nk__zmena--dolu { background: var(--modra-svetla); color: var(--navy); }
-  .nk__telo { flex-grow: 1; display: flex; flex-direction: column; gap: 0.5rem; padding: 1.05rem 1.25rem 1.1rem; }
-  .nk__oblast { display: flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .nk__hlavni { margin-left: auto; padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--oranzova-svetla); color: var(--orange-text); letter-spacing: 0.04em; }
-  .nk--hlavni { box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--orange) 55%, transparent), var(--stin-maly); }
-  .nk__nadpis { font-size: 1rem; line-height: 1.35; color: var(--text-2); }
-  .nk__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.15rem 0.5rem; font-size: clamp(1.9rem, 4vw, 2.35rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; color: var(--navy); font-variant-numeric: tabular-nums; }
-  .nk__cislo small { font-size: 0.88rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
-  .nk__text { flex-grow: 1; font-size: 0.9rem; line-height: 1.62; color: var(--text-2); }
-  .nk__zdroj { padding-top: 0.6rem; border-top: 1px solid var(--line); font-size: 0.78rem; font-weight: 600; color: var(--muted); }
-  .nk__zdroj a { color: var(--muted); }
-  @media (prefers-reduced-motion: reduce) { .nk { transition: none; } .nk:hover { transform: none; } }
+  .nk__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.1rem 0.45rem; font-size: clamp(1.8rem, 3.6vw, 2.15rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .nk__cislo small { font-size: 0.85rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
+  .nk__nadpis { font-size: 0.98rem; line-height: 1.35; color: var(--navy); text-wrap: balance; }
+  /* text jen na tři řádky, celý je v detailu */
+  .nk__text {
+    flex-grow: 1; font-size: 0.88rem; line-height: 1.58; color: var(--text-2);
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 3; line-clamp: 3; overflow: hidden;
+  }
+  .nk__pata { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.35rem; padding-top: 0.65rem; border-top: 1px solid var(--line); font-size: 0.78rem; font-weight: 700; }
+  .nk__zdroj { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .nk__vice { display: inline-flex; align-items: center; gap: 0.2rem; flex-shrink: 0; color: var(--orange-text); font-weight: 800; transition: gap 0.2s var(--ease-out); }
+
+  /* ---------- detail v okně ---------- */
+  .nkd {
+    width: min(560px, calc(100vw - 2rem)); max-height: min(88vh, 860px); margin: auto; padding: 0; border: 1px solid var(--line); border-radius: 26px;
+    background: var(--paper); color: var(--text); box-shadow: 0 30px 80px rgba(var(--stin-barva), 0.28); overflow: auto; overscroll-behavior: contain;
+  }
+  .nkd::backdrop { background: rgba(15, 23, 42, 0.45); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); }
+  .nkd[open] { animation: nkd-in 0.28s var(--ease-out); }
+  .nkd[open]::backdrop { animation: nkd-fade 0.28s ease; }
+  @keyframes nkd-in { from { opacity: 0; transform: translateY(14px) scale(0.98); } }
+  @keyframes nkd-fade { from { opacity: 0; } }
+  .nkd__obal { display: flex; flex-direction: column; gap: 0.8rem; padding: 1.2rem 1.4rem 1.4rem; text-align: left; }
+  .nkd__hlava { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+  .nkd__kde { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .nkd__zavrit { display: grid; place-items: center; width: 40px; height: 40px; flex-shrink: 0; border: 1px solid var(--line); border-radius: 50%; background: var(--plocha-2); color: var(--navy); cursor: pointer; transition: transform var(--stisk) var(--ease-out); }
+  .nkd__zavrit:active { transform: scale(0.92); }
+  .nkd__nadpis { font-size: clamp(1.2rem, 3vw, 1.45rem); line-height: 1.25; text-wrap: balance; }
+  .nkd__cisla { display: flex; align-items: center; flex-wrap: wrap; gap: 0.5rem 0.9rem; }
+  .nkd__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.1rem 0.5rem; font-size: clamp(2.2rem, 6vw, 2.8rem); font-weight: 900; line-height: 1; letter-spacing: -0.03em; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .nkd__cislo small { font-size: 0.9rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
+  .nkd__graf { padding: 0.9rem 1rem 0.6rem; border-radius: 18px; background: var(--plocha-2); border: 1px solid var(--line-jemna); }
+  .nkd__graf :global(.mg__svg text) { stroke: var(--plocha-2); }
+  .nkd__text { font-size: 0.95rem; line-height: 1.65; color: var(--text-2); text-wrap: pretty; }
+  .nkd__zdroj { padding-top: 0.7rem; border-top: 1px solid var(--line); font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+  .nkd__zdroj a { color: var(--muted); }
+  :global(html:has(dialog.nkd[open])) { overflow: hidden; }
+
+  /* na telefonu vyjede detail zespodu přes celou šířku */
+  @media (max-width: 640px) {
+    .nkd { width: 100vw; max-width: 100vw; max-height: 90dvh; margin: auto 0 0; border-radius: 24px 24px 0 0; border-bottom: 0; }
+    .nkd[open] { animation: nkd-zespodu 0.32s var(--ease-out); }
+    @keyframes nkd-zespodu { from { transform: translateY(40px); opacity: 0.4; } }
+    .nkd__obal { padding: 1rem 1.1rem calc(1.4rem + env(safe-area-inset-bottom)); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .nk, .nkd[open], .nkd[open]::backdrop { transition: none; animation: none; }
+    .nk:hover, .nk:active { transform: none; }
+  }
 </style>
