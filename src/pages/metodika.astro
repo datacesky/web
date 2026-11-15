@@ -102,6 +102,16 @@ const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
       a celá Mírova trasa je odhad, na mapě i v kalendáři jsou proto tyrkysově.
     </p>
 
+    <h2 id="hra">Hra Vlajky světa</h2>
+    <p>
+      V balíčku je 197 států: 193 členů OSN, Vatikán, Palestina, Kosovo a Tchaj-wan. Základ dat (hlavní města, měny, jazyky
+      a pozemní hranice) je z otevřené databáze mledoze/countries, názvy a údaje jsou česky a zkontrolované k listopadu 2026,
+      včetně letošních změn: Bulharsko platí od 1. 1. 2026 eurem a hlavním městem Rovníkové Guineje je od ledna 2026 Ciudad de la Paz.
+      U jazyků jsou úřední jazyky (u států s mnoha jazyky ty hlavní). Sousedé jsou státy z balíčku, se kterými má stát pozemní hranici,
+      námořní hranice se nepočítají. Území, která v balíčku nejsou (Francouzská Guyana, Západní Sahara, Gibraltar, Hongkong a Macao),
+      jsou na kartě v poznámce. Mapa je z Natural Earth v měřítku 1 : 50 milionů, vlajky jsou stejné jako jinde na webu.
+    </p>
+
         <h2 id="porovnej">Porovnej se</h2>
     <p>
       Výpočty u grafů jsou jednoduché a dají se zkontrolovat: majetek nebo tržby vydělené tvou roční hrubou mzdou,
@@ -113,12 +123,13 @@ const vrstvy = SVET_VRSTVY.filter((v) => v.id !== 'epizody');
     <p>
       Web nepoužívá žádné cookies, ani reklamní, ani analytické. Proto tu nenajdeš ani cookie lištu.
     </p>
-    <p>Do úložiště tvého prohlížeče se něco zapíše jen ve dvou případech, a to až ve chvíli, kdy to sám uděláš:</p>
+    <p>Do úložiště tvého prohlížeče se něco zapíše jen ve třech případech, a to až ve chvíli, kdy to sám uděláš:</p>
     <ul>
       <li><strong>Hlasování o dalším dílu:</strong> náhodné číslo a země, pro kterou jsi hlasoval(a), aby šlo o každém dílu hlasovat jen jednou. Číslo tě nijak neidentifikuje.</li>
       <li><strong>Můj kraj na Mapě Česka:</strong> který kraj sis vybral(a), aby ho mapa příště rovnou ukázala.</li>
+      <li><strong>Hra Vlajky světa:</strong> nastavení hry a jména hráčů, vybrané kontinenty, rekord v bleskovce a jestli máš vypnutý zvuk, aby to příště zůstalo, jak jsi to nechal(a).</li>
     </ul>
-    <p>Obojí smažeš tím, že v prohlížeči vymažeš data tohoto webu.</p>
+    <p>Všechno smažeš tím, že v prohlížeči vymažeš data tohoto webu.</p>
     <p>
       <strong>Mapa supermarketů</strong> se tě na polohu zeptá, jen když klikneš na Najít nejbližší. Poloha se nikam neukládá a nejbližší prodejny
       spočítá přímo tvůj prohlížeč.{web.trasy && ' Kvůli času a vzdálenosti cesty pošle mapa polohu zaokrouhlenou asi na 10 m a polohy nejbližších prodejen přes server webu (Cloudflare) do Mapy.com.'}

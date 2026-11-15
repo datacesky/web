@@ -111,6 +111,7 @@ const VZHLED = [
           <a href="/zebricky/" aria-current={supermarkety ? undefined : aktivni('/zebricky') ?? aktivni('/grafy')}>Žebříčky</a>
           <a href="/mapa/" aria-current={aktivni('/mapa')}>Mapa Česka</a>
           <a href="/svet/" aria-current={aktivni('/svet')}>Svět</a>
+          <a href="/hra/" aria-current={aktivni('/hra')}>Hra</a>
           <a href={SUPERMARKETY} class="navigace__obchody" aria-current={supermarkety}>
             <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d={KOSIK} /></svg><span class="navigace__dlouhe">Supermarkety</span><span class="navigace__kratke">Obchody</span>
           </a>
@@ -167,6 +168,7 @@ const VZHLED = [
               <li><a href="/mapa/">Mapa Česka</a></li>
               <li><a href="/svet/">Svět</a></li>
               <li><a href={SUPERMARKETY}>Mapa supermarketů</a></li>
+              <li><a href="/hra/">Hra: Vlajky světa</a></li>
               {hlasovaniZapnute && <li><a href="/hlasovani/">Hlasuj o dalším dílu</a></li>}
             </ul>
           </div>
