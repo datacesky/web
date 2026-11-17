@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import MapyPrepinac from '../components/MapyPrepinac.astro';
 import geo from '../data/kraje.json';
 import podklad from '../data/cesko-mapa.json';
 import mestaData from '../data/mesta.json';
@@ -45,6 +46,7 @@ const data = JSON.stringify({
   <section class="obal sekce--mala sloupec mapa-stranka" style="gap: 1.25rem; --obal: 1320px;">
     <div class="mapa-hlava">
       <div class="sloupec" style="gap: 0.5rem; max-width: 62ch;">
+        <MapyPrepinac aktivni="cesko" />
         <h1 class="mapa-titul">Mapa Česka</h1>
         <p class="perex">Vyber, co chceš vidět. U krajů se mapa přebarví, u měst naskočí bubliny. Přepni na satelit nebo zapni řeky a hory.</p>
         <div class="mapa-odkazy">

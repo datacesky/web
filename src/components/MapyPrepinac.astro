@@ -1,0 +1,33 @@
+---
+// Přepínač Svět / Česko nahoře na stránkách Svět a Mapa Česka.
+// Na telefonu je Mapa Česka ve spodní liště schovaná pod Světem, tudy se na ni přepíná.
+interface Props { aktivni: 'svet' | 'cesko' }
+const { aktivni } = Astro.props;
+const GLOBUS = 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M3.6 9h16.8 M3.6 15h16.8 M11.5 3a17 17 0 0 0 0 18 M12.5 3a17 17 0 0 1 0 18';
+const MAPA = 'M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z M9 4v13 M15 7v13';
+---
+
+<nav class="mapy-prepinac" aria-label="Svět, nebo Česko">
+  <a href="/svet/" aria-current={aktivni === 'svet' ? 'page' : undefined}>
+    <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={GLOBUS} /></svg>Svět
+  </a>
+  <a href="/mapa/" aria-current={aktivni === 'cesko' ? 'page' : undefined}>
+    <svg viewBox="0 0 24 24" width="17" height="17" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d={MAPA} /></svg>Česko
+  </a>
+</nav>
+
+<style>
+  .mapy-prepinac {
+    display: inline-flex; gap: 3px; padding: 3px; width: fit-content; border-radius: 999px;
+    background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly);
+  }
+  .mapy-prepinac a {
+    display: inline-flex; align-items: center; gap: 0.45rem; min-height: 38px; padding: 0 1.05rem; border-radius: 999px;
+    color: var(--navy); font-size: 0.88rem; font-weight: 800; text-decoration: none; touch-action: manipulation;
+    transition: background-color 0.2s ease, color 0.2s ease, transform var(--stisk) var(--ease-out);
+  }
+  .mapy-prepinac a:active { transform: scale(0.96); }
+  @media (hover: hover) and (pointer: fine) { .mapy-prepinac a:not([aria-current]):hover { background: var(--plocha-2); color: var(--navy); } }
+  .mapy-prepinac a[aria-current='page'] { background: var(--navy); color: var(--cream); }
+  .mapy-prepinac a[aria-current='page'] svg { color: var(--orange); }
+</style>

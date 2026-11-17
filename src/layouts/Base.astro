@@ -44,12 +44,13 @@ const SITE = [
   { nazev: 'Facebook', url: FB, d: 'M7 10v4h3v7h4v-7h3l1-4h-4V8a1 1 0 0 1 1-1h3V3h-3a5 5 0 0 0-5 5v2z' },
 ];
 
-// Spodní lišta na telefonu: pět hlavních míst webu
+// Spodní lišta na telefonu: pět hlavních míst webu. Mapa Česka je pod Světem (přepínač Svět / Česko nahoře na obou stránkách).
+const GAMEPAD = 'M12 5h3.5a5 5 0 0 1 0 10h-5.5l-4.015 4.227a2.3 2.3 0 0 1-3.923-2.035l1.634-6.537a6 6 0 0 1 5.804-4.655h3.5z M14 15l4.07 4.284a2.3 2.3 0 0 0 3.925-2.023l-1.6-6.38 M8 9v2 M7 10h2 M14 10h2';
 const DOK = [
   { href: '/novinky/', nazev: 'Novinky', aktivni: aktivni('/novinky'), d: 'M13 3L4 14h7l-1 7 9-11h-7z' },
   { href: '/zebricky/', nazev: 'Žebříčky', aktivni: supermarkety ? undefined : aktivni('/zebricky') ?? aktivni('/grafy'), d: 'M4 5h10 M4 10h16 M4 15h13 M4 20h7' },
-  { href: '/mapa/', nazev: 'Mapa', aktivni: aktivni('/mapa'), d: 'M3 7l6-3 6 3 6-3v13l-6 3-6-3-6 3z M9 4v13 M15 7v13' },
-  { href: '/svet/', nazev: 'Svět', aktivni: aktivni('/svet'), d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M3.6 9h16.8 M3.6 15h16.8 M11.5 3a17 17 0 0 0 0 18 M12.5 3a17 17 0 0 1 0 18' },
+  { href: '/hry/', nazev: 'Hry', aktivni: aktivni('/hry'), d: GAMEPAD },
+  { href: '/svet/', nazev: 'Svět', aktivni: aktivni('/svet') ?? aktivni('/mapa'), d: 'M12 3a9 9 0 1 0 0 18a9 9 0 1 0 0-18 M3.6 9h16.8 M3.6 15h16.8 M11.5 3a17 17 0 0 0 0 18 M12.5 3a17 17 0 0 1 0 18' },
   { href: SUPERMARKETY, nazev: 'Obchody', aktivni: supermarkety, d: KOSIK },
 ];
 const LUPA = 'M10 4a6 6 0 1 0 0 12a6 6 0 1 0 0-12 M20 20l-5.6-5.6';
@@ -111,7 +112,7 @@ const VZHLED = [
           <a href="/zebricky/" aria-current={supermarkety ? undefined : aktivni('/zebricky') ?? aktivni('/grafy')}>Žebříčky</a>
           <a href="/mapa/" aria-current={aktivni('/mapa')}>Mapa Česka</a>
           <a href="/svet/" aria-current={aktivni('/svet')}>Svět</a>
-          <a href="/hra/" aria-current={aktivni('/hra')}>Hra</a>
+          <a href="/hry/" aria-current={aktivni('/hry')}>Hry</a>
           <a href={SUPERMARKETY} class="navigace__obchody" aria-current={supermarkety}>
             <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d={KOSIK} /></svg><span class="navigace__dlouhe">Supermarkety</span><span class="navigace__kratke">Obchody</span>
           </a>
@@ -168,7 +169,7 @@ const VZHLED = [
               <li><a href="/mapa/">Mapa Česka</a></li>
               <li><a href="/svet/">Svět</a></li>
               <li><a href={SUPERMARKETY}>Mapa supermarketů</a></li>
-              <li><a href="/hra/">Hra: Vlajky světa</a></li>
+              <li><a href="/hry/">Hry: Vlajky světa</a></li>
               {hlasovaniZapnute && <li><a href="/hlasovani/">Hlasuj o dalším dílu</a></li>}
             </ul>
           </div>

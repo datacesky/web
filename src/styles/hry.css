@@ -1,0 +1,54 @@
+/* Společné prvky stránek s hrami (/hry/ a jednotlivé hry): úroveň, skóre, síň slávy.
+   Obsah vzniká skriptem, proto jsou styly globální s předponou hry- */
+
+.hry-profil {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.9rem;
+  padding: 0.85rem 1rem; border-radius: var(--radius); background: var(--panel); color: var(--na-panelu);
+  box-shadow: var(--stin-maly); text-align: left; font-family: inherit; border: 0; width: 100%;
+}
+button.hry-profil { cursor: pointer; transition: transform var(--stisk) var(--ease-out); }
+button.hry-profil:active { transform: scale(0.985); }
+.hry-uroven {
+  position: relative; width: 52px; height: 52px; flex: none; border-radius: 50%; display: grid; place-items: center;
+  background: conic-gradient(var(--orange) calc(var(--p, 0) * 1turn), color-mix(in srgb, var(--na-panelu) 16%, transparent) 0);
+}
+.hry-uroven::before { content: ''; position: absolute; inset: 5px; border-radius: 50%; background: var(--panel); }
+.hry-uroven b { position: relative; font-size: 1.2rem; font-weight: 900; line-height: 1; font-variant-numeric: tabular-nums; }
+.hry-uroven small { position: absolute; top: -4px; right: -6px; padding: 1px 5px; border-radius: 99px; background: var(--orange); color: var(--na-oranzove); font-size: 0.55rem; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; }
+.hry-profil__text { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.hry-profil__text > b { font-size: 1.05rem; font-weight: 900; line-height: 1.2; letter-spacing: -0.01em; }
+.hry-profil__text > small { font-size: 0.78rem; font-weight: 700; color: var(--na-panelu-2); line-height: 1.35; }
+.hry-pruh { height: 6px; margin-top: 5px; border-radius: 99px; background: color-mix(in srgb, var(--na-panelu) 16%, transparent); overflow: hidden; }
+.hry-pruh i { display: block; height: 100%; border-radius: 99px; background: var(--orange); transition: width 0.6s var(--ease-out); }
+.hry-profil__cislo { text-align: right; line-height: 1.1; }
+.hry-profil__cislo b { display: block; font-size: 1.45rem; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; }
+.hry-profil__cislo small { font-size: 0.7rem; font-weight: 700; color: var(--na-panelu-2); }
+
+/* Velká karta profilu na rozcestníku */
+.hry-karta-profilu { padding: 1.3rem 1.4rem; border-radius: var(--radius); background: var(--panel); color: var(--na-panelu); box-shadow: var(--stin); display: grid; gap: 1.1rem; }
+.hry-karta-profilu .hry-profil { padding: 0; box-shadow: none; }
+.hry-karta-profilu .hry-uroven { width: 64px; height: 64px; }
+.hry-karta-profilu .hry-uroven b { font-size: 1.45rem; }
+.hry-karta-profilu .hry-profil__text > b { font-size: 1.3rem; }
+.hry-cisla { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.5rem; }
+.hry-cisla div { padding: 0.65rem 0.75rem; border-radius: 14px; background: color-mix(in srgb, var(--na-panelu) 8%, transparent); min-width: 0; }
+.hry-cisla b { display: block; font-size: 1.3rem; font-weight: 900; line-height: 1.15; font-variant-numeric: tabular-nums; }
+.hry-cisla small { display: block; font-size: 0.72rem; font-weight: 700; color: var(--na-panelu-2); line-height: 1.3; }
+@media (max-width: 560px) { .hry-cisla { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* Síň slávy */
+.hry-sin { display: grid; gap: 0.45rem; }
+.hry-sin__radek { display: grid; grid-template-columns: 30px minmax(0, 1fr) auto auto; align-items: center; gap: 0.75rem; padding: 0.55rem 0.85rem; border-radius: 14px; background: var(--plocha-2); border: 1px solid var(--line-jemna); }
+.hry-sin__misto { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; font-size: 0.85rem; font-weight: 900; background: var(--line); color: var(--navy); }
+.hry-sin__radek:nth-child(1) .hry-sin__misto { background: var(--orange); color: var(--na-oranzove); }
+.hry-sin__radek:nth-child(2) .hry-sin__misto { background: var(--slate); color: #fff; }
+.hry-sin__radek:nth-child(3) .hry-sin__misto { background: var(--hneda); color: #fff; }
+.hry-sin__jmeno { font-weight: 800; line-height: 1.3; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hry-sin__jmeno small { display: block; font-size: 0.74rem; font-weight: 600; color: var(--muted); white-space: normal; }
+.hry-sin__cislo { text-align: right; line-height: 1.1; }
+.hry-sin__cislo b { display: block; font-size: 1.15rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+.hry-sin__cislo small { font-size: 0.66rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Nová úroveň */
+.hry-levelup { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin: 0.4rem auto 0; padding: 0.45rem 0.9rem; width: fit-content; border-radius: 999px; background: var(--oranzova-svetla); color: var(--orange-text); font-weight: 800; font-size: 0.9rem; }
+.hry-zisk { display: inline-flex; align-items: center; gap: 0.35rem; font-weight: 800; color: var(--teal-text); }

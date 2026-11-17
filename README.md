@@ -44,7 +44,8 @@ Po `git push` do větve main se web sám nasadí.
 | Odkaz z dílu série na interaktivní verzi | pole `web` u dílu v `src/data/serie.ts` |
 | Vrstevnice v úvodu | `public/vrstevnice.svg`, generuje `navody/vrstevnice.py` |
 | Hledání na webu (⌘K / Ctrl+K) | okno `src/components/Hledani.astro`, rejstřík `src/pages/hledani.json.ts` (skládá se sám ze zemí, krajů, měst, vrstev, žebříčků, grafů, novinek a dílů; přezdívky zemí jsou nahoře v souboru) |
-| Hlavička, spodní lišta na mobilu a patička | `src/layouts/Base.astro`, styly v `src/styles/global.css` |
+| Hlavička, spodní lišta na mobilu a patička | `src/layouts/Base.astro` (v liště na telefonu: Novinky, Žebříčky, Hry, Svět, Obchody; Mapa Česka je pod Světem přes přepínač `src/components/MapyPrepinac.astro`), styly v `src/styles/global.css` |
+| Hry | rozcestník `src/pages/hry/index.astro`, seznam her `src/data/hry.ts`, Vlajky světa `src/pages/hry/vlajky-sveta.astro` (data `public/data/hra-vlajky.json`). Dlouhodobé skóre, úrovně, síň slávy a celá obrazovka jsou společné pro všechny hry v `src/lib/hry.ts`, styly v `src/styles/hry.css`. **Nová hra:** položka v `src/data/hry.ts` (id se už nemění), stránka v `src/pages/hry/` a po dohrání `zapis({ hra: 'id', skore, her: 1, ... })`, krok zpět po konci hry vrátí zápis přes `vrat()`. Stará adresa `/hra/` přesměruje na Vlajky světa |
 | Barvy a tmavý režim | proměnné nahoře v `src/styles/global.css` (světlé v `:root`, tmavé v bloku `:root[data-tema='tmavy']`); přepínač je v hlavičce a v patičce (`Base.astro`), skripty s canvasem berou barvy přes `src/lib/tema.ts` |
 
 ## Pohyb na webu

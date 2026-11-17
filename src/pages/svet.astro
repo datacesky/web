@@ -1,5 +1,6 @@
 ---
 import Base from '../layouts/Base.astro';
+import MapyPrepinac from '../components/MapyPrepinac.astro';
 import HlasovaniPozvanka from '../components/HlasovaniPozvanka.astro';
 import CestaCapu from '../components/CestaCapu.astro';
 import { epizody, odkazDilu } from '../data/epizody';
@@ -39,6 +40,7 @@ const czPoradi = Object.fromEntries(
   <section class="obal sekce--mala sloupec" style="gap: 1.25rem; --obal: 1320px;">
     <div class="svet-hlava">
       <div class="sloupec" style="gap: 0.5rem; max-width: 60ch;">
+        <MapyPrepinac aktivni="svet" />
         <h1 class="svet-titul">Svět vedle Česka</h1>
         <p class="perex">Vyber, co chceš vidět. Glóbus se přebarví a vedle se seřadí žebříček. Klikni na stát a postav ho vedle Česka.</p>
       </div>

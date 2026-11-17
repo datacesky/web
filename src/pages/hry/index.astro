@@ -1,0 +1,155 @@
+---
+// Rozcestník her. Seznam her je v src/data/hry.ts, skóre se počítá ve skriptu z prohlížeče (src/lib/hry.ts).
+import Base from '../../layouts/Base.astro';
+import { HRY } from '../../data/hry';
+import '../../styles/hry.css';
+
+const VEJIR = ['cz', 'jp', 'br'];
+---
+
+<Base
+  titul="Hry: zahraj si se státy a daty — data.cesky"
+  popis="Hry na data.cesky: Vlajky světa s kostkou, bleskovka a kartičky se všemi 197 státy. Body ze všech her se sčítají do tvého celkového skóre."
+  obrazek="/og/hra.png"
+>
+  <section class="obal sekce--mala sloupec hry-stranka" style="gap: 1.5rem;">
+    <div class="sloupec" style="gap: 0.6rem; max-width: 62ch;">
+      <span class="nadhlavi">Hry</span>
+      <h1>Zahraj si</h1>
+      <p class="perex">Hry, ve kterých si ověříš, co víš o světě a o Česku. Body ze všech her se sčítají do tvého celkového skóre a s ním roste i tvoje úroveň.</p>
+    </div>
+
+    <div class="hry-karta-profilu" data-profil aria-live="polite">
+      <div class="hry-profil">
+        <span class="hry-uroven" style="--p:0"><b>1</b></span>
+        <span class="hry-profil__text"><b>Turista</b><small>Zatím žádné body. Začni třeba Vlajkami světa.</small><span class="hry-pruh"><i style="width:0%"></i></span></span>
+        <span class="hry-profil__cislo"><b>0</b><small>bodů</small></span>
+      </div>
+    </div>
+
+    <div class="hry-seznam">
+      {HRY.map((h) => (
+        <a class="hry-hra" href={h.href} style={`--hc:${h.barva}`}>
+          <span class="hry-hra__vejir" aria-hidden="true">
+            {VEJIR.map((v) => <span><img src={`/vlajky/${v}.svg`} alt="" width="640" height="480" loading="lazy" /></span>)}
+          </span>
+          <span class="hry-hra__text">
+            <b>{h.nazev}</b>
+            <span class="hry-hra__popis">{h.popis}</span>
+            <span class="hry-hra__rezimy">{h.rezimy.map((r) => <span>{r}</span>)}</span>
+            <span class="hry-hra__stav" data-hra-stav={h.id}></span>
+            <span class="hry-hra__cta">Hrát <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14 M13 18l6-6 M13 6l6 6" /></svg></span>
+          </span>
+        </a>
+      ))}
+      <div class="hry-brzy">
+        <span class="hry-brzy__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14 M5 12h14" /></svg></span>
+        <b>Další hry připravujeme</b>
+        <span class="drobne">Body z nich se budou počítat do stejného skóre.</span>
+      </div>
+    </div>
+
+    <div class="sloupec hry-sin-obal" data-sin-obal hidden style="gap: 0.8rem;">
+      <h2 class="hry-nadpis">Síň slávy</h2>
+      <p class="drobne">Hráči deskové hry s vlastním jménem, seřazení podle výher. Platí pro tohle zařízení.</p>
+      <div class="hry-sin" data-sin></div>
+    </div>
+
+    <div class="hry-pata">
+      <p class="drobne">Skóre se ukládá jen v tomhle prohlížeči, nikam se neposílá. Na jiném zařízení začínáš od nuly. Víc v <a href="/metodika/#soukromi">soukromí</a>.</p>
+      <button type="button" class="tlacitko tlacitko--male" data-smazat hidden>Smazat skóre</button>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .hry-stranka h1 { font-size: clamp(2rem, 4vw, 2.8rem); line-height: 1.12; }
+  .hry-nadpis { font-size: clamp(1.35rem, 2.4vw, 1.7rem); }
+  .hry-seznam { display: grid; gap: 1rem; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+  @media (max-width: 760px) { .hry-seznam { grid-template-columns: minmax(0, 1fr); } }
+  .hry-hra {
+    position: relative; overflow: hidden; display: grid; grid-template-columns: 220px minmax(0, 1fr); align-items: center; gap: 1.5rem;
+    padding: 1.4rem 1.5rem; border-radius: var(--radius); background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin);
+    color: var(--navy); text-decoration: none; transition: transform var(--stisk) var(--ease-out), box-shadow 0.25s ease;
+  }
+  @media (hover: hover) and (pointer: fine) { .hry-hra:hover { transform: translateY(-3px); box-shadow: var(--stin-velky); color: var(--navy); } }
+  .hry-hra:active { transform: scale(0.99); }
+  .hry-hra__vejir { position: relative; height: 170px; }
+  .hry-hra__vejir span { position: absolute; left: 50%; top: 50%; width: 104px; height: 122px; margin: -61px 0 0 -52px; border-radius: 13px; background: var(--paper); border: 1px solid var(--line); box-shadow: 0 12px 24px -10px rgba(var(--stin-barva), 0.45); display: grid; place-items: center; transform-origin: 50% 130%; transition: transform 0.4s var(--ease-out); }
+  .hry-hra__vejir img { width: 80px; height: auto; border-radius: 4px; box-shadow: 0 0 0 1px color-mix(in srgb, var(--navy) 12%, transparent); }
+  .hry-hra__vejir span:nth-child(1) { transform: rotate(-15deg) translateX(-16px); }
+  .hry-hra__vejir span:nth-child(2) { transform: translateY(-6px); z-index: 2; }
+  .hry-hra__vejir span:nth-child(3) { transform: rotate(15deg) translateX(16px); }
+  @media (hover: hover) and (pointer: fine) {
+    .hry-hra:hover .hry-hra__vejir span:nth-child(1) { transform: rotate(-22deg) translateX(-24px); }
+    .hry-hra:hover .hry-hra__vejir span:nth-child(3) { transform: rotate(22deg) translateX(24px); }
+  }
+  .hry-hra__text { display: flex; flex-direction: column; gap: 0.5rem; min-width: 0; }
+  .hry-hra__text > b { font-size: 1.55rem; font-weight: 900; letter-spacing: -0.02em; line-height: 1.15; }
+  .hry-hra__popis { font-size: 0.95rem; font-weight: 600; color: var(--text-2); line-height: 1.55; }
+  .hry-hra__rezimy { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+  .hry-hra__rezimy span { padding: 0.2rem 0.6rem; border-radius: 999px; background: var(--plocha-2); border: 1px solid var(--line-jemna); font-size: 0.76rem; font-weight: 700; color: var(--muted); }
+  .hry-hra__stav { font-size: 0.82rem; font-weight: 700; color: var(--orange-text); }
+  .hry-hra__stav:empty { display: none; }
+  .hry-hra__cta { display: inline-flex; align-items: center; gap: 0.4rem; width: fit-content; margin-top: 0.3rem; min-height: 44px; padding: 0 1.2rem; border-radius: 999px; background: var(--orange); color: var(--na-oranzove); font-weight: 800; }
+  @media (max-width: 620px) {
+    .hry-hra { grid-template-columns: minmax(0, 1fr); gap: 0.8rem; padding: 1.1rem 1.15rem 1.3rem; }
+    .hry-hra__vejir { height: 150px; }
+  }
+  .hry-brzy { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; padding: 1.4rem; text-align: center; border-radius: var(--radius); border: 1.5px dashed var(--line-2); color: var(--muted); }
+  .hry-brzy b { color: var(--navy); font-size: 1.02rem; }
+  .hry-brzy__ikona { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--plocha-2); color: var(--muted); margin-bottom: 0.2rem; }
+  .hry-pata { display: flex; flex-wrap: wrap; gap: 0.6rem 1.2rem; align-items: center; justify-content: space-between; }
+  .hry-pata .tlacitko { width: auto; }
+</style>
+
+<script>
+  import { nactiProfil, uroven, sinSlavy, smazProfil, cislo, sklonuj } from '../../lib/hry';
+  import { HRY } from '../../data/hry';
+
+  const esc = (s: unknown) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string);
+  const VSECH_STATU = 197;
+
+  function vykresli() {
+    const p = nactiProfil(), u = uroven(p.skore);
+    const objev = (p.objev.vlajky ?? []).length;
+    const usp = p.odpovedi ? Math.round((p.spravne / p.odpovedi) * 100) + ' %' : '–';
+    const box = document.querySelector<HTMLElement>('[data-profil]')!;
+    const prazdny = p.skore === 0 && p.her === 0;
+    box.innerHTML = `<div class="hry-profil">
+        <span class="hry-uroven" style="--p:${u.podil.toFixed(3)}"><b>${u.cislo}</b></span>
+        <span class="hry-profil__text"><b>${esc(u.nazev)}</b><small>${prazdny ? 'Zatím žádné body. Začni třeba Vlajkami světa.' : `Úroveň ${u.cislo} · další za ${cislo(u.chybi)} ${sklonuj(u.chybi, 'bod', 'body', 'bodů')}`}</small><span class="hry-pruh"><i style="width:${(u.podil * 100).toFixed(1)}%"></i></span></span>
+        <span class="hry-profil__cislo"><b>${cislo(p.skore)}</b><small>${sklonuj(p.skore, 'bod', 'body', 'bodů')} celkem</small></span>
+      </div>
+      ${prazdny ? '' : `<div class="hry-cisla">
+        <div><b>${p.her}</b><small>${sklonuj(p.her, 'odehraná hra', 'odehrané hry', 'odehraných her')}</small></div>
+        <div><b>${usp}</b><small>správných odpovědí</small></div>
+        <div><b>${objev}</b><small>${sklonuj(objev, 'objevený stát', 'objevené státy', 'objevených států')} z ${VSECH_STATU}</small></div>
+        <div><b>${p.den.serie}</b><small>${sklonuj(p.den.serie, 'den', 'dny', 'dní')} v řadě, nejvíc ${p.den.nejdelsi}</small></div>
+      </div>`}`;
+
+    for (const h of HRY) {
+      const el = document.querySelector<HTMLElement>(`[data-hra-stav="${h.id}"]`); if (!el) continue;
+      const c = p.hry[h.id] ?? {};
+      const casti: string[] = [];
+      if (h.id === 'vlajky') {
+        if (c.rekord) casti.push(`rekord bleskovky ${c.rekord}`);
+        if (objev) casti.push(`objeveno ${objev} z ${VSECH_STATU} států`);
+      }
+      el.textContent = casti.length ? 'Tvoje: ' + casti.join(' · ') : '';
+    }
+
+    const sin = sinSlavy(p);
+    const obal = document.querySelector<HTMLElement>('[data-sin-obal]')!;
+    obal.hidden = !sin.length;
+    document.querySelector<HTMLElement>('[data-sin]')!.innerHTML = sin.slice(0, 10).map((s, i) => `<div class="hry-sin__radek"><span class="hry-sin__misto">${i + 1}.</span><span class="hry-sin__jmeno">${esc(s.jmeno)}<small>${s.hry} ${sklonuj(s.hry, 'hra', 'hry', 'her')} · ${cislo(s.body)} ${sklonuj(s.body, 'bod', 'body', 'bodů')} · ${s.tahu ? Math.round((s.spravne / s.tahu) * 100) : 0} % správně</small></span><span class="hry-sin__cislo"><b>${s.vyhry}</b><small>${sklonuj(s.vyhry, 'výhra', 'výhry', 'výher')}</small></span></div>`).join('');
+    document.querySelector<HTMLElement>('[data-smazat]')!.hidden = prazdny && !sin.length;
+  }
+
+  document.querySelector('[data-smazat]')?.addEventListener('click', () => {
+    if (confirm('Smazat celkové skóre, úroveň, rekordy a síň slávy ve všech hrách? Vrátit to nejde.')) { smazProfil(); vykresli(); }
+  });
+  // Při návratu tlačítkem Zpět z hry se stránka obnoví z mezipaměti, skóre se proto přepočítá
+  addEventListener('pageshow', vykresli);
+  vykresli();
+</script>
