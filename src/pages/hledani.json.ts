@@ -42,6 +42,7 @@ export async function GET() {
     ['stranka', 'Svět', 'Glóbus a srovnání s Českem', '/svet/', 'svet'],
     ['stranka', 'Hry', 'Hry s daty, celkové skóre a síň slávy', '/hry/', 'kostka', 'hra hry skóre úroveň síň slávy zábava'],
     ['stranka', 'Vlajky světa', 'Kostka, kartičky a bleskovka se 197 státy', '/hry/vlajky-sveta/', 'kostka', 'hra vlajky kvíz státy hlavní města měny jazyky sousedé'],
+    ['stranka', 'Slepá mapa', 'Najdi státy na mapě bez popisků, kontinent po kontinentu', '/hry/vlajky-sveta/#slepa-mapa', 'kostka', 'slepá mapa zeměpis státy světa kde leží poloha evropa afrika asie procvičení'],
     ['stranka', 'Videa', 'Všechna videa a série', '/videa/', 'serie', 'serie dily reely instagram tiktok'],
     ['stranka', 'Metodika a zdroje', 'Odkud jsou data a jak s nimi pracujeme', '/metodika/', 'kniha', 'opravy chyby licence cc by'],
     ['stranka', 'Soukromí a cookies', 'Co web ukládá', '/metodika/#soukromi', 'stit', 'gdpr'],

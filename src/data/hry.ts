@@ -17,7 +17,7 @@ export const HRY: HraNaWebu[] = [
     nazev: 'Vlajky světa',
     href: '/hry/vlajky-sveta/',
     popis: 'Všech 197 států na kartičkách. Kostka určí, jestli hádáš hlavní město, měnu, jazyk, nebo sousedy.',
-    rezimy: ['Desková hra pro 1–6 hráčů', 'Bleskovka na 60 sekund', 'Studovna', 'Atlas karet'],
+    rezimy: ['Desková hra pro 1–6 hráčů', 'Bleskovka na 60 sekund', 'Slepá mapa', 'Studovna', 'Atlas karet'],
     obr: '/nahledy/hra.webp',
     barva: '#F08829',
   },
