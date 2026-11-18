@@ -452,7 +452,8 @@ import '../../styles/hry.css';
   .sm-otazka__vlajka { height: 46px; width: auto; max-width: 74px; flex: none; border-radius: 5px; box-shadow: 0 0 0 1px color-mix(in srgb, var(--navy) 14%, transparent); }
   .sm-otazka__text { flex: 1; min-width: 0; line-height: 1.15; }
   .sm-otazka__stitek { display: block; font-size: 0.68rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
-  .sm-otazka__text b { display: block; margin-top: 3px; font-size: 1.32rem; font-weight: 900; letter-spacing: -0.015em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sm-otazka__text b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; margin-top: 3px; font-size: 1.32rem; font-weight: 900; letter-spacing: -0.015em; line-height: 1.12; overflow: hidden; overflow-wrap: anywhere; }
+  .sm-otazka__text b.dlouhy { font-size: 1.08rem; }
   .sm-otazka__vpravo { display: flex; flex-direction: column; align-items: flex-end; gap: 0.4rem; flex: none; }
   .sm-pokusy { display: flex; gap: 5px; padding-right: 2px; }
   .sm-pokusy i { width: 9px; height: 9px; border-radius: 50%; background: var(--sm-1); transition: background-color 0.25s ease, transform 0.25s var(--ease-out); }
@@ -475,6 +476,7 @@ import '../../styles/hry.css';
     .sm-otazka__ikona { width: 38px; height: 38px; border-radius: 11px; }
     .sm-otazka__vlajka { height: 40px; }
     .sm-otazka__text b { font-size: 1.15rem; }
+    .sm-otazka__text b.dlouhy { font-size: 0.98rem; }
     .sm-otazka__pruh { margin-inline: -0.55rem; }
     .sm-nevim { min-height: 30px; padding: 0 0.6rem; }
   }
@@ -494,6 +496,45 @@ import '../../styles/hry.css';
     .sm-konec { max-height: calc(100% - 1rem); }
   }
 
+  /* Denní výzva */
+  .hra-dl--vyzva { border-color: color-mix(in srgb, var(--orange) 60%, var(--line)); background: var(--oranzova-podklad); }
+  .hra-dl--vyzva.hotovo { border-color: var(--line); background: var(--paper); }
+  .hra-dl__serie { display: inline-flex; align-items: center; gap: 1px; vertical-align: 2px; margin-left: 0.3rem; padding: 1px 7px 1px 5px; border-radius: 99px; background: var(--oranzova-svetla); color: var(--orange-text); font-size: 0.72rem; font-weight: 900; }
+  .sm-vyzva-uvod { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 1.1rem; align-items: start; }
+  .sm-vyzva-uvod ul { margin: 0; padding-left: 1.1rem; display: grid; gap: 0.35rem; font-size: 0.93rem; line-height: 1.5; color: var(--text-2); }
+  .sm-vyzva-uvod__cislo { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 86px; padding: 0.7rem 0.4rem; border-radius: 18px; background: var(--panel); color: var(--na-panelu); text-align: center; line-height: 1.1; }
+  .sm-vyzva-uvod__cislo b { font-size: 1.8rem; font-weight: 900; letter-spacing: -0.03em; color: var(--na-panelu-akcent); margin: 2px 0; }
+  .sm-vyzva-uvod__cislo small { font-size: 0.68rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--na-panelu-2); }
+  @media (max-width: 480px) { .sm-vyzva-uvod { grid-template-columns: minmax(0, 1fr); } .sm-vyzva-uvod__cislo { flex-direction: row; gap: 0.5rem; width: auto; justify-content: flex-start; padding: 0.55rem 0.9rem; } .sm-vyzva-uvod__cislo b { font-size: 1.4rem; } }
+  .sm-ctverce { display: flex; gap: 5px; margin: 0.8rem 0 0.6rem; }
+  .sm-ctverce i { flex: 1; max-width: 34px; aspect-ratio: 1; border-radius: 7px; animation: sm-ctverec 0.4s var(--ease-out) backwards; }
+  .sm-ctverce i:nth-child(2) { animation-delay: 0.05s; } .sm-ctverce i:nth-child(3) { animation-delay: 0.1s; } .sm-ctverce i:nth-child(4) { animation-delay: 0.15s; } .sm-ctverce i:nth-child(5) { animation-delay: 0.2s; }
+  .sm-ctverce i:nth-child(6) { animation-delay: 0.25s; } .sm-ctverce i:nth-child(7) { animation-delay: 0.3s; } .sm-ctverce i:nth-child(8) { animation-delay: 0.35s; } .sm-ctverce i:nth-child(9) { animation-delay: 0.4s; } .sm-ctverce i:nth-child(10) { animation-delay: 0.45s; }
+  @keyframes sm-ctverec { from { transform: scale(0.4); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .sm-ctverce i { animation: none; } }
+  .sm-vyzva-staty { display: flex; flex-wrap: wrap; gap: 0.3rem; }
+  @media (max-width: 620px), (max-height: 700px) {
+    .sm-vyzva-staty { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -1.1rem; padding: 0 1.1rem 2px; scroll-padding-inline: 1.1rem; mask-image: linear-gradient(90deg, transparent, #000 1rem, #000 calc(100% - 1.5rem), transparent); }
+    .sm-vyzva-staty::-webkit-scrollbar { display: none; }
+    .sm-vyzva-staty button { flex: none; white-space: nowrap; }
+    .sm-konec--vyzva .sm-konec__tl { flex-wrap: nowrap; }
+    .sm-konec--vyzva .sm-konec__tl .tlacitko { padding: 0 0.8rem; }
+    .sm-konec--vyzva .sm-ctverce { margin: 0.65rem 0 0.55rem; }
+  }
+  .sm-konec--vyzva .sm-tl-menu { flex: 0 0 auto; }
+  .sm-vyzva-staty button { display: inline-flex; align-items: center; gap: 0.35rem; min-height: 30px; padding: 0 0.6rem; border-radius: 999px; border: 1px solid var(--line); background: var(--plocha-2); color: var(--navy); font-family: inherit; font-size: 0.76rem; font-weight: 800; cursor: pointer; transition: transform var(--stisk) var(--ease-out); }
+  .sm-vyzva-staty button:active { transform: scale(0.95); }
+  @media (hover: hover) and (pointer: fine) { .sm-vyzva-staty button:hover { border-color: var(--line-2); } }
+  .sm-vyzva-staty i { width: 9px; height: 9px; border-radius: 3px; flex: none; }
+  .sm-stat { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.4rem; margin-top: 0.75rem; }
+  .sm-stat div { padding: 0.45rem 0.5rem; border-radius: 12px; background: var(--plocha-2); text-align: center; line-height: 1.15; }
+  .sm-stat b { display: block; font-size: 1.15rem; font-weight: 900; font-variant-numeric: tabular-nums; }
+  .sm-stat small { font-size: 0.68rem; font-weight: 700; color: var(--muted); }
+  .hra-panel .sm-stat { margin-top: 0; }
+  .sm-odpocet { margin-top: 0.7rem; text-align: center; font-size: 0.84rem; font-weight: 700; color: var(--muted); }
+  .sm-odpocet b { color: var(--navy); font-variant-numeric: tabular-nums; }
+  .sm-sdileni { width: 100%; margin-top: 0.4rem; padding: 0.7rem; border-radius: 12px; border: 1px solid var(--line-2); background: var(--plocha-2); color: var(--navy); font: 700 0.9rem/1.5 inherit; resize: none; }
+
   /* Výsledek kola dole přes mapu, nad ním je vidět vybarvená oblast */
   .sm-konec {
     position: absolute; z-index: 6; left: 50%; bottom: 0.75rem; transform: translateX(-50%); width: min(calc(100% - 1.2rem), 560px);
@@ -502,6 +543,11 @@ import '../../styles/hry.css';
   }
   @media (max-width: 700px) { .hra.cela .sm-konec { bottom: calc(0.6rem + env(safe-area-inset-bottom)); } }
   @keyframes sm-nahoru { from { opacity: 0; transform: translate(-50%, 28px); } }
+  @media (min-width: 1000px) {
+    .sm-konec { left: auto; right: 0.9rem; top: 0.9rem; bottom: auto; transform: none; width: 420px; max-height: calc(100% - 1.8rem); animation-name: sm-zprava; }
+    .sm-mapa.je-konec .sm-zoom { right: calc(420px + 1.8rem); }
+  }
+  @keyframes sm-zprava { from { opacity: 0; transform: translateX(28px); } }
   .sm-konec__hlava { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
   .sm-konec h2 { font-size: 1.35rem; line-height: 1.15; margin-top: 0.2rem; }
   .sm-konec__cislo { text-align: right; line-height: 1; flex: none; }
@@ -529,6 +575,7 @@ import '../../styles/hry.css';
 <script>
   import { nactiProfil, zapis, vrat, uroven, sinSlavy, smazProfil, cislo, sklonuj, klicJmena, zapniFullscreen, vypniFullscreen, jeFullscreen, type Zaznam, type Profil } from '../../lib/hry';
   import { slepaMapa, type SlepaMapa, type StavStatu, type Box, type Okraje } from '../../lib/slepa-mapa';
+  import { dnes, cisloVyzvy, hezkeDatum, doPulnoci, odpocet, vyberDne, TYPY_DNE, vysledekDne, ulozVysledek, rozehrana, ulozRozehranou, bodyZa, statistiky as statistikyVyzev, textSdileni, hodnoceni, MAX_BODU, type Vysledek } from '../../lib/vyzva';
 
   /* ============ ZÁKLAD ============ */
   type Zeme = {
@@ -592,6 +639,8 @@ import '../../styles/hry.css';
     cil: '<path d="M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M4 12a8 8 0 1 0 16 0a8 8 0 1 0 -16 0" /><path d="M12 2l0 2" /><path d="M12 20l0 2" /><path d="M20 12l2 0" /><path d="M2 12l2 0" />',
     oko: '<path d="M10 12a2 2 0 1 0 4 0a2 2 0 0 0 -4 0" /><path d="M21 12c-2.4 4 -5.4 6 -9 6c-3.6 0 -6.6 -2 -9 -6c2.4 -4 5.4 -6 9 -6c3.6 0 6.6 2 9 6" />',
     ramecek: '<path d="M4 9V4h5" /><path d="M20 9V4h-5" /><path d="M4 15v5h5" /><path d="M20 15v5h-5" />',
+    kalendar: '<path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M8 15h2v2h-2z" />',
+    sdilet: '<path d="M3 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M15 6a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M15 18a3 3 0 1 0 6 0a3 3 0 1 0 -6 0" /><path d="M8.7 10.7l6.6 -3.4" /><path d="M8.7 13.3l6.6 3.4" />',
   };
   const ik = (n: string, s = 20, sw = 2) => `<svg viewBox="0 0 24 24" width="${s}" height="${s}" fill="none" stroke="currentColor" stroke-width="${sw}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IK[n] || ''}</svg>`;
 
@@ -837,7 +886,7 @@ import '../../styles/hry.css';
   }
   AKCE.statistiky = () => {
     const p = nactiProfil(), h = p.hry.vlajky ?? {}, o = objeveno(p);
-    const her = (h.deskovky ?? 0) + (h.bleskovky ?? 0) + (h.mapy ?? 0);
+    const her = (h.deskovky ?? 0) + (h.bleskovky ?? 0) + (h.mapy ?? 0) + (h.vyzvy ?? 0);
     const usp = p.odpovedi ? Math.round((p.spravne / p.odpovedi) * 100) + ' %' : '–';
     const kont = Object.keys(KONT).map((k) => {
       const vse = ZEME.filter((z) => z.cont[0] === k), ma = vse.filter((z) => o.has(z.c)).length;
@@ -875,6 +924,7 @@ import '../../styles/hry.css';
         <span class="hra-vejir" aria-hidden="true">${vejir.map((z) => `<span>${vlajka(z)}</span>`).join('')}</span>
       </button>
       <button class="hra-dl" data-a="bleskovkaUvod" style="--ic:#3F7FBF"><span class="hra-dl__ikona">${ik('bolt', 26)}</span><span><b>Bleskovka</b><small>60 sekund, co nejvíc správně${rekord ? ` · tvůj rekord ${rekord}` : ''}</small></span></button>
+      ${vyzvaDlazdice()}
       <button class="hra-dl" data-a="slepaUvod" style="--ic:#D8473B"><span class="hra-dl__ikona">${ik('cil', 26)}</span><span><b>Slepá mapa <span class="hra-dl__nove">Nové</span></b><small>Najdi stát na mapě bez popisků. Kontinent po kontinentu.</small></span></button>
       <button class="hra-dl" data-a="studovnaUvod" style="--ic:var(--teal)"><span class="hra-dl__ikona">${ik('books', 26)}</span><span><b>Studovna</b><small>Kartičky na procvičení. Co neumíš, vrátí se.</small></span></button>
       <button class="hra-dl" data-a="atlas" style="--ic:#8E6CC9"><span class="hra-dl__ikona">${ik('map', 26)}</span><span><b>Atlas karet</b><small>Prohlédni si a hledej všech ${ZEME.length} karet.</small></span></button>
@@ -902,6 +952,7 @@ import '../../styles/hry.css';
       <li>Barvy: <b>zelená</b> napoprvé, <b>žlutá</b> napodruhé, <b>oranžová</b> napotřetí, <b>červená</b> nenalezen.</li>
       <li>Bod do celkového skóre je za každý stát nalezený napoprvé.</li>
       <li>Malé státy jsou kroužky. Když ťukneš mezi víc malých států, mapa se tam sama přiblíží.</li></ul>
+    <h3>${ik('kalendar', 18)} Denní výzva</h3><p>Každý den 10 států na mapě světa, pro všechny stejných. Napoprvé 3 body, napodruhé 2, napotřetí 1. Hraje se jednou denně, bez kroku zpět, a výsledek jde sdílet.</p>
     <h3>${ik('check', 18)} Spory</h3><ul>
       <li>Jazyk: stačí jeden z úředních jazyků.</li>
       <li>Kontinent: u států na pomezí (Rusko, Turecko, Kypr…) platí obě odpovědi.</li>
@@ -1423,7 +1474,9 @@ import '../../styles/hry.css';
     fronta: string[]; typy: string[]; pos: number; pokus: number; stav: Record<string, StavStatu>; zamek: boolean;
     start: number; cas: number; konec: boolean; chyby: boolean; zaznam: Zaznam | null; predSkore: number;
     rekord: { klic: string; pred: { p: number; t: number } | null } | null;
+    kont: string[]; hranice: boolean; popis: string; vyzva: { datum: string; cislo: number } | null;
   };
+  type StartMapy = { fronta?: string[]; typy?: string[]; kont?: string[]; chyby?: boolean; popis?: string; vyzva?: { datum: string; cislo: number } };
   const SM: NastaveniMapy = { kont: ['EU'], typy: ['n'], pocet: 0, hranice: true, ...ulozeni.get<Partial<NastaveniMapy>>('mapa', {}) };
   if (!SM.kont?.length) SM.kont = ['EU'];
   if (!SM.typy?.length) SM.typy = ['n'];
@@ -1434,7 +1487,7 @@ import '../../styles/hry.css';
   let casMapy = 0;
   let priblizeniTipu = 0;
   const nazevOblasti = (k: string[]) => (k.length === 6 ? 'Celý svět' : k.map((x) => KONT_KRATKE[x]).join(', '));
-  const klicRekordu = (o: NastaveniMapy) => [...o.kont].sort().join('+') + (o.hranice ? '' : '-bez');
+  const klicRekordu = (o: { kont: string[]; hranice: boolean }) => [...o.kont].sort().join('+') + (o.hranice ? '' : '-bez');
   const rekordyMapy = () => ulozeni.get<Record<string, { p: number; t: number }>>('mapaRekordy', {});
   const minuty = (ms: number) => { const s = Math.round(ms / 1000); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
   function oblastMapy(kont: string[]): Box {
@@ -1449,6 +1502,7 @@ import '../../styles/hry.css';
     const r = rekordyMapy()[klicRekordu(SM)];
     const vse = SM.kont.length === 6;
     obrazovka(`<div class="hra-uzke">${lista('Slepá mapa', 'Kde leží který stát')}
+      <div class="hra-menu" style="margin-bottom:.9rem">${vyzvaDlazdice()}</div>
       <div class="hra-panel"><h3>${ik('cil', 18)} Jak to funguje</h3><p class="perex" style="font-size:.98rem">Mapa bez popisků. Hra řekne stát a ty na něj ťukneš. Na každý máš 3 pokusy a mapa se postupně vybarví podle toho, jak ti to šlo. Na konci si můžeš procvičit jen ty, které nevyšly.</p></div>
       <div class="hra-panel"><h3>${ik('kont', 18)} Oblast</h3>
         <div class="rada" style="gap:.5rem">${Object.keys(KONT).map((k) => `<button type="button" class="chip" data-a="smkont" data-k="${k}" aria-pressed="${!vse && SM.kont.includes(k)}">${KONT_KRATKE[k]}</button>`).join('')}<button type="button" class="chip" data-a="smsvet" aria-pressed="${vse}">Celý svět</button></div>
@@ -1477,26 +1531,54 @@ import '../../styles/hry.css';
     const moz = SM.typy.filter((t) => !(t === 'vlajka' && DVOJCATA[c]) && !(t === 'cap' && normalizuj(z.capShort).startsWith(normalizuj(z.n).slice(0, 5))));
     return moz.length ? vyber(moz) : 'n';
   }
+  // Typ otázky ve výzvě je daný, jen u dvojčat vlajek a měst podobných státu se změní na název
+  const typVyzvy = (c: string, t: string) => (t === 'vlajka' && DVOJCATA[c]) || (t === 'cap' && normalizuj(PODLE[c].capShort).startsWith(normalizuj(PODLE[c].n).slice(0, 5))) ? 'n' : t;
   // Místo zakryté kartou s otázkou a ovládáním, aby se oblast vešla do volné části mapy
   function okrajeMapy(): Okraje {
     const obal = app.querySelector<HTMLElement>('[data-sm]'); if (!obal) return {};
     const k = obal.querySelector<HTMLElement>('[data-smo]'), z = obal.querySelector<HTMLElement>('.sm-zoom'), konec = obal.querySelector<HTMLElement>('.sm-konec');
     const r = obal.getBoundingClientRect();
     const nahore = k && !konec ? k.getBoundingClientRect().bottom - r.top + 8 : 10;
-    const dole = konec ? r.bottom - konec.getBoundingClientRect().top + 8 : z && innerWidth <= 700 ? r.bottom - z.getBoundingClientRect().top + 6 : 10;
-    return { nahore, dole, vlevo: 10, vpravo: z && innerWidth > 700 ? 64 : 10 };
+    // Výsledek je na širokém displeji vpravo vedle mapy, jinak dole
+    const vpravoKonec = konec && innerWidth >= 1000;
+    const dole = konec && !vpravoKonec ? r.bottom - konec.getBoundingClientRect().top + 8 : z && innerWidth <= 700 ? r.bottom - z.getBoundingClientRect().top + 6 : 10;
+    const vpravo = vpravoKonec ? r.right - konec!.getBoundingClientRect().left + 8 : z && innerWidth > 700 ? 64 : 10;
+    return { nahore, dole, vlevo: 10, vpravo };
   }
 
-  AKCE.slepa = () => startMapy(null);
-  AKCE.smchyby = () => { if (!M) return; startMapy(M.fronta.filter((c) => M!.stav[c] > 1)); };
-  function startMapy(chyby: string[] | null) {
+  AKCE.slepa = () => startMapy();
+  AKCE.smchyby = () => {
+    if (!M) return;
+    const i = M.fronta.map((_, k) => k).filter((k) => M!.stav[M!.fronta[k]] > 1);
+    startMapy({ fronta: i.map((k) => M!.fronta[k]), typy: i.map((k) => M!.typy[k]), kont: M.kont, chyby: true, popis: M.vyzva ? 'Procvičení výzvy' : 'Procvičení chyb' });
+  };
+  function startMapy(o: StartMapy = {}) {
     zavri(); vstupDoHry(); clearTimeout(casMapy);
-    const aktivni = zKontinentu(SM.kont).map((i) => ZEME[i].c);
-    let fronta = zamichej(chyby ?? aktivni);
-    if (!chyby && SM.pocet) fronta = fronta.slice(0, SM.pocet);
-    M = { fronta, typy: fronta.map(typOtazky), pos: 0, pokus: 0, stav: {}, zamek: false, start: Date.now(), cas: 0, konec: false, chyby: !!chyby, zaznam: null, predSkore: 0, rekord: null };
+    const kont = o.kont ?? SM.kont, hranice = o.vyzva ? true : SM.hranice;
+    const aktivni = zKontinentu(kont).map((i) => ZEME[i].c);
+    let fronta: string[], typy: string[];
+    if (o.fronta && !o.vyzva) {
+      // procvičování: stejné státy (a typy otázek) v novém pořadí
+      const por = zamichej(o.fronta.map((_, k) => k));
+      fronta = por.map((k) => o.fronta![k]); typy = por.map((k) => o.typy?.[k] ?? typOtazky(o.fronta![k]));
+    } else if (o.fronta) { fronta = o.fronta; typy = o.typy ?? fronta.map(typOtazky); }
+    else { fronta = zamichej(aktivni); if (SM.pocet) fronta = fronta.slice(0, SM.pocet); typy = fronta.map(typOtazky); }
+    M = { fronta, typy, pos: 0, pokus: 0, stav: {}, zamek: false, start: Date.now(), cas: 0, konec: false, chyby: !!o.chyby, zaznam: null, predSkore: 0, rekord: null, kont, hranice, popis: o.popis ?? '', vyzva: o.vyzva ?? null };
     MH = [];
-    obrazovka(`<div class="hra-fit sm-hra">${lista('Slepá mapa', '', 'smkonec', true)}
+    let hotovaVyzva: Vysledek | null = null;
+    if (o.vyzva) {
+      // Výzva se hraje jednou denně: rozehranou dohraješ, kde jsi skončil, hotovou jen prohlížíš
+      hotovaVyzva = vysledekDne(o.vyzva.datum);
+      const r = rozehrana(o.vyzva.datum);
+      if (hotovaVyzva) {
+        fronta.forEach((c, k) => (M!.stav[c] = (hotovaVyzva!.v[k] || 4) as StavStatu));
+        Object.assign(M, { konec: true, cas: hotovaVyzva.t, pos: fronta.length });
+      } else if (r) {
+        Object.assign(M, { pos: r.pos, pokus: r.pokus, stav: r.stav, start: Date.now() - r.cas });
+        while (M.pos < fronta.length && M.stav[fronta[M.pos]]) { M.pos++; M.pokus = 0; }
+      }
+    }
+    obrazovka(`<div class="hra-fit sm-hra">${lista('Slepá mapa', '', 'smkonec', !o.vyzva)}
       <div class="sm-mapa" data-sm>
         <div class="sm-otazka" data-smo></div>
         <div class="zoom-ovladani sm-zoom" role="group" aria-label="Přiblížení mapy">
@@ -1510,7 +1592,7 @@ import '../../styles/hry.css';
     let napCas = 0;
     const m = slepaMapa(obal, {
       W: MAPA.W, H: MAPA.H, other: MAPA.other, preklopit: PREKLOPIT,
-      staty: ZEME.map((z) => ({ c: z.c, d: z.map ? MAPA.paths[z.c] : null, pt: z.pt, ar: z.ar })),
+      staty: ZEME.map((z) => ({ c: z.c, d: z.map ? MAPA.paths[z.c] : null, pt: z.pt, ar: z.ar, box: z.box })),
       naTuk: tukMapy,
       naPriblizeni: () => { if (priblizeniTipu++ < 2) zpravaMapy('info', `${ik('search', 16, 2.4)} Bylo tam víc států, tak jsem mapu přiblížil. Ťukni znovu.`); },
       kolecko: () => cela,
@@ -1520,13 +1602,16 @@ import '../../styles/hry.css';
     // jen pro automatické testy při vývoji (v sestaveném webu se vynechá)
     if (import.meta.env.DEV) (window as any).__slepa = { mapa: m, kolo: () => M, zeme: PODLE };
     stopky.push(() => { m.znic(); if (mapa === m) mapa = null; clearTimeout(casMapy); });
-    m.aktivni(aktivni); m.hranice(SM.hranice);
+    m.aktivni(aktivni); m.hranice(hranice); m.stavy(M.stav);
     const hodiny = window.setInterval(() => { if (M && !M.konec) titulMapy(); }, 1000);
     stopky.push(() => clearInterval(hodiny));
-    ZPET = { mozno: () => MH.length > 0, proved: zpetMapy };
+    // Ve výzvě krok zpět není (jinak by šla vylepšit)
+    ZPET = { mozno: () => !M?.vyzva && MH.length > 0, proved: zpetMapy };
+    if (M.konec && hotovaVyzva) { titulMapy(); konecVyzvy(false); return; }
+    if (M.pos >= M.fronta.length) { konecMapy(); return; }
     otazkaMapy();
     // Oblast až po vykreslení karty, ať je známé, kolik místa zabírá
-    requestAnimationFrame(() => m.naOblast(oblastMapy(SM.kont), okrajeMapy(), false));
+    requestAnimationFrame(() => m.naOblast(oblastMapy(kont), okrajeMapy(), false));
     if (!ulozeni.get('mapaTip', false)) {
       ulozeni.set('mapaTip', true);
       zpravaMapy('info', matchMedia('(pointer: coarse)').matches ? 'Mapu posuneš tažením a přiblížíš dvěma prsty.' : 'Mapu posuneš tažením, přiblížíš kolečkem nebo tlačítky vpravo.');
@@ -1535,7 +1620,8 @@ import '../../styles/hry.css';
   function titulMapy() {
     const t = app.querySelector<HTMLElement>('[data-titul]'); if (!t || !M) return;
     const cas = M.konec ? M.cas : Date.now() - M.start;
-    t.innerHTML = `Slepá mapa<small>${esc(M.chyby ? 'Procvičení chyb' : nazevOblasti(SM.kont))} · ${Math.min(M.pos + 1, M.fronta.length)} z ${M.fronta.length} · ${minuty(cas)}</small>`;
+    const nazev = M.vyzva ? `Denní výzva #${M.vyzva.cislo}` : 'Slepá mapa', kde = M.vyzva ? hezkeDatum(M.vyzva.datum) : M.popis || nazevOblasti(M.kont);
+    t.innerHTML = `${nazev}<small>${esc(kde)} · ${Math.min(M.pos + 1, M.fronta.length)} z ${M.fronta.length} · ${minuty(cas)}</small>`;
   }
   function otazkaMapy() {
     if (!M) return;
@@ -1545,7 +1631,7 @@ import '../../styles/hry.css';
     const vizual = t.k === 'vlajka' ? vlajka(z, 'sm-otazka__vlajka') : `<span class="sm-otazka__ikona">${ik(t.ik, 24)}</span>`;
     const hlavni = t.k === 'vlajka' ? 'Kde leží?' : t.k === 'cap' ? esc(z.capShort) : esc(z.n);
     k.innerHTML = `<div class="sm-otazka__radek">${vizual}
-        <div class="sm-otazka__text"><span class="sm-otazka__stitek">${t.otazka}</span><b>${hlavni}</b></div>
+        <div class="sm-otazka__text"><span class="sm-otazka__stitek">${t.otazka}</span><b${hlavni.length > 17 ? ' class="dlouhy"' : ''}>${hlavni}</b></div>
         <div class="sm-otazka__vpravo"><span class="sm-pokusy" aria-label="Pokusy">${[0, 1, 2].map((i) => `<i class="${i < M!.pokus ? 'pryc' : ''}"></i>`).join('')}</span>
           <button type="button" class="sm-nevim" data-a="smnevim">${ik('oko', 16)} Nevím</button></div></div>
       <div class="sm-otazka__zprava" data-smz></div>
@@ -1576,6 +1662,8 @@ import '../../styles/hry.css';
     zpravaMapy('info', `${ik('zpet', 16, 2.4)} Krok zpět`);
   }
 
+  // Rozehraná výzva se ukládá po každém ťuknutí, takže obnovení stránky nepomůže
+  function ulozVyzvu() { if (M?.vyzva && !M.konec) ulozRozehranou({ datum: M.vyzva.datum, pos: M.pos, pokus: M.pokus, stav: M.stav, cas: Date.now() - M.start }); }
   function tukMapy(c: string, mx: number, my: number) {
     if (!M || M.zamek || M.konec || !mapa) return;
     const cil = M.fronta[M.pos], z = PODLE[cil];
@@ -1599,6 +1687,7 @@ import '../../styles/hry.css';
       const kde = !v ? '' : v.km < 40 ? ' Je hned vedle.' : ` Hledaný stát leží asi ${cislo(Math.round(v.km / (v.km < 1000 ? 10 : 50)) * (v.km < 1000 ? 10 : 50))} km ${v.smer}.`;
       zpravaMapy('chyba', `${ik('x', 17, 2.8)} To je ${esc(PODLE[c].n)}.${kde}`);
     }
+    ulozVyzvu();
     aktualizujZpet();
   }
   function odhalMapy(nevim: boolean) {
@@ -1612,6 +1701,7 @@ import '../../styles/hry.css';
     mapa.stitekStatu(cil, z.n, 'info', 2300);
     if (nevim) zvuk('tik');
     zpravaMapy('info', `${ik('cil', 17, 2.4)} Tady je <b>${esc(z.n)}</b>${M.typy[M.pos] === 'cap' ? ` (${esc(z.capShort)})` : ''}`);
+    ulozVyzvu();
     aktualizujZpet();
     casMapy = window.setTimeout(() => { mapa?.nastavPohled(pohled); dalsiMapy(); }, 2500);
   }
@@ -1620,11 +1710,13 @@ import '../../styles/hry.css';
     if (!M) return;
     M.pos++; M.pokus = 0; M.zamek = false;
     if (M.pos >= M.fronta.length) { konecMapy(); return; }
+    ulozVyzvu();
     otazkaMapy();
   }
   function konecMapy() {
     if (!M || !mapa) return;
     M.konec = true; M.cas = Date.now() - M.start; M.zamek = false;
+    if (M.vyzva) { titulMapy(); konecVyzvy(true); return; }
     const pocty = [1, 2, 3, 4].map((k) => M!.fronta.filter((c) => M!.stav[c] === k).length);
     const n = M.fronta.length, napoprve = pocty[0], proc = Math.round((napoprve / n) * 100);
     // Zápis do celkového skóre: bod za každý stát napoprvé
@@ -1633,14 +1725,15 @@ import '../../styles/hry.css';
     // Rekord jen za celou oblast (ne za 10/20 států ani procvičení chyb)
     let novy = false;
     if (!M.chyby && !SM.pocet) {
-      const klic = klicRekordu(SM), r = rekordyMapy(), pred = r[klic] ?? null;
+      const klic = klicRekordu(M), r = rekordyMapy(), pred = r[klic] ?? null;
       M.rekord = { klic, pred };
       if (!pred || proc > pred.p || (proc === pred.p && M.cas < pred.t)) { r[klic] = { p: proc, t: M.cas }; ulozeni.set('mapaRekordy', r); novy = !!pred; }
     }
     titulMapy();
     zvuk('vyhra'); if (proc >= 80 || novy) konfety();
     const chyb = n - napoprve;
-    const nazev = M.chyby ? 'Chyby procvičené' : SM.pocet || (SM.kont.length > 1 && SM.kont.length < 6) ? 'Kolo hotové' : SM.kont.length === 6 ? 'Celý svět hotový!' : `${SM.kont[0] === 'OC' ? 'Oceánie' : KONT[SM.kont[0]]} hotová!`;
+    const K = M.kont;
+    const nazev = M.chyby ? 'Chyby procvičené' : SM.pocet || (K.length > 1 && K.length < 6) ? 'Kolo hotové' : K.length === 6 ? 'Celý svět hotový!' : `${K[0] === 'OC' ? 'Oceánie' : KONT[K[0]]} hotová!`;
     const LEG = ['napoprvé', 'napodruhé', 'napotřetí', 'nenalezeno'];
     const obal = $('[data-sm]', app);
     obal.classList.add('je-konec');
@@ -1660,14 +1753,102 @@ import '../../styles/hry.css';
     obal.appendChild(sheet);
     aktualizujZpet();
     // Celá oblast nad výsledkem, ať je vidět vybarvená mapa
-    requestAnimationFrame(() => mapa?.naOblast(oblastMapy(SM.kont), okrajeMapy(), true));
+    requestAnimationFrame(() => mapa?.naOblast(oblastMapy(K), okrajeMapy(), true, true));
   }
   AKCE.smplus = () => mapa?.plus();
   AKCE.smminus = () => mapa?.minus();
   AKCE.smdomu = () => mapa?.domu();
   AKCE.smkonec = () => {
+    if (M?.vyzva) { if (!M.konec && (M.pos || M.pokus)) toast('Výzva je uložená, dohraješ ji do půlnoci'); menu(); return; }
     if (!M || M.konec || M.pos === 0) { AKCE.slepaUvod(koren, new Event('x')); return; }
     otevri(`<div class="hra-okno" role="dialog" aria-modal="true" aria-label="Ukončit kolo" style="text-align:center"><h2>Ukončit kolo?</h2><p>Rozehrané kolo se do skóre nezapočítá.</p><div class="hra-dva" style="margin-top:1rem"><button class="tlacitko" data-a="zavri">Hrát dál</button><button class="tlacitko hra-tl-ne" data-a="slepaUvod">Ukončit</button></div></div>`);
+  };
+
+  /* ============ DENNÍ VÝZVA ============
+     10 států na mapě světa, každý den jiných a pro všechny stejných. Výběr, ukládání a statistiky jsou v src/lib/vyzva.ts. */
+  const VSECHNY_KONT = Object.keys(KONT);
+  function vyzvaDlazdice() {
+    const d = dnes(), c = cisloVyzvy(d), v = vysledekDne(d), r = rozehrana(d), st = statistikyVyzev();
+    const stav = v ? `Splněno: ${v.b} z ${MAX_BODU} bodů · další za ${Math.ceil(doPulnoci() / 3600)}&nbsp;h` : r ? `Rozehráno: ${Math.min(r.pos + 1, 10)}. stát z 10 · dohraj do půlnoci` : '10 států na mapě světa, pro všechny stejných. Jednou denně.';
+    return `<button class="hra-dl hra-dl--vyzva${v ? ' hotovo' : ''}" data-a="vyzva" style="--ic:var(--orange)"><span class="hra-dl__ikona">${ik('kalendar', 26)}</span><span><b>Denní výzva #${c}${st.serie > 1 ? ` <span class="hra-dl__serie" title="Dní v řadě">${ik('flame', 13)}${st.serie}</span>` : !v && !r ? ' <span class="hra-dl__nove">Dnes</span>' : ''}</b><small>${stav}</small></span></button>`;
+  }
+  const statyVyzvyHTML = (st: ReturnType<typeof statistikyVyzev>) =>
+    `<div class="sm-stat"><div><b>${st.hrano}</b><small>${sklonuj(st.hrano, 'odehraná', 'odehrané', 'odehraných')}</small></div><div><b>${st.serie}</b><small>${sklonuj(st.serie, 'den', 'dny', 'dní')} v řadě</small></div><div><b>${st.nejlepsi}</b><small>nejlepší</small></div><div><b>${st.prumer}</b><small>průměr</small></div></div>`;
+  AKCE.vyzva = () => {
+    zavri();
+    const d = dnes(), c = cisloVyzvy(d);
+    if (vysledekDne(d)) { startVyzvy(); return; }
+    const r = rozehrana(d), st = statistikyVyzev();
+    obrazovka(`<div class="hra-uzke">${lista(`Denní výzva #${c}`, hezkeDatum(d))}
+      <div class="hra-panel sm-vyzva-uvod"><div class="sm-vyzva-uvod__cislo"><small>výzva</small><b>#${c}</b><small>${hezkeDatum(d)}</small></div>
+        <div><h3>${ik('kalendar', 18)} Jak to funguje</h3><ul>
+          <li>10 států na mapě světa. Každý den jiné a pro všechny stejné, od velkých po malé.</li>
+          <li>Většinou hledáš podle názvu, dvakrát jen podle vlajky a jednou podle hlavního města.</li>
+          <li>Na každý stát máš 3 pokusy: napoprvé 3 body, napodruhé 2, napotřetí 1.</li>
+          <li>Hraje se jednou denně a krok zpět tu není. Když odejdeš, pokračuješ tam, kde jsi skončil.</li>
+          <li>Výsledek můžeš sdílet jako řádek barevných čtverečků.</li></ul></div></div>
+      ${st.hrano ? `<div class="hra-panel"><h3>${ik('graf', 18)} Tvoje výzvy</h3>${statyVyzvyHTML(st)}</div>` : ''}
+      <button class="tlacitko tlacitko--oranzovy tlacitko--plna-sirka" data-a="vyzvaStart">${ik('cil', 20)} ${r ? `Pokračovat (${Math.min(r.pos + 1, 10)}. stát z 10)` : 'Začít výzvu'}</button>
+      <p class="drobne" style="margin-top:.8rem;text-align:center">Nová výzva je každý den o půlnoci.</p></div>`);
+  };
+  AKCE.vyzvaStart = () => startVyzvy();
+  function startVyzvy() {
+    const d = dnes(), fronta = vyberDne(d, ZEME);
+    startMapy({ fronta, typy: fronta.map((c, i) => typVyzvy(c, TYPY_DNE[i])), kont: VSECHNY_KONT, vyzva: { datum: d, cislo: cisloVyzvy(d) } });
+  }
+  function konecVyzvy(nove: boolean) {
+    if (!M?.vyzva || !mapa) return;
+    const V = M.vyzva, fronta = M.fronta;
+    const v = fronta.map((c) => M!.stav[c] || 4);
+    const napoprve = v.filter((x) => x === 1).length;
+    let vys: Vysledek;
+    if (nove) {
+      vys = { v, b: bodyZa(v), t: M.cas };
+      ulozVysledek(V.datum, vys);
+      // Do celkového skóre: bod za každý stát napoprvé a 3 body navíc za splněnou výzvu
+      M.predSkore = nactiProfil().skore;
+      M.zaznam = zapis({ hra: 'vlajky', skore: napoprve + 3, her: 1, spravne: napoprve, odpovedi: fronta.length, cisla: { vyzvy: 1 }, rekordy: { vyzva: vys.b }, objev: fronta.filter((c) => M!.stav[c] === 1) });
+      zvuk('vyhra'); if (vys.b >= 24) konfety();
+    } else vys = vysledekDne(V.datum) ?? { v, b: bodyZa(v), t: M.cas };
+    const st = statistikyVyzev();
+    const obal = $('[data-sm]', app);
+    obal.classList.add('je-konec');
+    const sheet = document.createElement('div');
+    sheet.className = 'sm-konec sm-konec--vyzva';
+    sheet.setAttribute('role', 'dialog'); sheet.setAttribute('aria-label', 'Výsledek denní výzvy');
+    sheet.innerHTML = `<div class="sm-konec__hlava"><div><span class="nadhlavi">Denní výzva #${V.cislo} · ${hezkeDatum(V.datum)}</span><h2>${hodnoceni(vys.b)}</h2></div>
+        <div class="sm-konec__cislo"><b>${vys.b}/${MAX_BODU}</b><small>bodů · ${minuty(vys.t)}</small></div></div>
+      <div class="sm-ctverce" role="img" aria-label="${vys.v.map((x) => ['', 'napoprvé', 'napodruhé', 'napotřetí', 'nenalezeno'][x]).join(', ')}">${vys.v.map((x) => `<i style="background:var(--sm-${x})"></i>`).join('')}</div>
+      <div class="sm-vyzva-staty">${fronta.map((c, i) => `<button type="button" data-a="smukaz" data-c="${c}"><i style="background:var(--sm-${vys.v[i]})"></i>${esc(PODLE[c].n)}</button>`).join('')}</div>
+      ${statyVyzvyHTML(st)}
+      ${nove ? ziskHTML(M.predSkore, napoprve + 3) : ''}
+      <div class="sm-konec__tl">
+        <button class="tlacitko tlacitko--oranzovy" data-a="smsdilet">${ik('sdilet', 18)} Sdílet</button>
+        ${vys.v.every((x) => x === 1) ? '' : `<button class="tlacitko" data-a="smchyby">${ik('books', 18)} Procvičit</button>`}
+        <button class="tlacitko sm-tl-menu" data-a="menu">Menu</button>
+      </div>
+      <p class="sm-odpocet" data-odpocet></p>`;
+    obal.appendChild(sheet);
+    // Procvičit = jen státy, které nevyšly napoprvé (stejně jako u běžného kola). Odpočet do další výzvy:
+    const tik = () => {
+      const el = sheet.querySelector<HTMLElement>('[data-odpocet]'); if (!el) return;
+      const s = doPulnoci();
+      el.innerHTML = dnes() !== V.datum || s <= 1 ? `<button class="tlacitko tlacitko--male" data-a="vyzva" style="width:auto">Nová výzva je tu</button>` : `Další výzva za <b>${odpocet(s)}</b>`;
+    };
+    tik();
+    const id = window.setInterval(tik, 1000); stopky.push(() => clearInterval(id));
+    aktualizujZpet();
+    requestAnimationFrame(() => mapa?.naOblast(SVET, okrajeMapy(), nove, true));
+  }
+  AKCE.smukaz = (b) => { const c = b.dataset.c!; if (!mapa) return; mapa.smazStitky(); mapa.ukaz(c, okrajeMapy()); mapa.stitekStatu(c, PODLE[c].n, 'info', 2400); };
+  AKCE.smsdilet = async () => {
+    if (!M?.vyzva) return;
+    const v = vysledekDne(M.vyzva.datum); if (!v) return;
+    const text = textSdileni(M.vyzva.datum, v);
+    // Na telefonu nabídka sdílení, na počítači zkopírování do schránky
+    if (navigator.share && matchMedia('(pointer: coarse)').matches) { try { await navigator.share({ text }); } catch {} return; }
+    try { await navigator.clipboard.writeText(text); toast('Výsledek je zkopírovaný, vlož ho třeba do zprávy'); }
+    catch { otevri(`<div class="hra-okno" role="dialog" aria-modal="true" aria-label="Sdílet výsledek"><h2>Sdílet výsledek</h2><p>Zkopíruj si text:</p><textarea class="sm-sdileni" readonly rows="5">${esc(text)}</textarea><div style="margin-top:1rem"><button class="tlacitko tlacitko--plny tlacitko--plna-sirka" data-a="zavri">Hotovo</button></div></div>`); }
   };
 
   /* ============ START ============ */
@@ -1687,8 +1868,9 @@ import '../../styles/hry.css';
       document.querySelector('[data-hra-defs]')!.innerHTML = defs + '</g>';
       menu();
       // Odkaz rovnou na slepou mapu: /hry/vlajky-sveta/#slepa-mapa
-      if (location.hash === '#slepa-mapa') AKCE.slepaUvod(koren, new Event('x'));
-      addEventListener('hashchange', () => { if (location.hash === '#slepa-mapa') AKCE.slepaUvod(koren, new Event('x')); });
+      const podleOdkazu = () => { if (location.hash === '#slepa-mapa') AKCE.slepaUvod(koren, new Event('x')); else if (location.hash === '#vyzva') AKCE.vyzva(koren, new Event('x')); };
+      podleOdkazu();
+      addEventListener('hashchange', podleOdkazu);
     })
     .catch(() => { app.innerHTML = '<p class="drobne">Hru se nepodařilo načíst. Zkus stránku obnovit.</p>'; });
 </script>

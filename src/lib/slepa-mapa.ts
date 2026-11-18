@@ -15,12 +15,13 @@ import { barva } from './tema';
 
 /** 0 = ještě nehádaný, 1–3 = nalezen na tolikátý pokus, 4 = nenalezen */
 export type StavStatu = 0 | 1 | 2 | 3 | 4;
-export type VstupStatu = { c: string; d?: string | null; pt: [number, number]; ar: number };
+/** box = obdélník hlavního území (bez zámořských částí, např. Francie bez Guyany a Réunionu) */
+export type VstupStatu = { c: string; d?: string | null; pt: [number, number]; ar: number; box?: Box | null };
 export type Box = [number, number, number, number];
 export type Okraje = { nahore?: number; dole?: number; vlevo?: number; vpravo?: number };
 
 type Stat = {
-  c: string; path: Path2D | null; kruhy: number[][]; lod: (Path2D | null)[]; box: Box; pt: [number, number]; ar: number;
+  c: string; path: Path2D | null; kruhy: number[][]; lod: (Path2D | null)[]; box: Box; hlavni: Box; pt: [number, number]; ar: number;
   aktivni: boolean; stav: StavStatu; kruh: { x: number; y: number } | null;
 };
 type Kandidat = { st: Stat; d: number; uvnitr: boolean; velikost: number; kruh: boolean };
@@ -116,7 +117,8 @@ export function slepaMapa(obal: HTMLElement, o: Volby) {
     for (const k of kruhy) for (let i = 0; i < k.length; i += 2) { x0 = Math.min(x0, k[i]); x1 = Math.max(x1, k[i]); y0 = Math.min(y0, k[i + 1]); y1 = Math.max(y1, k[i + 1]); }
     if (!kruhy.length) { x0 = x1 = pt[0]; y0 = y1 = pt[1]; }
     const path = kruhy.length ? cesta(kruhy) : null;
-    return { c: v.c, path, kruhy, lod: [path], box: [x0, y0, x1, y1], pt, ar: v.ar, aktivni: false, stav: 0, kruh: null };
+    const box: Box = [x0, y0, x1, y1];
+    return { c: v.c, path, kruhy, lod: [path], box, hlavni: v.box && !preklopit.has(v.c) ? v.box : box, pt, ar: v.ar, aktivni: false, stav: 0, kruh: null };
   });
   const podle = new Map(staty.map((s) => [s.c, s]));
   const ostatniKruhy = rozeber(o.other);
@@ -197,7 +199,7 @@ export function slepaMapa(obal: HTMLElement, o: Volby) {
   let hover: string | null = null;
   let upraveno = false; // hráč sám posouval nebo přibližoval
   let cekajiciOblast: { box: Box; okraje: Okraje } | null = null;
-  let posledniOblast: { box: Box; okraje: Okraje } | null = null;
+  let posledniOblast: { box: Box; okraje: Okraje; cela?: boolean } | null = null;
   const s = () => Math.exp(ls);
   const doMapy = (x: number, y: number): [number, number] => [cx + (x - w / 2) / s(), cy + (y - h / 2) / s()];
   const naPlatno = (x: number, y: number): [number, number] => [(x - cx) * s() + w / 2, (y - cy) * s() + h / 2];
@@ -341,7 +343,7 @@ export function slepaMapa(obal: HTMLElement, o: Volby) {
         ctx.globalAlpha = 1 - p; ctx.lineWidth = 3; ctx.strokeStyle = B.s1; ctx.stroke(); ctx.globalAlpha = 1;
       } else if (e.typ === 'ukaz') {
         // dvě vlny kolem státu, ať je vidět i na celé mapě
-        const r0 = st.path ? Math.max(14, (Math.max(st.box[2] - st.box[0], st.box[3] - st.box[1]) * m) / 2 + 6) : 12;
+        const r0 = st.path ? Math.min(Math.max(14, (Math.max(st.hlavni[2] - st.hlavni[0], st.hlavni[3] - st.hlavni[1]) * m) / 2 + 6), Math.max(w, h) / 2) : 12;
         for (const f of [0, 0.5]) {
           const q = ((t - e.t0) / 1100 + f) % 1;
           ctx.beginPath(); ctx.arc(x, y, r0 + q * 40, 0, Math.PI * 2);
@@ -366,7 +368,7 @@ export function slepaMapa(obal: HTMLElement, o: Volby) {
     sMin = Math.min(w / W, h / (H * 0.85)) * 0.9;
     sMax = Math.max(2.6, sMin * 60);
     if (cekajiciOblast) { const c = cekajiciOblast; cekajiciOblast = null; naObdelnik(c.box, c.okraje, false); return; }
-    if ((prvni || !upraveno) && posledniOblast) { naObdelnik(posledniOblast.box, posledniOblast.okraje, false); return; }
+    if ((prvni || !upraveno) && posledniOblast) { naObdelnik(posledniOblast.box, posledniOblast.okraje, false, !posledniOblast.cela); return; }
     omez(); kresliHned();
   }
   const ro = new ResizeObserver(velikost);
@@ -543,8 +545,8 @@ export function slepaMapa(obal: HTMLElement, o: Volby) {
     stavy(v: Record<string, StavStatu>) { staty.forEach((st) => (st.stav = v[st.c] ?? 0)); prestav(); },
     hranice(on: boolean) { hranice = on; kresli(); },
     /** Přiblíží na obdélník mapy. okraje = místo zakryté ovládáním (CSS px). */
-    naOblast(box: Box, okraje: Okraje = {}, plynule = true) { posledniOblast = { box, okraje }; upraveno = false; naObdelnik(box, okraje, plynule); },
-    domu() { if (posledniOblast) { upraveno = false; naObdelnik(posledniOblast.box, posledniOblast.okraje, true); } },
+    naOblast(box: Box, okraje: Okraje = {}, plynule = true, cela = false) { posledniOblast = { box, okraje, cela }; upraveno = false; naObdelnik(box, okraje, plynule, !cela); },
+    domu() { if (posledniOblast) { upraveno = false; naObdelnik(posledniOblast.box, posledniOblast.okraje, true, !posledniOblast.cela); } },
     plus() { upraveno = true; kolemBodu(s() * 1.8, w / 2, h / 2, true); },
     minus() { upraveno = true; kolemBodu(s() / 1.8, w / 2, h / 2, true); },
     /** Uloží a vrátí pohled (kvůli návratu po ukázání správného státu) */
@@ -554,7 +556,7 @@ export function slepaMapa(obal: HTMLElement, o: Volby) {
     ukaz(c: string, okraje: Okraje = {}) {
       const st = podle.get(c); if (!st) return;
       const m = s(), [x, y] = naPlatno(st.pt[0], st.pt[1]);
-      const rozmer = Math.max(st.box[2] - st.box[0], st.box[3] - st.box[1], 1);
+      const rozmer = Math.max(st.hlavni[2] - st.hlavni[0], st.hlavni[3] - st.hlavni[1], 1);
       const videt = x > (okraje.vlevo ?? 0) + 30 && x < w - (okraje.vpravo ?? 0) - 30 && y > (okraje.nahore ?? 0) + 30 && y < h - (okraje.dole ?? 0) - 30;
       if (!videt || (st.path && rozmer * m < 22)) {
         // Přiblížit, aby měl stát aspoň ~30 px, ale ne víc, než je potřeba vidět kus okolí
@@ -575,13 +577,18 @@ export function slepaMapa(obal: HTMLElement, o: Volby) {
     /** Vzdálenost z bodu mapy k nejbližšímu místu státu: km a směr (sever, severovýchod…) */
     vzdalenost(mx: number, my: number, c: string): { km: number; smer: string } | null {
       const st = podle.get(c); if (!st) return null;
+      // Nejbližší bod hlavního území (nápověda k Francii nemá mířit na Martinik)
       let bx = st.pt[0], by = st.pt[1], nej = Infinity;
-      for (const k of st.kruhy) for (let i = 0; i < k.length; i += 2) { const d = (k[i] - mx) ** 2 + (k[i + 1] - my) ** 2; if (d < nej) { nej = d; bx = k[i]; by = k[i + 1]; } }
+      const H0 = st.hlavni, o = Math.max(60, (H0[2] - H0[0]) * 0.15, (H0[3] - H0[1]) * 0.15);
+      for (const k of st.kruhy) for (let i = 0; i < k.length; i += 2) {
+        if (k[i] < H0[0] - o || k[i] > H0[2] + o || k[i + 1] < H0[1] - o || k[i + 1] > H0[3] + o) continue;
+        const d = (k[i] - mx) ** 2 + (k[i + 1] - my) ** 2; if (d < nej) { nej = d; bx = k[i]; by = k[i + 1]; }
+      }
       const a = doGeo(mx, my), b = doGeo(bx, by);
       if (!a || !b || !isFinite(a[0]) || !isFinite(b[0])) return null;
       const km = geoDistance(a, b) * 6371;
-      const r = Math.PI / 180, f1 = a[1] * r, f2 = b[1] * r, dl = (b[0] - a[0]) * r;
-      const azimut = (Math.atan2(Math.sin(dl) * Math.cos(f2), Math.cos(f1) * Math.sin(f2) - Math.sin(f1) * Math.cos(f2) * Math.cos(dl)) / r + 360) % 360;
+      // Směr podle toho, kam se hráč na mapě dívá (ne podle ortodromy, ta by z Kanady do Konga vedla „na severovýchod“)
+      const azimut = ((Math.atan2(bx - mx, my - by) * 180) / Math.PI + 360) % 360;
       const SMERY = ['severně', 'severovýchodně', 'východně', 'jihovýchodně', 'jižně', 'jihozápadně', 'západně', 'severozápadně'];
       return { km, smer: SMERY[Math.round(azimut / 45) % 8] };
     },

@@ -42,6 +42,17 @@ const VEJIR = ['cz', 'jp', 'br'];
           </span>
         </a>
       ))}
+      <a class="hry-vyzva" href="/hry/vlajky-sveta/#vyzva" data-vyzva>
+        <span class="hry-vyzva__hlava">
+          <span class="hry-vyzva__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2v-12" /><path d="M16 3v4" /><path d="M8 3v4" /><path d="M4 11h16" /><path d="M8 15h2v2h-2z" /></svg></span>
+          <span class="nadhlavi">Denní výzva</span>
+        </span>
+        <b data-vyzva-titul>Slepá mapa dne</b>
+        <span class="hry-vyzva__popis">10 států na slepé mapě světa. Každý den nové a pro všechny stejné.</span>
+        <span class="hry-vyzva__ctverce" data-vyzva-ctverce aria-hidden="true">{Array.from({ length: 10 }, () => <i />)}</span>
+        <span class="hry-vyzva__stav" data-vyzva-stav></span>
+        <span class="hry-hra__cta" data-vyzva-cta>Hrát výzvu <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14 M13 18l6-6 M13 6l6 6" /></svg></span>
+      </a>
       <div class="hry-brzy">
         <span class="hry-brzy__ikona" aria-hidden="true"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14 M5 12h14" /></svg></span>
         <b>Další hry připravujeme</b>
@@ -96,6 +107,24 @@ const VEJIR = ['cz', 'jp', 'br'];
     .hry-hra { grid-template-columns: minmax(0, 1fr); gap: 0.8rem; padding: 1.1rem 1.15rem 1.3rem; }
     .hry-hra__vejir { height: 150px; }
   }
+  .hry-vyzva {
+    display: flex; flex-direction: column; gap: 0.55rem; padding: 1.3rem 1.35rem; border-radius: var(--radius); text-decoration: none; color: var(--navy);
+    background: var(--oranzova-podklad); border: 1px solid color-mix(in srgb, var(--orange) 55%, var(--line)); box-shadow: var(--stin);
+    transition: transform var(--stisk) var(--ease-out), box-shadow 0.25s ease;
+  }
+  @media (hover: hover) and (pointer: fine) { .hry-vyzva:hover { transform: translateY(-3px); box-shadow: var(--stin-velky); color: var(--navy); } }
+  .hry-vyzva:active { transform: scale(0.99); }
+  .hry-vyzva__hlava { display: flex; align-items: center; gap: 0.6rem; }
+  .hry-vyzva__ikona { width: 44px; height: 44px; border-radius: 14px; display: grid; place-items: center; background: var(--orange); color: var(--na-oranzove); }
+  .hry-vyzva > b { font-size: 1.35rem; font-weight: 900; letter-spacing: -0.02em; line-height: 1.15; }
+  .hry-vyzva__popis { font-size: 0.92rem; font-weight: 600; color: var(--text-2); line-height: 1.5; }
+  .hry-vyzva__ctverce { display: flex; gap: 4px; }
+  .hry-vyzva__ctverce i { flex: 1; max-width: 26px; aspect-ratio: 1; border-radius: 6px; background: var(--line); }
+  .hry-vyzva__ctverce i.s1 { background: var(--teal); } .hry-vyzva__ctverce i.s2 { background: #E0AE1C; } .hry-vyzva__ctverce i.s3 { background: var(--orange); } .hry-vyzva__ctverce i.s4 { background: var(--valka); }
+  .hry-vyzva__stav { font-size: 0.84rem; font-weight: 700; color: var(--orange-text); font-variant-numeric: tabular-nums; }
+  .hry-vyzva__stav:empty { display: none; }
+  .hry-vyzva .hry-hra__cta { margin-top: auto; }
+  .hry-seznam .hry-brzy { grid-column: 1 / -1; flex-direction: row; flex-wrap: wrap; padding: 1rem 1.2rem; }
   .hry-brzy { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.4rem; padding: 1.4rem; text-align: center; border-radius: var(--radius); border: 1.5px dashed var(--line-2); color: var(--muted); }
   .hry-brzy b { color: var(--navy); font-size: 1.02rem; }
   .hry-brzy__ikona { width: 48px; height: 48px; border-radius: 50%; display: grid; place-items: center; background: var(--plocha-2); color: var(--muted); margin-bottom: 0.2rem; }
@@ -105,6 +134,7 @@ const VEJIR = ['cz', 'jp', 'br'];
 
 <script>
   import { nactiProfil, uroven, sinSlavy, smazProfil, cislo, sklonuj } from '../../lib/hry';
+  import { dnes, cisloVyzvy, vysledekDne, rozehrana, statistiky, doPulnoci, odpocet, MAX_BODU } from '../../lib/vyzva';
   import { HRY } from '../../data/hry';
 
   const esc = (s: unknown) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c] as string);
@@ -145,6 +175,22 @@ const VEJIR = ['cz', 'jp', 'br'];
     document.querySelector<HTMLElement>('[data-sin]')!.innerHTML = sin.slice(0, 10).map((s, i) => `<div class="hry-sin__radek"><span class="hry-sin__misto">${i + 1}.</span><span class="hry-sin__jmeno">${esc(s.jmeno)}<small>${s.hry} ${sklonuj(s.hry, 'hra', 'hry', 'her')} · ${cislo(s.body)} ${sklonuj(s.body, 'bod', 'body', 'bodů')} · ${s.tahu ? Math.round((s.spravne / s.tahu) * 100) : 0} % správně</small></span><span class="hry-sin__cislo"><b>${s.vyhry}</b><small>${sklonuj(s.vyhry, 'výhra', 'výhry', 'výher')}</small></span></div>`).join('');
     document.querySelector<HTMLElement>('[data-smazat]')!.hidden = prazdny && !sin.length;
   }
+
+  // Karta denní výzvy: číslo, stav dneška a odpočet do další
+  function vyzva() {
+    const d = dnes(), v = vysledekDne(d), r = rozehrana(d), st = statistiky();
+    document.querySelector<HTMLElement>('[data-vyzva-titul]')!.textContent = `Denní výzva #${cisloVyzvy(d)}`;
+    document.querySelectorAll<HTMLElement>('[data-vyzva-ctverce] i').forEach((el, i) => (el.className = v ? 's' + v.v[i] : ''));
+    const serie = st.serie > 1 ? ` · ${st.serie} ${sklonuj(st.serie, 'den', 'dny', 'dní')} v řadě` : '';
+    document.querySelector<HTMLElement>('[data-vyzva-stav]')!.textContent = v
+      ? `Splněno: ${v.b} z ${MAX_BODU} bodů${serie} · další za ${odpocet(doPulnoci())}`
+      : r ? `Rozehráno, dohraj do půlnoci${serie}` : `Dnes ještě nehráno${serie}`;
+    const cta = document.querySelector<HTMLElement>('[data-vyzva-cta]')!;
+    cta.firstChild!.textContent = v ? 'Zobrazit výsledek ' : r ? 'Pokračovat ' : 'Hrát výzvu ';
+  }
+  vyzva();
+  setInterval(vyzva, 1000);
+  addEventListener('pageshow', vyzva);
 
   document.querySelector('[data-smazat]')?.addEventListener('click', () => {
     if (confirm('Smazat celkové skóre, úroveň, rekordy a síň slávy ve všech hrách? Vrátit to nejde.')) { smazProfil(); vykresli(); }
