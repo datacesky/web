@@ -17,15 +17,18 @@ interface Props {
   hlavni?: boolean;
   // řádek místo karty (úvodní stránka): skutečný malý graf místo ilustrace, text, číslo a změna vedle sebe, bez rámečku
   radek?: boolean;
+  // dlaždice (stránka Novinky): stejný obsah jako řádek, jen pod sebou: graf, název, číslo
+  dlazdice?: boolean;
 }
-const { p, kotva = false, hlavni = false, radek = false } = Astro.props;
+const { p, kotva = false, hlavni = false, radek: jenRadek = false, dlazdice = false } = Astro.props;
+const radek = jenRadek || dlazdice;
 const SIPKA = { nahoru: 'M12 19V5 M6 11l6-6 6 6', dolu: 'M12 5v14 M6 13l6 6 6-6', stejne: 'M5 12h14' };
 const OBLAST = { cesko: 'Česko', evropa: 'Evropa', svet: 'Svět' };
 const oblast = p.oblast ?? 'cesko';
 const idDetailu = `nkd-${p.id}-${Math.random().toString(36).slice(2, 7)}`;
 ---
 
-<li class:list={['nk', { 'nk--hlavni': hlavni && !radek, 'nk--radek': radek }]} id={kotva ? `n-${p.id}` : undefined} data-oblast={oblast}>
+<li class:list={['nk', { 'nk--hlavni': hlavni && !radek, 'nk--radek': jenRadek && !dlazdice, 'nk--dlazdice': dlazdice }]} id={kotva ? `n-${p.id}` : undefined} data-oblast={oblast}>
   <button type="button" class="nk__otevrit" data-nk-otevri aria-haspopup="dialog" aria-controls={idDetailu}>
     <span class="sr-only">{p.nadpis}: otevřít graf a detail</span>
   </button>
@@ -184,7 +187,7 @@ const idDetailu = `nkd-${p.id}-${Math.random().toString(36).slice(2, 7)}`;
   /* ---------- řádek (úvodní stránka): bez karty, jen tenká linka nad každým řádkem ---------- */
   .nk--radek {
     display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr) auto; grid-template-areas: 'graf telo hodnota';
-    align-items: center; gap: 1.25rem clamp(1.5rem, 4vw, 3rem); padding: 1.6rem 1.25rem; margin-inline: -1.25rem; border: 0;
+    align-items: center; gap: 1.25rem clamp(1.5rem, 4vw, 3rem); padding: 1.15rem 1.25rem; margin-inline: -1.25rem; border: 0;
     border-radius: 24px; background: none; box-shadow: none; overflow: visible; transition: background-color 0.3s ease;
   }
   /* bez čar mezi řádky: odděluje je vzduch, při najetí se řádek podloží světlou plochou */
@@ -214,6 +217,23 @@ const idDetailu = `nkd-${p.id}-${Math.random().toString(36).slice(2, 7)}`;
     .nkr__zdroj { margin-left: auto; }
     .nkr__graf :global(.mg__popis) { display: none; }
   }
+
+  /* ---------- dlaždice (stránka Novinky): graf nahoře, pod ním název a číslo, bez rámečku ---------- */
+  .nk--dlazdice {
+    display: flex; flex-direction: column; gap: 0.7rem; padding: 1rem 1rem 1.1rem; border: 0; border-radius: 24px;
+    background: none; box-shadow: none; overflow: visible; transition: background-color 0.3s ease;
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .nk--dlazdice:hover { transform: none; box-shadow: none; background: color-mix(in srgb, var(--paper) 70%, transparent); }
+    .nk--dlazdice:hover .nkr__nadpis { color: var(--orange-text); }
+  }
+  .nk--dlazdice:active { transform: none; }
+  .nk--dlazdice .nkr__graf :global(.mg__popis) { display: none; }
+  .nk--dlazdice .nkr__nadpis { font-size: 1.08rem; }
+  .nk--dlazdice .nkr__text { display: none; }
+  .nk--dlazdice .nkr__hodnota { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.8rem; text-align: left; margin-top: auto; }
+  .nk--dlazdice .nkr__hodnota .nk__cislo { justify-content: flex-start; font-size: 1.75rem; }
+  .nk--dlazdice .nkr__zdroj { margin-left: auto; }
 
   /* ---------- detail v okně ---------- */
   .nkd {

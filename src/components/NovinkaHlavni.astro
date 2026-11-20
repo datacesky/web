@@ -19,15 +19,15 @@ const odstavce = nezalomit(p.pribeh ?? p.text).split(/\n\s*\n/);
 ---
 
 <article class="hn odhal" id={`n-${p.id}`} data-oblast={p.oblast} aria-label={`Hlavní novinka měsíce, ${vydani}`}>
-  <figure class="hn__obrazek">
-    <NahledNovinky id={p.id} ikona={p.ikona} oblast={p.oblast} obrazek={p.obrazek} popis={p.obrazekPopis ?? ''} siroky nacitat="eager" />
-  </figure>
+  {/* široký obrázek jen když je vlastní fotka; generovanou ilustraci nahrazuje velký skutečný graf vpravo */}
+  {p.obrazek && (
+    <figure class="hn__obrazek">
+      <NahledNovinky id={p.id} ikona={p.ikona} oblast={p.oblast} obrazek={p.obrazek} popis={p.obrazekPopis ?? ''} siroky nacitat="eager" />
+    </figure>
+  )}
   <div class="hn__mrizka">
     <div class="hn__text">
-      <span class="hn__nadhlavi">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true"><path d="M13 3v7h6l-8 11v-7H5l8-11z" /></svg>
-        Hlavní novinka měsíce
-      </span>
+      <span class="hn__nadhlavi">Hlavní novinka měsíce</span>
       <div class="hn__hlava">
         <div class="hn__stitky">
           <span class="hn__oblast"><span class:list={['oblast-tecka', `oblast-tecka--${p.oblast}`]}></span>{OBLASTI[p.oblast]} · {p.stitek ?? p.zdroj}</span>
@@ -55,39 +55,28 @@ const odstavce = nezalomit(p.pribeh ?? p.text).split(/\n\s*\n/);
 </article>
 
 <style>
-  .hn {
-    position: relative; isolation: isolate; overflow: hidden;
-    border-radius: 28px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin);
-  }
-  /* jemná oranžová záře a vrstevnice v pozadí */
-  .hn::before {
-    content: ''; position: absolute; z-index: -1; inset: -30% auto auto -15%; width: 70%; aspect-ratio: 1; pointer-events: none;
-    background: radial-gradient(circle, rgba(240, 136, 41, 0.16), rgba(240, 136, 41, 0) 62%);
-  }
-  .hn::after {
-    content: ''; position: absolute; z-index: -2; inset: 0; pointer-events: none;
-    background: url('/vrstevnice.svg') center / cover no-repeat; opacity: calc(0.35 * var(--vrstevnice-sila));
-  }
-  .hn__obrazek { margin: 0; aspect-ratio: 3 / 1; max-height: 260px; width: 100%; overflow: hidden; border-bottom: 1px solid var(--line); }
+  /* bez krabice: text a číslo přímo na pozadí, graf na měkké ploše vedle */
+  .hn { position: relative; scroll-margin-top: 90px; }
+  .hn__obrazek { margin: 0 0 1.5rem; aspect-ratio: 3 / 1; max-height: 240px; width: 100%; overflow: hidden; border-radius: var(--radius-velky); }
   .hn__obrazek :global(.nn) { aspect-ratio: auto; width: 100%; height: 100%; }
-  .hn__mrizka { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: center; padding: clamp(1.4rem, 3.5vw, 2.6rem); }
+  .hn__mrizka { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 6fr); gap: clamp(1.5rem, 4vw, 4rem); align-items: center; }
   .hn__text { display: flex; flex-direction: column; gap: 0.85rem; min-width: 0; }
-  .hn__nadhlavi { display: inline-flex; align-items: center; gap: 0.45rem; align-self: flex-start; padding: 0.35rem 0.75rem; border-radius: 999px; background: var(--oranzova-svetla); color: var(--orange-text); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
+  .hn__nadhlavi { font-size: 0.78rem; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--orange-text); }
   .hn__hlava { display: flex; align-items: center; gap: 0.85rem; }
   .hn__stitky { display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem 0.6rem; min-width: 0; }
   .hn__oblast { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
-  .hn__zmena { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.22rem 0.6rem; border-radius: 999px; font-size: 0.78rem; font-weight: 800; white-space: nowrap; background: var(--bezova); color: var(--text-2); font-variant-numeric: tabular-nums; }
-  .hn__zmena--nahoru { background: var(--oranzova-svetla); color: var(--orange-text); }
-  .hn__zmena--dolu { background: var(--modra-svetla); color: var(--navy); }
-  .hn__nadpis { font-size: clamp(1.35rem, 2.6vw, 1.85rem); line-height: 1.25; letter-spacing: -0.015em; color: var(--navy); text-wrap: balance; }
+  .hn__zmena { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.82rem; font-weight: 800; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .hn__zmena--nahoru { color: var(--orange-text); }
+  .hn__zmena--dolu { color: var(--navy); }
+  .hn__nadpis { font-size: clamp(1.85rem, 3.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.033em; color: var(--navy); text-wrap: balance; }
   .hn__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.2rem 0.65rem; font-size: clamp(2.8rem, 6.5vw, 4.4rem); font-weight: 900; line-height: 1.02; letter-spacing: -0.04em; color: var(--orange-text); font-variant-numeric: tabular-nums; }
   .hn__cislo small { font-size: 1rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
-  .hn__popis { display: flex; flex-direction: column; gap: 0.7rem; font-size: 0.98rem; line-height: 1.7; color: var(--text-2); max-width: 60ch; text-wrap: pretty; }
-  .hn__zdroj { padding-top: 0.75rem; border-top: 1px solid var(--line); font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+  .hn__popis { display: flex; flex-direction: column; gap: 0.7rem; font-size: 0.98rem; line-height: 1.7; color: var(--text-2); max-width: 54ch; text-wrap: pretty; }
+  .hn__zdroj { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
   .hn__zdroj a { color: var(--muted); }
-  .hn__graf { min-width: 0; padding: clamp(1rem, 2.4vw, 1.5rem); border-radius: 20px; background: var(--plocha-2); border: 1px solid var(--line-jemna); }
+  .hn__graf { min-width: 0; padding: clamp(1rem, 2.4vw, 1.75rem); border-radius: var(--radius-velky); background: var(--plocha); box-shadow: var(--stin-mekky); }
   /* v grafu musí obrys popisků splývat s podkladem panelu */
-  .hn__graf :global(.mg__svg text) { stroke: var(--plocha-2); }
+  .hn__graf :global(.mg__svg text) { stroke: var(--paper); }
   .hn__graf :global(.mg__popis) { font-size: 0.8rem; }
 
   @media (max-width: 900px) {
@@ -98,8 +87,7 @@ const odstavce = nezalomit(p.pribeh ?? p.text).split(/\n\s*\n/);
   @media (max-width: 560px) {
     .hn__graf-velky { display: none; }
     .hn__graf-maly { display: block; }
-    .hn { border-radius: 22px; }
-    .hn__mrizka { padding: 1.15rem; gap: 1.25rem; }
+    .hn__mrizka { gap: 1.25rem; }
     .hn__graf { padding: 0.85rem; margin-inline: -0.25rem; }
   }
 </style>

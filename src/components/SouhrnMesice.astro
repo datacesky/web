@@ -1,8 +1,8 @@
 ---
-// Souhrn měsíce nahoře na stránce Novinky: titulek a pár vět lidskou řečí, pod nimi šest oblastí
-// (ceny, výplaty, tankování, práce, bydlení, ekonomika). U každé co to znamená v praxi, srovnání
-// s Evropou v pruzích, čísla a odkaz na zdroj i na novinku s grafem. Data: pole souhrn ve vydání novinek.
-import IkonaZare from './IkonaZare.astro';
+// Souhrn měsíce nahoře na stránce Novinky, celý na jednu obrazovku: vlevo titulek a perex lidskou řečí
+// (celý text po rozkliknutí), vpravo osm oblastí jako přepínač s číslem a pod ním detail vybrané oblasti:
+// co to znamená v praxi, srovnání s Evropou v pruzích, zdroj a odkaz na novinku s grafem.
+// Odkaz #s-ceny (třeba z úvodu) rovnou vybere danou oblast. Data: pole souhrn ve vydání novinek.
 import SouhrnPruhy from './SouhrnPruhy.astro';
 import type { Souhrn } from '../lib/novinky';
 import { nezalomit } from '../lib/format';
@@ -22,119 +22,150 @@ const zdroje = [...new Set(souhrn.body.flatMap((b) => b.zdroj.split(/,\s*/)))].m
 const zdrojeText = zdroje.length > 1 ? `${zdroje.slice(0, -1).join(', ')} a ${zdroje.at(-1)}` : zdroje[0];
 ---
 
-<section class="sm odhal" id="souhrn" aria-labelledby="souhrn-titulek">
+<section class="sm" id="souhrn" aria-labelledby="souhrn-titulek" data-sm>
   <div class="sm__hlava">
-    <div class="sm__stitky">
-      <span class="sm__nadhlavi">
-        <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16 M4 12h10 M4 18h13" /></svg>
-        Souhrn měsíce
-      </span>
-      <span class="sm__kdy">{vydani}</span>
-      <span class="sm__oblasti" aria-label="Česko, Evropa a svět">
-        <span><i class="oblast-tecka"></i>Česko</span>
-        <span><i class="oblast-tecka oblast-tecka--evropa"></i>Evropa</span>
-        <span><i class="oblast-tecka oblast-tecka--svet"></i>Svět</span>
-      </span>
-    </div>
+    <span class="sm__nadhlavi"><b>Souhrn měsíce</b><span>{vydani}</span></span>
     <h2 id="souhrn-titulek" class="sm__titulek">{nezalomit(souhrn.titulek)}</h2>
-    <div class="sm__perex">{odstavce.map((o) => <p>{o}</p>)}</div>
+    <p class="sm__perex">{nezalomit(souhrn.perex)}</p>
+    {odstavce.length > 0 && souhrn.text && (
+      <details class="sm__cely">
+        <summary>Celý souhrn lidskou řečí</summary>
+        <div class="sm__odstavce">{odstavce.map((o) => <p>{o}</p>)}</div>
+      </details>
+    )}
+    <p class="sm__pozn">
+      Z nejnovějších čísel {zdrojeText}. Srovnání s Evropou je vždy za stejné období a podle stejné metodiky.
+    </p>
   </div>
 
-  <ul class="sm__body" role="list">
-    {souhrn.body.map((b, i) => (
-      <li class:list={['sb', `sb--${b.ton}`]} id={`s-${b.id}`} style={`--i: ${i};`}>
-        <div class="sb__hlava">
-          <IkonaZare id={b.ikona} velikost={38} />
-          <span class="sb__tema">{b.tema}</span>
+  <div class="sm__panel">
+    <div class="sm__taby" role="tablist" aria-label="Oblasti souhrnu" data-sm-taby>
+      {souhrn.body.map((b, i) => (
+        <button
+          type="button" role="tab" class:list={['st', `st--${b.ton}`]} id={`sm-tab-${b.id}`}
+          aria-selected={i === 0 ? 'true' : 'false'} aria-controls={`s-${b.id}`} tabindex={i === 0 ? 0 : -1}
+        >
+          <span class="st__tema">{b.tema}</span>
+          <span class="st__cislo">{b.cislo}</span>
           <span class:list={['stav', `stav--${b.ton}`]}>{b.stav}</span>
-        </div>
-        <p class="sb__cislo"><span data-pocitej>{b.cislo}</span>{b.popisCisla && <small>{b.popisCisla}</small>}</p>
-        <p class="sb__veta">{nezalomit(b.veta)}</p>
-        {b.srovnani && <div class="sb__graf"><SouhrnPruhy srovnani={b.srovnani} /></div>}
-        <p class="sb__text">{nezalomit(b.text)}</p>
-        <p class="sb__pata">
-          <a class="sb__zdroj" href={b.url}>Zdroj: {b.zdroj}</a>
-          {b.novinka && (!novinky || novinky.has(b.novinka)) && (
-            <a class="sb__vice" href={`#n-${b.novinka}`}>
-              Graf a detail
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-            </a>
-          )}
-        </p>
-      </li>
-    ))}
-  </ul>
+        </button>
+      ))}
+    </div>
 
-  <p class="sm__pozn">
-    Souhrn skládám z nejnovějších čísel {zdrojeText}. Každá oblast má odkaz na zdroj.
-    Srovnání s Evropou je vždy za stejné období a podle stejné metodiky.
-  </p>
+    {souhrn.body.map((b, i) => (
+      <article class:list={['sd', `sd--${b.ton}`]} role="tabpanel" id={`s-${b.id}`} aria-labelledby={`sm-tab-${b.id}`} hidden={i !== 0}>
+        <div class="sd__hlava">
+          <p class="sd__cislo"><span>{b.cislo}</span>{b.popisCisla && <small>{b.popisCisla}</small>}</p>
+          <p class="sd__veta">{nezalomit(b.veta)}</p>
+        </div>
+        {b.srovnani && <div class="sd__graf"><SouhrnPruhy srovnani={b.srovnani} /></div>}
+        <p class="sd__text">{nezalomit(b.text)}</p>
+        <p class="sd__pata">
+          <a class="sd__zdroj" href={b.url}>Zdroj: {b.zdroj}</a>
+          {b.novinka && (!novinky || novinky.has(b.novinka)) && <a class="odkaz-dal" href={`#n-${b.novinka}`}>Graf a detail</a>}
+        </p>
+      </article>
+    ))}
+  </div>
 </section>
 
 <style>
+  /* bez krabice: souhrn stojí přímo na pozadí, plochu má jen detail vybrané oblasti */
   .sm {
-    position: relative; isolation: isolate; overflow: hidden; display: flex; flex-direction: column; gap: clamp(1.25rem, 3vw, 2rem);
-    padding: clamp(1.25rem, 3.5vw, 2.5rem); border-radius: 28px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin);
+    display: grid; grid-template-columns: minmax(0, 0.82fr) minmax(0, 1.18fr); align-items: start; gap: clamp(1.75rem, 4vw, 4rem);
     scroll-margin-top: 90px;
   }
-  /* vrstevnice a měkká záře jako na titulních slidech */
-  .sm::before {
-    content: ''; position: absolute; z-index: -1; inset: -35% -10% auto auto; width: 60%; aspect-ratio: 1; pointer-events: none;
-    background: radial-gradient(circle, rgba(240, 136, 41, 0.14), rgba(240, 136, 41, 0) 62%);
-  }
-  .sm::after {
-    content: ''; position: absolute; z-index: -2; inset: 0 0 auto; height: 380px; pointer-events: none;
-    background: url('/vrstevnice.svg') center top / cover no-repeat; opacity: calc(0.42 * var(--vrstevnice-sila));
-    -webkit-mask-image: linear-gradient(to bottom, #000 40%, transparent); mask-image: linear-gradient(to bottom, #000 40%, transparent);
-  }
-  .sm__hlava { display: flex; flex-direction: column; gap: 0.9rem; max-width: 74ch; }
-  .sm__stitky { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem 0.9rem; }
-  .sm__nadhlavi { display: inline-flex; align-items: center; gap: 0.45rem; padding: 0.38rem 0.8rem; border-radius: 999px; background: var(--navy); color: var(--cream); font-size: 0.74rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; }
-  .sm__kdy { font-size: 0.8rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--orange-text); }
-  .sm__oblasti { display: inline-flex; flex-wrap: wrap; gap: 0.3rem 0.8rem; font-size: 0.78rem; font-weight: 700; color: var(--muted); }
-  .sm__oblasti span { display: inline-flex; align-items: center; gap: 0.35rem; }
-  .sm__titulek { font-size: clamp(1.55rem, 3.4vw, 2.35rem); line-height: 1.18; letter-spacing: -0.022em; color: var(--navy); text-wrap: balance; }
-  .sm__perex { display: flex; flex-direction: column; gap: 0.75rem; font-size: clamp(1rem, 1.4vw, 1.06rem); line-height: 1.7; color: var(--text-2); text-wrap: pretty; }
+  .sm__hlava { display: flex; flex-direction: column; gap: 1rem; position: sticky; top: calc(var(--hv, 64px) + 1.5rem); }
+  .sm__nadhlavi { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: 0.35rem 0.7rem; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .sm__nadhlavi b { font-weight: 800; color: var(--orange-text); }
+  .sm__titulek { font-size: clamp(1.9rem, 3.4vw, 2.75rem); line-height: 1.06; letter-spacing: -0.035em; color: var(--navy); }
+  .sm__perex { font-size: clamp(1.02rem, 1.4vw, 1.12rem); line-height: 1.65; color: var(--text-2); text-wrap: pretty; max-width: 46ch; }
+  .sm__cely summary { display: inline-flex; align-items: center; gap: 0.35rem; padding-bottom: 0.15rem; font-size: 0.92rem; font-weight: 800; color: var(--navy); cursor: pointer; list-style: none; background: linear-gradient(var(--orange), var(--orange)) left bottom / 100% 2px no-repeat; }
+  .sm__cely summary::-webkit-details-marker { display: none; }
+  .sm__cely summary::after { content: '↓'; transition: transform 0.25s var(--ease-out); }
+  .sm__cely[open] summary::after { transform: rotate(180deg); }
+  .sm__odstavce { display: flex; flex-direction: column; gap: 0.7rem; margin-top: 0.9rem; max-height: 46vh; overflow-y: auto; padding-right: 0.5rem; font-size: 0.95rem; line-height: 1.7; color: var(--text-2); text-wrap: pretty; }
+  .sm__pozn { font-size: 0.78rem; font-weight: 600; line-height: 1.5; color: var(--muted); max-width: 52ch; }
 
-  .sm__body { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: clamp(0.85rem, 1.8vw, 1.25rem); list-style: none; margin: 0; padding: 0; }
-  .sb {
-    position: relative; display: flex; flex-direction: column; gap: 0.6rem; min-width: 0; padding: 1.05rem 1.15rem 0.95rem;
-    border-radius: 22px; background: var(--plocha-2); border: 1px solid var(--line-jemna); scroll-margin-top: 90px;
-    transition: transform 0.3s var(--ease-out), box-shadow 0.3s var(--ease-out), background-color 0.3s ease;
+  .sm__panel { display: flex; flex-direction: column; gap: 0.9rem; min-width: 0; }
+  /* osm oblastí jako přepínač: číslo hned vidět, vybraná oblast se podloží plochou */
+  .sm__taby { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.35rem; }
+  .st {
+    position: relative; display: flex; flex-direction: column; align-items: flex-start; gap: 0.2rem; min-width: 0; padding: 0.85rem 0.8rem 0.75rem;
+    border: 0; border-radius: 18px; background: none; color: var(--navy); font-family: inherit; text-align: left; cursor: pointer;
+    transition: background-color 0.25s ease, box-shadow 0.25s ease;
   }
-  /* proužek nahoře podle vyznění */
-  .sb::before { content: ''; position: absolute; inset: 0 1.15rem auto; height: 3px; border-radius: 0 0 3px 3px; background: var(--line-2); opacity: 0.7; }
-  .sb--dobre::before { background: var(--navy); }
-  .sb--spatne::before { background: var(--valka); }
-  @media (hover: hover) and (pointer: fine) { .sb:hover { transform: translateY(-3px); box-shadow: var(--stin-maly); background: var(--paper); } }
-  .sb:target { box-shadow: 0 0 0 2px var(--orange), var(--stin-maly); background: var(--paper); }
-  /* když není místo, štítek spadne pod název a název se neusekne */
-  .sb__hlava { display: flex; align-items: center; flex-wrap: wrap; gap: 0.45rem 0.65rem; min-width: 0; }
-  .sb__tema { flex: 1 0 auto; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--navy); }
-  .sb__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.1rem 0.45rem; margin-top: 0.15rem; font-size: clamp(1.9rem, 3.4vw, 2.3rem); font-weight: 900; line-height: 1.05; letter-spacing: -0.03em; color: var(--navy); font-variant-numeric: tabular-nums; }
-  .sb--spatne .sb__cislo, .sb--dobre .sb__cislo { color: var(--navy); }
-  .sb__cislo small { font-size: 0.82rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
-  .sb__veta { font-size: 1rem; font-weight: 700; line-height: 1.5; color: var(--navy); text-wrap: pretty; }
-  .sb__graf { padding: 0.7rem 0.8rem 0.6rem; border-radius: 16px; background: var(--paper); border: 1px solid var(--line-jemna); }
-  .sb__text { flex-grow: 1; font-size: 0.85rem; line-height: 1.6; color: var(--text-2); text-wrap: pretty; }
-  .sb__pata { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.4rem 0.75rem; padding-top: 0.6rem; border-top: 1px solid var(--line); font-size: 0.76rem; font-weight: 700; }
-  .sb__zdroj { color: var(--muted); text-decoration: none; }
-  .sb__zdroj:hover { color: var(--navy); text-decoration: underline; }
-  .sb__vice { display: inline-flex; align-items: center; gap: 0.2rem; color: var(--orange-text); font-weight: 800; text-decoration: none; transition: gap 0.2s var(--ease-out); }
-  .sb__vice:hover { gap: 0.4rem; color: var(--orange-text); }
-  .sm__pozn { font-size: 0.78rem; font-weight: 600; color: var(--muted); line-height: 1.5; max-width: 80ch; }
+  .st::before { content: ''; position: absolute; left: 0.8rem; top: 0; width: 22px; height: 3px; border-radius: 0 0 3px 3px; background: var(--line-2); transition: width 0.35s var(--ease-out); }
+  .st--dobre::before { background: var(--navy); }
+  .st--spatne::before { background: var(--valka); }
+  .st__tema { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); }
+  .st__cislo { font-size: clamp(1.25rem, 1.9vw, 1.6rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .st .stav { font-size: 0.66rem; white-space: normal; text-align: left; }
+  .st[aria-selected='true'] { background: var(--plocha); box-shadow: var(--stin-mekky); }
+  .st[aria-selected='true']::before { width: calc(100% - 1.6rem); }
+  .st[aria-selected='true'] .st__tema { color: var(--navy); }
+  @media (hover: hover) and (pointer: fine) { .st[aria-selected='false']:hover { background: var(--hover); } }
+  .st:focus-visible { outline: 3px solid var(--orange); outline-offset: 2px; }
 
-  /* dlaždice naskočí jedna po druhé */
-  :global(.js) .sm .sb { opacity: 0; transform: translateY(10px); }
-  :global(.js) .sm:global(.odhal--videt) .sb { opacity: 1; transform: none; transition: opacity 0.5s var(--ease-out) calc(var(--i) * 70ms + 150ms), transform 0.5s var(--ease-out) calc(var(--i) * 70ms + 150ms), box-shadow 0.3s var(--ease-out), background-color 0.3s ease; }
-  @media (hover: hover) and (pointer: fine) { :global(.js) .sm:global(.odhal--videt) .sb:hover { transform: translateY(-3px); transition-delay: 0s; } }
+  .sd { display: flex; flex-direction: column; gap: 0.95rem; padding: clamp(1.2rem, 2.4vw, 1.75rem); border-radius: var(--radius-velky); background: var(--plocha); box-shadow: var(--stin-mekky); animation: sd-vyjed 0.4s var(--ease-out); }
+  @keyframes sd-vyjed { from { opacity: 0; transform: translateY(8px); } }
+  .sd__hlava { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 0.4rem 1.5rem; }
+  .sd__cislo { display: flex; align-items: baseline; gap: 0.45rem; font-size: clamp(2.4rem, 4.2vw, 3.3rem); font-weight: 900; line-height: 1; letter-spacing: -0.04em; color: var(--navy); font-variant-numeric: tabular-nums; }
+  .sd__cislo small { font-size: 0.86rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
+  .sd__veta { flex: 1 1 18rem; font-size: 1.02rem; font-weight: 700; line-height: 1.45; color: var(--navy); text-wrap: pretty; }
+  .sd__graf { padding-block: 0.2rem; }
+  .sd__text { font-size: 0.92rem; line-height: 1.65; color: var(--text-2); text-wrap: pretty; max-width: 70ch; }
+  .sd__pata { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem 1rem; font-size: 0.8rem; font-weight: 700; }
+  .sd__zdroj { color: var(--muted); text-decoration: none; }
+  .sd__zdroj:hover { color: var(--navy); text-decoration: underline; }
 
-  @media (max-width: 640px) {
-    .sm { border-radius: 22px; }
-    .sb { padding: 0.95rem 1rem 0.85rem; }
+  @media (max-width: 980px) {
+    .sm { grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+    .sm__hlava { position: static; }
+    /* telefon a tablet: oblasti v jedné řadě, která jede do strany */
+    .sm__taby { display: flex; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; margin-inline: -1.25rem; padding: 0.3rem 1.25rem 0.9rem; scroll-padding-inline: 1.25rem; }
+    .sm__taby::-webkit-scrollbar { display: none; }
+    .st { flex: 0 0 auto; min-width: 9.5rem; scroll-snap-align: start; }
   }
-  @media (prefers-reduced-motion: reduce) {
-    :global(.js) .sm .sb { opacity: 1; transform: none; transition: none; }
-    .sb, .sb:hover { transform: none; }
-  }
+  @media (prefers-reduced-motion: reduce) { .sd { animation: none; } .st::before { transition: none; } }
 </style>
+
+<script>
+  // Přepínač oblastí souhrnu: klik, šipky na klávesnici a odkaz #s-oblast (třeba z úvodu) vybere oblast
+  for (const koren of document.querySelectorAll<HTMLElement>('[data-sm]')) {
+    const taby = [...koren.querySelectorAll<HTMLButtonElement>('[role="tab"]')];
+    const vyber = (tab: HTMLButtonElement, fokus = false) => {
+      for (const t of taby) {
+        const ano = t === tab;
+        t.setAttribute('aria-selected', String(ano));
+        t.tabIndex = ano ? 0 : -1;
+        const panel = document.getElementById(t.getAttribute('aria-controls')!);
+        if (panel) panel.hidden = !ano;
+      }
+      if (fokus) tab.focus();
+      tab.scrollIntoView({ block: 'nearest', inline: 'nearest' });
+    };
+    koren.querySelector('[data-sm-taby]')!.addEventListener('click', (e) => {
+      const t = (e.target as HTMLElement).closest<HTMLButtonElement>('[role="tab"]');
+      if (t) vyber(t);
+    });
+    koren.querySelector('[data-sm-taby]')!.addEventListener('keydown', (e) => {
+      const ev = e as KeyboardEvent;
+      const i = taby.indexOf(document.activeElement as HTMLButtonElement);
+      if (i < 0) return;
+      const dalsi = { ArrowRight: i + 1, ArrowDown: i + 1, ArrowLeft: i - 1, ArrowUp: i - 1, Home: 0, End: taby.length - 1 }[ev.key];
+      if (dalsi === undefined) return;
+      ev.preventDefault();
+      vyber(taby[(dalsi + taby.length) % taby.length], true);
+    });
+    const zHashe = () => {
+      const id = decodeURIComponent(location.hash.slice(1));
+      const t = taby.find((x) => x.getAttribute('aria-controls') === id);
+      if (!t) return;
+      vyber(t);
+      requestAnimationFrame(() => koren.scrollIntoView({ block: 'start' }));
+    };
+    zHashe();
+    addEventListener('hashchange', zHashe);
+  }
+</script>

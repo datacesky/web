@@ -138,7 +138,7 @@ const [prahaX, prahaY] = xy(14.4378, 50.0755);
 <style>
   .fm {
     position: relative; display: flex; flex-direction: column; gap: 1.1rem; scroll-margin-top: 80px;
-    padding: clamp(1.25rem, 3.5vw, 2.25rem); border-radius: 28px; background: var(--paper); box-shadow: 0 0 0 1px var(--line), var(--stin);
+    padding: clamp(1.25rem, 3.5vw, 2.25rem); border-radius: var(--radius-velky); background: var(--plocha); box-shadow: var(--stin-mekky);
     overflow: hidden; isolation: isolate;
   }
   .fm::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('/vrstevnice.svg') center top / 140% auto no-repeat; opacity: calc(0.45 * var(--vrstevnice-sila)); pointer-events: none; }
@@ -187,6 +187,15 @@ const [prahaX, prahaY] = xy(14.4378, 50.0755);
   :global([data-tema='tmavy']) .fm { --zesvetleni: 45%; }
   :global([data-tema='tmavy']) .fm__pruh i, :global([data-tema='tmavy']) .fm__poz, :global([data-tema='tmavy']) .fm-b__poradi { background: color-mix(in srgb, var(--barva) calc(100% - var(--zesvetleni)), #F2EDE3); fill: color-mix(in srgb, var(--barva) calc(100% - var(--zesvetleni)), #F2EDE3); }
   @media (max-width: 600px) { .fm-praha-popis { font-size: 28px; } }
+
+  /* na širokém displeji mapa a seznam vedle sebe, ať se celá karta vejde na obrazovku */
+  @media (min-width: 1100px) {
+    .fm { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); column-gap: 1.75rem; align-items: center; }
+    .fm > * { grid-column: 1 / -1; }
+    .fm__mapa { grid-column: 1; grid-row: 2; }
+    .fm__seznam { grid-column: 2; grid-row: 2; grid-template-columns: 1fr; gap: 0.1rem; }
+    .fm__seznam li { padding-block: 0.25rem 0.35rem; }
+  }
 </style>
 
 <script>

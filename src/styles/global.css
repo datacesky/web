@@ -175,23 +175,26 @@
     radial-gradient(45% 40% at 0% 18%, rgba(255, 251, 244, 0.75), rgba(255, 251, 244, 0) 70%),
     radial-gradient(75% 55% at 25% 108%, rgba(222, 198, 160, 0.5), rgba(222, 198, 160, 0) 72%),
     linear-gradient(180deg, #F7F3EC 0%, #F2EDE3 48%, #EBE3D4 100%);
-  --zrno-sila: 0.07;
-  --zrno-smes: multiply;
+  --zrno-sila: 0.09;
+  --zrno: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='z'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.33 0.33 0.33 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23z)'/%3E%3C/svg%3E");
+  --plocha: color-mix(in srgb, var(--paper) 90%, transparent);
+  --radius-velky: 28px;
+  --stin-mekky: 0 1px 2px rgba(27, 42, 74, 0.04), 0 28px 56px -36px rgba(27, 42, 74, 0.28);
 }
 :root[data-tema='tmavy'] {
   --hloubka:
     radial-gradient(65% 55% at 82% -5%, rgba(56, 80, 130, 0.55), rgba(56, 80, 130, 0) 72%),
     radial-gradient(60% 50% at 0% 105%, rgba(34, 52, 92, 0.5), rgba(34, 52, 92, 0) 72%),
     linear-gradient(180deg, #121D33 0%, #0E1628 50%, #0A1120 100%);
-  --zrno-sila: 0.1;
-  --zrno-smes: overlay;
+  --zrno-sila: 0.06;
+  --zrno: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='z'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0.33 0.33 0.33 0 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23z)'/%3E%3C/svg%3E");
+  --plocha: color-mix(in srgb, var(--paper) 88%, transparent);
+  --stin-mekky: 0 0 0 1px rgba(236, 229, 215, 0.06), 0 28px 56px -32px rgba(0, 0, 0, 0.7);
 }
 body::before, body::after { content: ''; position: fixed; inset: 0; z-index: -1; pointer-events: none; }
 body::before { background: var(--hloubka); }
-body::after {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='z'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23z)'/%3E%3C/svg%3E");
-  opacity: var(--zrno-sila); mix-blend-mode: var(--zrno-smes);
-}
+/* zrno: tmavý (ve tmě světlý) šum s průhledností, bez mix-blend-mode (ten se v Chromu rozbije pod pásy, které jedou do strany) */
+body::after { background-image: var(--zrno); opacity: var(--zrno-sila); }
 /* Prvky, které mají vždy vypadat jako grafika ze sítí (obálky dílů): světlé i v tmavém režimu */
 .vzdy-svetle {
   --cream: #F2EDE3; --paper: #FFFFFF; --plocha-2: #F8F5EF; --navy: #1B2A4A; --navy-2: #26375C; --orange: #F08829;
@@ -226,8 +229,9 @@ body {
 /* Prostrkání podle velikosti: čím větší nadpis, tím těsněji. Řádkování necháváme dost volné,
    aby se háčky a čárky velkých písmen (Č, Ř, Š, Ž, Ú) nedotýkaly řádku nad sebou. */
 h1, h2, h3 { margin: 0; line-height: 1.2; font-weight: 900; text-wrap: balance; }
-h1 { font-size: clamp(2.1rem, 4.4vw, 3rem); letter-spacing: -0.028em; }
-h2 { font-size: clamp(1.55rem, 2.8vw, 2.1rem); letter-spacing: -0.02em; }
+/* Velké vzdušné nadpisy jako na úvodu: velké, těsně prostrkané, s nízkým řádkováním (ale ne tak nízkým, aby se háčky dotýkaly) */
+h1 { font-size: clamp(2.5rem, 5.4vw, 4.4rem); line-height: 1.02; letter-spacing: -0.04em; }
+h2 { font-size: clamp(1.85rem, 3.4vw, 2.7rem); line-height: 1.08; letter-spacing: -0.033em; }
 /* Kotvy (#opravy, #svet…) nezajedou pod lepkavou hlavičku */
 [id] { scroll-margin-top: 5.5rem; }
 h3 { font-size: 1.2rem; font-weight: 800; letter-spacing: -0.008em; }
@@ -247,22 +251,23 @@ button, .tlacitko, .chip, .segment button, .navigace a, summary, select {
 
 /* Rozvržení */
 .obal { width: min(100% - 2.5rem, var(--obal)); margin-inline: auto; }
-.sekce { padding-block: clamp(3rem, 8vw, 6.5rem); }
-.sekce--mala { padding-block: clamp(2rem, 5vw, 3.5rem); }
+.sekce { padding-block: clamp(2.5rem, 6vw, 4.5rem); }
+.sekce--mala { padding-block: clamp(1.75rem, 4vw, 2.75rem); }
 .sloupec { display: flex; flex-direction: column; gap: 1rem; }
 .rada { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
 .rada--mezi { justify-content: space-between; }
 .nadpis-sekce { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: flex-end; justify-content: space-between; margin-bottom: 1.75rem; }
 
+/* Plochy (karty, panely grafů): žádný rámeček, jen měkká plocha, která se lehce vznáší nad pozadím s hloubkou.
+   Grafy dál stojí na světlé ploše, aby nesplývaly s krémovou, ale nepůsobí jako krabice. */
 .karta {
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: var(--radius);
-  box-shadow: var(--stin);
+  background: var(--plocha);
+  border: 0;
+  border-radius: var(--radius-velky);
+  box-shadow: var(--stin-mekky);
   padding: clamp(1.25rem, 3vw, 2.25rem);
 }
-/* Graf vždy na bílé ploše, aby nesplýval s krémovým pozadím stránky */
-.plocha-grafu { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--stin-maly); }
+.plocha-grafu { background: var(--plocha); border: 0; border-radius: 22px; box-shadow: var(--stin-mekky); }
 
 /* Text */
 .perex { font-size: clamp(1.02rem, 1.6vw, 1.12rem); line-height: 1.7; color: var(--text-2); }
@@ -529,7 +534,7 @@ html:active-view-transition-type(prechod)::view-transition-new(root) { animation
 /* Graf týdne */
 .graf-tydne { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: clamp(1.5rem, 4vw, 3.5rem); align-items: center; }
 @media (max-width: 880px) { .graf-tydne { grid-template-columns: 1fr; } }
-.panel-grafu { background: var(--paper); border: 1px solid var(--line); border-radius: 18px; padding: clamp(1.25rem, 3vw, 2rem); display: flex; flex-direction: column; gap: 1.1rem; }
+.panel-grafu { background: var(--plocha); border: 0; box-shadow: var(--stin-mekky); border-radius: 22px; padding: clamp(1.25rem, 3vw, 2rem); display: flex; flex-direction: column; gap: 1.1rem; }
 
 /* Mřížka karet */
 .mrizka { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 1.5rem; list-style: none; margin: 0; padding: 0; }

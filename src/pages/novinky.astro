@@ -3,7 +3,6 @@ import Base from '../layouts/Base.astro';
 import NovinkaKarta from '../components/NovinkaKarta.astro';
 import NovinkaHlavni from '../components/NovinkaHlavni.astro';
 import SouhrnMesice from '../components/SouhrnMesice.astro';
-import IkonaZare from '../components/IkonaZare.astro';
 import { vydaniNovinek, hlavniNovinka, polozkyVydani, nazevVydani, OBLASTI, type Oblast } from '../lib/novinky';
 import { datum } from '../lib/format';
 
@@ -33,7 +32,7 @@ const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 
     <div class="sloupec" style="max-width: 64ch; gap: 0.85rem;">
       <span class="nadhlavi nadhlavi--zive">Novinky z dat{posledni && ` · ${datum(posledni.data.datum)}`}</span>
       <h1>Co nového ukázala data</h1>
-      <p class="perex">Jednou měsíčně vybírám nejzajímavější čísla z Česka, Evropy i světa, která zveřejnil Český statistický úřad, Eurostat a Světová banka. Nahoře je souhrn lidskou řečí, pod ním jednotlivé novinky s grafem a odkazem na datovou sadu, ze které pochází.</p>
+      <p class="perex">Jednou měsíčně nejzajímavější čísla z Česka, Evropy i světa od ČSÚ, Eurostatu a Světové banky. Souhrn lidskou řečí, pod ním každá novinka s grafem a zdrojem.</p>
     </div>
 
     {!posledni && <p class="drobne">První vydání chystám.</p>}
@@ -61,7 +60,7 @@ const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 
           )}
         </div>
         <ul class="mrizka-novinek" data-filtr-mrizka data-postupne>
-          {dalsi.map((p) => <NovinkaKarta p={p} kotva={kotva(p.id)} />)}
+          {dalsi.map((p) => <NovinkaKarta p={p} kotva={kotva(p.id)} dlazdice />)}
         </ul>
       </section>
     )}
@@ -80,7 +79,6 @@ const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 
             return (
               <details class="vydani" id={v.id}>
                 <summary class="vydani__radek">
-                  <IkonaZare id={h.ikona} velikost={40} />
                   <span class="vydani__info">
                     <span class="vydani__titul">{nazevVydani(v)}</span>
                     <span class="vydani__hlavni">{h.nadpis}: <b>{h.cislo}</b></span>
@@ -96,7 +94,7 @@ const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 
                   </div>
                 )}
                 <ul class="mrizka-novinek vydani__mrizka">
-                  {polozky.map((p) => <NovinkaKarta p={p} kotva={kotva(p.id)} hlavni={p === h} />)}
+                  {polozky.map((p) => <NovinkaKarta p={p} kotva={kotva(p.id)} dlazdice />)}
                 </ul>
               </details>
             );
@@ -114,13 +112,12 @@ const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 
 
 <style>
   .dalsi__hlava { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 1rem 2rem; }
-  .dalsi__titul { font-size: clamp(1.4rem, 3vw, 1.9rem); }
   .filtr { display: flex; flex-wrap: wrap; gap: 0.5rem; }
   .filtr__chip { min-height: 40px; padding: 0 0.95rem; gap: 0.45rem; font-size: 0.88rem; }
   .filtr__chip span:last-child { font-weight: 800; opacity: 0.6; font-variant-numeric: tabular-nums; }
   .filtr__chip[aria-pressed='true'] .oblast-tecka { box-shadow: 0 0 0 2px var(--cream); }
 
-  .mrizka-novinek { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem; list-style: none; margin: 0; padding: 0; }
+  .mrizka-novinek { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.5rem 1.25rem; list-style: none; margin: 0 -1rem; padding: 0; }
   /* filtr: ukáže jen novinky vybrané oblasti */
   .mrizka-novinek[data-vyber='cesko'] > :global(li:not([data-oblast='cesko'])),
   .mrizka-novinek[data-vyber='evropa'] > :global(li:not([data-oblast='evropa'])),
@@ -128,12 +125,13 @@ const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 
   .mrizka-novinek[data-vyber] > :global(li) { animation: naskoc 0.35s var(--ease-out); }
   @keyframes naskoc { from { opacity: 0; transform: translateY(6px); } }
 
-  .archiv { gap: 1.25rem; margin-top: 0.5rem; padding-top: clamp(1.5rem, 4vw, 2.5rem); border-top: 1px solid var(--line); }
-  .archiv__seznam { display: flex; flex-direction: column; gap: 0.75rem; }
-  .vydani { border-radius: 20px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin-maly); }
+  /* archiv: vydání jako řádky na měkké ploše, bez rámečků a čar */
+  .archiv { gap: 1.25rem; margin-top: 1rem; }
+  .archiv__seznam { display: flex; flex-direction: column; gap: 0.6rem; }
+  .vydani { border-radius: 22px; background: var(--plocha); box-shadow: var(--stin-mekky); }
   .vydani__radek {
-    display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; align-items: center; gap: 0.6rem 1rem;
-    padding: 0.85rem 1.1rem; border-radius: 20px; list-style: none; cursor: pointer; transition: background-color 0.2s ease;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 0.6rem 1rem;
+    padding: 1rem 1.25rem; border-radius: 22px; list-style: none; cursor: pointer; transition: background-color 0.2s ease;
   }
   .vydani__radek::-webkit-details-marker { display: none; }
   @media (hover: hover) and (pointer: fine) { .vydani__radek:hover { background: var(--hover); } }
@@ -145,21 +143,26 @@ const novinek = (n: number) => `${n} ${n === 1 ? 'novinka' : n >= 2 && n <= 4 ? 
   .vydani__pocet { font-size: 0.82rem; font-weight: 700; color: var(--muted); white-space: nowrap; }
   .vydani__sipka { color: var(--navy); transition: transform 0.3s var(--ease-out); }
   .vydani[open] .vydani__sipka { transform: rotate(180deg); }
-  .vydani[open] .vydani__radek { border-bottom-left-radius: 0; border-bottom-right-radius: 0; border-bottom: 1px solid var(--line-jemna); }
-  .vydani__mrizka { padding: 1.1rem; }
-  .vydani__souhrn { display: flex; flex-direction: column; gap: 0.3rem; margin: 1.1rem 1.1rem 0; padding: 0.9rem 1rem; border-radius: 16px; background: var(--plocha-2); border: 1px solid var(--line-jemna); }
+  .vydani__mrizka { margin: 0; padding: 0 0.5rem 1rem; }
+  .vydani__souhrn { display: flex; flex-direction: column; gap: 0.3rem; margin: 0 1.25rem 0.5rem; max-width: 70ch; }
   .vydani__souhrn-stitek { font-size: 0.7rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--orange-text); }
   .vydani__souhrn strong { font-size: 1.02rem; font-weight: 900; color: var(--navy); line-height: 1.3; }
   .vydani__souhrn p { font-size: 0.88rem; line-height: 1.6; color: var(--text-2); }
 
-  @media (max-width: 1020px) { .mrizka-novinek { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+  /* telefon a tablet: novinky v řadě, která jede do strany (jedna dlaždice skoro přes celou šířku), ať se vejdou na obrazovku */
+  @media (max-width: 1020px) {
+    .mrizka-novinek { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; margin-inline: -1.25rem; padding: 0 0.75rem 0.5rem; scroll-padding-inline: 0.75rem; }
+    .mrizka-novinek::-webkit-scrollbar { display: none; }
+    .mrizka-novinek > :global(li) { flex: 0 0 min(82vw, 340px); scroll-snap-align: start; }
+    .mrizka-novinek { align-items: flex-start; }
+    .mrizka-novinek > :global(li .nkr__hodnota) { margin-top: 0.2rem; }
+    .vydani__mrizka { margin: 0 0.25rem; padding: 0 0.5rem 1rem; }
+  }
   @media (max-width: 640px) {
-    .mrizka-novinek { grid-template-columns: 1fr; }
-    .vydani__radek { grid-template-columns: auto minmax(0, 1fr) auto; }
-    .vydani__pocet { grid-column: 2; grid-row: 2; }
+    .vydani__radek { grid-template-columns: minmax(0, 1fr) auto; }
+    .vydani__pocet { grid-column: 1; grid-row: 2; }
     .vydani__datum { display: none; }
-    .vydani__sipka { grid-column: 3; grid-row: 1 / span 2; }
-    .vydani__mrizka { padding: 0.75rem; }
+    .vydani__sipka { grid-column: 2; grid-row: 1 / span 2; }
   }
   @media (prefers-reduced-motion: reduce) {
     .mrizka-novinek[data-vyber] > :global(li) { animation: none; }

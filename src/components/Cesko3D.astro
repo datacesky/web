@@ -79,12 +79,13 @@ const REZIMY = [
 </section>
 
 <style>
-  .c3__panel { display: flex; flex-direction: column; gap: 1rem; padding: clamp(0.9rem, 2.4vw, 1.4rem); border-radius: 26px; background: var(--paper); border: 1px solid var(--line); box-shadow: var(--stin); }
+  /* bez krabice: ovládání a scéna přímo na stránce, scéna je měkká plocha s výškou podle obrazovky (celá sekce se vejde) */
+  .c3__panel { display: flex; flex-direction: column; gap: 0.85rem; }
   .c3__lista { display: flex; flex-wrap: wrap; gap: 0.6rem 1rem; align-items: center; justify-content: space-between; }
   .c3__lista .segment { max-width: 100%; overflow-x: auto; scrollbar-width: none; }
   .c3__lista select { min-height: 40px; border-radius: 999px; padding-left: 1rem; font-size: 0.9rem; }
   .c3__prepinace { display: flex; flex-wrap: wrap; gap: 0.4rem; }
-  .c3__scena { position: relative; height: clamp(380px, 62vh, 640px); border-radius: 20px; overflow: hidden; isolation: isolate;
+  .c3__scena { position: relative; height: clamp(300px, calc(100svh - 450px), 620px); border-radius: var(--radius-velky); overflow: hidden; isolation: isolate; box-shadow: var(--stin-mekky);
     background: radial-gradient(120% 90% at 50% 35%, var(--scena-3d-1) 0%, var(--scena-3d-2) 60%, var(--scena-3d-3) 100%); }
   .c3__scena::before { content: ''; position: absolute; inset: 0; z-index: -1; background: url('/vrstevnice.svg') center / cover no-repeat; opacity: calc(0.45 * var(--vrstevnice-sila)); }
   .c3__platno { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: grab; touch-action: none; }

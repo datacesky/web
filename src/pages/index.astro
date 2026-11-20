@@ -72,7 +72,8 @@ const ROZCESTNIK = [
     </section>
   )}
 
-  <section class="pas-papir" id="cisla" aria-labelledby="cisla-titul">
+  <div class="pas-papir">
+  <section id="cisla" aria-labelledby="cisla-titul">
     <div class="obal pas-papir__obsah">
       <div class="nadpis-sekce odhal">
         <div class="nadpis">
@@ -105,16 +106,21 @@ const ROZCESTNIK = [
         </a>
       )}
 
+    </div>
+  </section>
+  <section id="kraje" aria-labelledby="kraje-titul">
+    <div class="obal pas-papir__obsah">
       <div class="pas-papir__mapa">
         <div class="nadpis odhal">
           <span class="nadhlavi">Mapa Česka</span>
-          <h3 class="tydne__titul">Porovnej kraje</h3>
+          <h3 class="tydne__titul" id="kraje-titul">Porovnej kraje</h3>
           <p class="drobne">Na celé mapě jsou i města, satelit, vlaky za 24 hodin a vývoj v čase. <a href="/mapa/">Otevřít celou mapu →</a></p>
         </div>
         <MapaMini />
       </div>
     </div>
   </section>
+  </div>
 
   <section class="pas-tmavy" id="videa" aria-labelledby="videa-titul">
     <div class="obal pas-tmavy__hlava">
@@ -204,6 +210,7 @@ const ROZCESTNIK = [
   .pas-papir__obsah { display: flex; flex-direction: column; gap: clamp(2.5rem, 6vw, 4.5rem); }
   .pas-papir__obsah > .nadpis-sekce { margin-bottom: -1rem; }
   .pas-papir__mapa { display: flex; flex-direction: column; gap: 1.25rem; }
+  .pas-papir > section + section { margin-top: clamp(3rem, 7vw, 5rem); }
 
   .tydne { display: grid; grid-template-columns: minmax(0, 4fr) minmax(0, 6fr); gap: clamp(1.5rem, 5vw, 4rem); align-items: center; text-decoration: none; color: var(--navy); }
   .tydne:hover { color: var(--navy); }

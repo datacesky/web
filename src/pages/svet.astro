@@ -42,7 +42,7 @@ const czPoradi = Object.fromEntries(
       <div class="sloupec" style="gap: 0.5rem; max-width: 60ch;">
         <MapyPrepinac aktivni="svet" />
         <h1 class="svet-titul">Svět vedle Česka</h1>
-        <p class="perex">Vyber, co chceš vidět. Glóbus se přebarví a vedle se seřadí žebříček. Klikni na stát a postav ho vedle Česka.</p>
+        <p class="perex">Vyber, co chceš vidět: glóbus se přebarví a vedle se seřadí žebříček. Klikni na stát a postav ho vedle Česka.</p>
       </div>
       <div class="segment prepinac" role="group" aria-label="Zobrazení">
         <button type="button" aria-pressed="true" data-rezim="globus">Glóbus</button>
@@ -160,11 +160,18 @@ const czPoradi = Object.fromEntries(
   <CestaCapu />
 
   <section class="obal sekce sloupec" style="gap: 1.5rem;" id="dily">
-    <div class="nadpis">
-      <h2>Všechny díly Česko vs. svět</h2>
-      <p class="drobne">Každý díl jako rychlé srovnání. Oranžově Česko, modře druhá země.</p>
+    <div class="dily__hlava">
+      <div class="nadpis">
+        <span class="nadhlavi">Česko vs. svět</span>
+        <h2>Všechny díly</h2>
+        <p class="drobne">Každý díl jako rychlé srovnání. Oranžově Česko, modře druhá země.</p>
+      </div>
+      <div class="dily__sipky" data-pas-sipky>
+        <button type="button" class="pas-sipka" data-posun="-1" aria-label="Předchozí díly" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg></button>
+        <button type="button" class="pas-sipka" data-posun="1" aria-label="Další díly"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></button>
+      </div>
     </div>
-    <ul class="dily">
+    <ul class="dily" data-pas>
       {dily.map((d) => (
         <li class="dil">
           <div class="dil__hlava">
@@ -191,8 +198,8 @@ const czPoradi = Object.fromEntries(
             ))}
           </ul>
           <div class="dil__akce">
-            <a class="tlacitko tlacitko--male tlacitko--plny" href={odkazDilu(d)}>{d.instagram ? 'Přehrát díl' : 'Na Instagramu'}</a>
-            <button type="button" class="tlacitko tlacitko--male" data-zeme-kod={d.a3}>Ukázat na glóbusu</button>
+            <a class="odkaz-dal" href={odkazDilu(d)}>{d.instagram ? 'Přehrát díl' : 'Na Instagramu'}</a>
+            <button type="button" class="dil__globus" data-zeme-kod={d.a3}>Ukázat na glóbusu</button>
           </div>
         </li>
       ))}
@@ -370,14 +377,32 @@ const czPoradi = Object.fromEntries(
   :global(.panel__stat .video p) { font-size: 0.9rem; line-height: 1.6; color: var(--text-2); }
 
   /* Díly série */
-  .dily { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(330px, 1fr)); gap: 1.25rem; }
-  .dil { background: var(--paper); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--stin-maly); padding: 1.35rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  /* všechny díly v jednom pásu do strany (na počítači šipky), karta je měkká plocha bez rámečku a čar */
+  .dily__hlava { display: flex; align-items: flex-end; justify-content: space-between; gap: 1rem; }
+  .dily__hlava .nadpis { display: flex; flex-direction: column; gap: 0.6rem; }
+  .dily__sipky { display: none; gap: 0.4rem; }
+  @media (hover: hover) and (pointer: fine) { .dily__sipky { display: flex; } }
+  .pas-sipka { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--plocha); box-shadow: var(--stin-mekky); color: var(--navy); cursor: pointer; transition: background-color 0.2s ease, opacity 0.2s ease; }
+  .pas-sipka:hover:not(:disabled) { background: var(--navy); color: var(--cream); }
+  .pas-sipka:disabled { opacity: 0.35; cursor: default; }
+  .dily {
+    list-style: none; margin: 0 -1.25rem; padding: 0.75rem 1.25rem 3.5rem; display: flex; gap: 1.25rem;
+    overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 1.25rem; scrollbar-width: none; overscroll-behavior-x: contain;
+    margin-bottom: -1.75rem;
+    /* kraje pásu se ztrácejí do pozadí, ať karty nejsou useknuté natvrdo */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 1.25rem, #000 calc(100% - 3rem), transparent);
+    mask-image: linear-gradient(90deg, transparent 0, #000 1.25rem, #000 calc(100% - 3rem), transparent);
+  }
+  .dily::-webkit-scrollbar { display: none; }
+  .dil { flex: 0 0 min(84vw, 360px); scroll-snap-align: start; background: var(--plocha); border: 0; border-radius: var(--radius-velky); box-shadow: var(--stin-mekky); padding: 1.35rem; display: flex; flex-direction: column; gap: 0.75rem; }
+  .dil__globus { padding: 0; border: 0; background: none; font-family: inherit; font-size: 0.86rem; font-weight: 700; color: var(--muted); cursor: pointer; }
+  .dil__globus:hover { color: var(--navy); text-decoration: underline; }
   .dil__hlava { display: flex; justify-content: space-between; align-items: center; }
   .dil__vlajky { display: flex; align-items: center; gap: 0.5rem; font-size: 0.8rem; font-weight: 800; color: var(--muted); }
   .dil__vlajky img { border-radius: 5px; box-shadow: 0 0 0 1px color-mix(in srgb, var(--navy) 14%, transparent); }
   .dil h3 { font-size: 1.25rem; font-weight: 900; }
   .dil__popis { min-height: 3em; }
-  .dil__srovnani { list-style: none; margin: 0.2rem 0 0; padding: 0.9rem 0 0; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 0.8rem; }
+  .dil__srovnani { list-style: none; margin: 0.2rem 0 0; padding: 0; display: flex; flex-direction: column; gap: 0.8rem; }
   .dil__srovnani li { display: flex; flex-direction: column; gap: 0.3rem; }
   .dil__metrika { display: flex; justify-content: space-between; gap: 0.5rem; font-size: 0.78rem; font-weight: 800; }
   .dil__metrika em { font-style: normal; color: var(--muted); font-weight: 700; }
@@ -390,13 +415,52 @@ const czPoradi = Object.fromEntries(
   .dil__strana > span { display: block; height: 100%; }
   .dil__strana--cz > span { background: var(--orange); border-radius: 999px 0 0 999px; }
   .dil__strana--x > span { background: var(--navy); border-radius: 0 999px 999px 0; }
-  .dil__akce { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: auto; padding-top: 0.4rem; }
+  .dil__akce { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 1rem; margin-top: auto; padding-top: 0.4rem; }
 
   @media (prefers-reduced-motion: reduce) {
     :global(.zeme), .dlazdice { transition: none; }
     :global(.zebricek .pruh), :global(.panel__stat .s-radek .pruh) { animation: none; }
   }
+
+  /* ===== Nový vzhled: kompaktní hlavička s velkým nadpisem, vrstvy bez rámečků, glóbus a žebříček na jednu obrazovku ===== */
+  .svet-titul { font-size: clamp(2.4rem, 4.6vw, 3.8rem); }
+  .dlazdice { border: 0; background: none; box-shadow: none; }
+  @media (hover: hover) and (pointer: fine) { .dlazdice:hover { background: var(--hover); transform: none; } }
+  .dlazdice[aria-pressed='true'] { background: var(--plocha); color: var(--navy); box-shadow: var(--stin-mekky); }
+  .dlazdice[aria-pressed='true'] svg { color: var(--orange); }
+  .dlazdice[aria-pressed='true'] .dlazdice__cz { color: var(--orange-text); }
+  .vyber__nazev { font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; padding-left: 0.65rem; }
+  .panel { background: var(--plocha); border: 0; box-shadow: var(--stin-mekky); border-radius: var(--radius-velky); max-height: calc(100svh - 270px); }
+  .scena__svg { max-height: calc(100svh - 395px); }
+  @media (min-width: 1181px) {
+    .svet-hlava > .sloupec { display: grid !important; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 1.25rem; row-gap: 0.45rem !important; max-width: none !important; flex: 1 1 0; }
+    .svet-hlava > .sloupec > :global(.mapy-prepinac) { grid-column: 2; grid-row: 1; justify-self: start; }
+    .svet-hlava > .sloupec > .svet-titul { grid-column: 1; grid-row: 1; }
+    .svet-hlava > .sloupec > .perex { grid-column: 1 / -1; max-width: none; }
+    .svet { grid-template-columns: 236px minmax(0, 1fr) 360px; }
+    /* vrstvy jako jednořádkové položky: název vlevo, pořadí Česka vpravo */
+    .vyber { gap: 0.7rem; margin-left: -0.65rem; }
+    .vyber__dlazdice { gap: 0.05rem; }
+    .dlazdice { grid-template-columns: 20px minmax(0, 1fr) auto; grid-template-rows: auto; padding: 0.4rem 0.65rem; }
+    .dlazdice svg { grid-row: 1; }
+  }
 </style>
+
+<script>
+  // Pás dílů: šipky posouvají o kus doleva / doprava, na krajích zešednou
+  for (const pas of document.querySelectorAll<HTMLElement>('[data-pas]')) {
+    const sipky = Array.from(pas.parentElement!.querySelectorAll<HTMLButtonElement>('[data-pas-sipky] [data-posun]'));
+    if (sipky.length < 2) continue;
+    const stav = () => {
+      sipky[0].disabled = pas.scrollLeft <= 2;
+      sipky[1].disabled = pas.scrollLeft >= pas.scrollWidth - pas.clientWidth - 2;
+    };
+    for (const b of sipky) b.addEventListener('click', () => pas.scrollBy({ left: Number(b.dataset.posun) * pas.clientWidth * 0.8, behavior: 'smooth' }));
+    pas.addEventListener('scroll', stav, { passive: true });
+    addEventListener('resize', stav);
+    stav();
+  }
+</script>
 
 <script>
   import { geoOrthographic, geoEqualEarth, geoPath, geoGraticule10, geoCentroid, geoArea, geoDistance } from 'd3-geo';

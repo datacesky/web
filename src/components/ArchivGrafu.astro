@@ -25,9 +25,14 @@ const temata = ['Vše', ...new Set(grafy.map((g) => g.data.tema))];
     </div>
   </div>
 
-  <p class="drobne" data-pocet aria-live="polite"></p>
-
-  <ul class="mrizka" data-seznam data-postupne>
+  <div class="archiv__radek">
+    <p class="drobne" data-pocet aria-live="polite"></p>
+    <div class="archiv__sipky">
+      <button type="button" class="archiv__sipka" data-posun="-1" aria-label="Předchozí grafy" disabled><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6" /></svg></button>
+      <button type="button" class="archiv__sipka" data-posun="1" aria-label="Další grafy"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></button>
+    </div>
+  </div>
+  <ul class="archiv__seznam" data-seznam data-postupne>
     {grafy.map((g, i) => <GrafCard id={g.id} data={g.data} velka={i === 0} />)}
   </ul>
 
@@ -42,7 +47,26 @@ const temata = ['Vše', ...new Set(grafy.map((g) => g.data.tema))];
   .archiv { display: flex; flex-direction: column; gap: 1.25rem; }
   .archiv__ovladani { display: flex; flex-wrap: wrap; gap: 1rem 2rem; align-items: center; justify-content: space-between; }
   .archiv__hledani { width: min(100%, 300px); }
-  .archiv__prazdno { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; text-align: center; border-style: dashed; }
+  .archiv__prazdno { display: flex; flex-direction: column; align-items: center; gap: 0.75rem; text-align: center; }
+  /* grafy v jednom pásu, který jede do strany: celá sekce se vejde na obrazovku, na telefonu se posouvá prstem, na počítači šipkami */
+  .archiv__radek { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: -0.5rem; }
+  .archiv__sipky { display: none; gap: 0.4rem; }
+  @media (hover: hover) and (pointer: fine) { .archiv__sipky { display: flex; } }
+  .archiv__sipka { display: grid; place-items: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: var(--plocha); box-shadow: var(--stin-mekky); color: var(--navy); cursor: pointer; transition: background-color 0.2s ease, opacity 0.2s ease; }
+  .archiv__sipka:hover:not(:disabled) { background: var(--navy); color: var(--cream); }
+  .archiv__sipka:disabled { opacity: 0.35; cursor: default; }
+  .archiv__seznam {
+    display: flex; gap: clamp(1rem, 2vw, 1.5rem); list-style: none; margin: 0 -1.25rem; padding: 0.75rem 1.25rem 3.5rem;
+    overflow-x: auto; scroll-snap-type: x mandatory; scroll-padding-inline: 1.25rem; scrollbar-width: none; overscroll-behavior-x: contain;
+    margin-bottom: -1.75rem;
+    /* kraje pásu se ztrácejí do pozadí, ať karty nejsou useknuté natvrdo */
+    -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 1.25rem, #000 calc(100% - 3rem), transparent);
+    mask-image: linear-gradient(90deg, transparent 0, #000 1.25rem, #000 calc(100% - 3rem), transparent);
+  }
+  .archiv__seznam::-webkit-scrollbar { display: none; }
+  .archiv__seznam > :global(li) { flex: 0 0 clamp(270px, 26vw, 340px); scroll-snap-align: start; }
+  .archiv__seznam > :global(li.kg--velka) { flex-basis: clamp(290px, 46vw, 640px); }
+  @media (max-width: 899px) { .archiv__seznam > :global(li.kg--velka) { flex-basis: min(84vw, 360px); } .archiv__seznam > :global(li) { flex-basis: min(80vw, 320px); } }
 </style>
 
 <script>
@@ -78,14 +102,28 @@ const temata = ['Vše', ...new Set(grafy.map((g) => g.data.tema))];
       chip.addEventListener('click', () => {
         filtr = chip.dataset.filtr ?? 'Vše';
         prekresli();
+        seznam.scrollTo({ left: 0 });
+        stavSipek();
       });
     }
-    hledat.addEventListener('input', prekresli);
+    // šipky posouvají pás o kus doleva / doprava, na krajích zešednou
+    const seznam = archiv.querySelector<HTMLElement>('[data-seznam]')!;
+    const sipky = Array.from(archiv.querySelectorAll<HTMLButtonElement>('[data-posun]'));
+    const stavSipek = () => {
+      const max = seznam.scrollWidth - seznam.clientWidth - 2;
+      sipky[0].disabled = seznam.scrollLeft <= 2;
+      sipky[1].disabled = seznam.scrollLeft >= max;
+    };
+    for (const b of sipky) b.addEventListener('click', () => seznam.scrollBy({ left: Number(b.dataset.posun) * seznam.clientWidth * 0.8, behavior: 'smooth' }));
+    seznam.addEventListener('scroll', stavSipek, { passive: true });
+    addEventListener('resize', stavSipek);
+    hledat.addEventListener('input', () => { prekresli(); seznam.scrollTo({ left: 0 }); stavSipek(); });
     zrusit.addEventListener('click', () => {
       filtr = 'Vše';
       hledat.value = '';
       prekresli();
     });
     prekresli();
+    stavSipek();
   }
 </script>

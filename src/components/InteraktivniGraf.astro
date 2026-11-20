@@ -161,8 +161,8 @@ import { logo } from '../lib/loga';
     gap: 1rem;
     align-items: center;
     width: 100%;
-    min-height: 46px;
-    padding: 0.4rem 0.75rem;
+    min-height: 38px;
+    padding: 0.25rem 0.75rem;
     border: 0;
     border-radius: 12px;
     background: transparent;
@@ -200,6 +200,9 @@ import { logo } from '../lib/loga';
     .ig__hodnota { font-size: 0.9rem; }
   }
   @media (prefers-reduced-motion: reduce) { .ig__radek { transition: none; } }
+
+  /* dlouhé žebříčky se posouvají uvnitř karty, ať je celý graf vždy na jedné obrazovce */
+  .ig__radky { max-height: max(300px, calc(100svh - 500px)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
 </style>
 
 <script>

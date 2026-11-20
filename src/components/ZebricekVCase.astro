@@ -182,6 +182,10 @@ const nejdelsiKratke = Math.max(...vse.map((v) => kratke(v).length));
   @media (prefers-reduced-motion: reduce) {
     .zvc__radek, .zvc__pruh, .zvc__hodnota, .zvc__ref::before, .zvc__ref-popisek { transition: none; }
   }
+
+  /* dlouhé žebříčky se posouvají uvnitř, ať je graf i s ovládáním vždy na jedné obrazovce */
+  .zvc__radky { max-height: max(300px, calc(100svh - 450px)); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; }
+  .zvc__cas { border: 0; }
 </style>
 
 <script>

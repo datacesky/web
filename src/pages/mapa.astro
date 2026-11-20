@@ -48,7 +48,7 @@ const data = JSON.stringify({
       <div class="sloupec" style="gap: 0.5rem; max-width: 62ch;">
         <MapyPrepinac aktivni="cesko" />
         <h1 class="mapa-titul">Mapa Česka</h1>
-        <p class="perex">Vyber, co chceš vidět. U krajů se mapa přebarví, u měst naskočí bubliny. Přepni na satelit nebo zapni řeky a hory.</p>
+        <p class="perex">Vyber, co chceš vidět: kraje se přebarví, u měst naskočí bubliny. Jde to i na satelitu.</p>
         <div class="mapa-odkazy">
           <a class="mapa-3d-odkaz" href="#v=vlaky" data-vlaky-odkaz><span>Nově</span>Vlaky za 24 hodin: každá tečka je jeden vlak</a>
           <a class="mapa-3d-odkaz mapa-3d-odkaz--svetly" href="#cesko-3d">Česko ve 3D: všech 6 254 obcí ↓</a>
@@ -245,7 +245,9 @@ const data = JSON.stringify({
         </div>
       </aside>
     </div>
+  </section>
 
+  <section class="obal sloupec mapa-dalsi" style="gap: 1rem; --obal: 1320px;">
     <details class="karta">
       <summary style="font-weight: 800; cursor: pointer;">Všechna čísla v tabulce</summary>
       <div class="tabulka-obal" style="margin-top: 1rem;">
@@ -273,7 +275,7 @@ const data = JSON.stringify({
 
 <style>
   /* Vrstva Vlaky za 24 hodin má vlastní mapu a panel (components/Vlaky.astro), ostatní ovládání schováme */
-  .mapa-stranka--vlaky .mc__karta > :not(.mc__vyber), .mapa-stranka--vlaky .mc__panel > *, .mapa-stranka--vlaky .mapa-hlava__nastroje, .mapa-stranka--vlaky > details { display: none !important; }
+  .mapa-stranka--vlaky .mc__karta > :not(.mc__vyber), .mapa-stranka--vlaky .mc__panel > *, .mapa-stranka--vlaky .mapa-hlava__nastroje, .mapa-stranka--vlaky + .mapa-dalsi { display: none !important; }
   .dlazdice--nove .dlazdice__nazev::after { content: 'nové'; margin-left: 0.4rem; padding: 0.05rem 0.4rem; border-radius: 999px; background: var(--orange); color: var(--na-oranzove); font-size: 0.66rem; font-weight: 900; vertical-align: 1px; }
   .dlazdice--nove[aria-pressed='true'] .dlazdice__nazev::after { background: var(--orange); }
   .mapa-odkazy { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.3rem; }
@@ -452,6 +454,56 @@ const data = JSON.stringify({
   :global(.poradi .p-pruh) { display: block; height: 6px; border-radius: 999px; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--navy) 18%, transparent); transition: width 0.45s ease, background 0.45s ease; }
   :global(.poradi .p-hodnota) { font-variant-numeric: tabular-nums; font-weight: 800; white-space: nowrap; }
   @media (prefers-reduced-motion: reduce) { :global(.kraj), :global(.poradi .p-pruh), .mesto__bublina { transition: none; } }
+
+  /* ===== Nový vzhled: velký nadpis, bez krabic a čar, na počítači celé na jednu obrazovku =====
+     Vrstvy jsou vlevo pod sebou, mapa uprostřed (výška podle obrazovky), detail a pořadí krajů vpravo.
+     Karta mapy se na počítači „rozpustí“ (display: contents), takže její části jdou rovnou do mřížky stránky. */
+  .mapa-titul { font-size: clamp(2.4rem, 4.6vw, 3.8rem); }
+  .mapa-hlava .perex { max-width: 52ch; }
+  .mc__karta { background: none; border: 0; box-shadow: none; padding: 0; }
+  .mc__vyber { border-bottom: 0; padding-bottom: 0; }
+  .dlazdice { border: 0; background: none; }
+  @media (hover: hover) and (pointer: fine) { .dlazdice:hover { background: var(--hover); transform: none; } }
+  .dlazdice[aria-pressed='true'] { background: var(--plocha); color: var(--navy); box-shadow: var(--stin-mekky); }
+  .dlazdice[aria-pressed='true'] svg { color: var(--orange); }
+  .mc__platno { background: var(--plocha); box-shadow: var(--stin-mekky); border-radius: var(--radius-velky); }
+  .mc__cas { border: 0; background: var(--plocha); box-shadow: var(--stin-mekky); }
+  .mc__pata { padding-top: 0; border-top: 0; }
+  .mc__poradi-karta { background: none; border: 0; box-shadow: none; padding: 0.4rem 0 0; }
+  .mc__poradi-titul { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .mapa__detail { border-radius: var(--radius-velky); }
+  .mapa-3d-odkaz--svetly { box-shadow: var(--stin-mekky); }
+  @media (min-width: 1100px) {
+    .mc {
+      grid-template-columns: 200px minmax(0, 1fr) 290px; grid-template-rows: auto auto auto auto 1fr;
+      grid-template-areas: 'vyber hlava panel' 'vyber platno panel' 'vyber ovladani panel' 'vyber cas panel' 'vyber pata panel';
+      column-gap: clamp(1.25rem, 2.2vw, 2.25rem); row-gap: 0.7rem;
+    }
+    .mc__karta { display: contents; }
+    .mc__vyber { grid-area: vyber; flex-direction: column; flex-wrap: nowrap; align-items: stretch; gap: 0.85rem; margin-left: -0.6rem; }
+    .mc__skupina { display: flex; flex-direction: column; align-items: stretch; gap: 0.05rem; }
+    .mc__skupina-nazev { padding: 0 0 0.2rem 0.6rem; font-size: 0.68rem; letter-spacing: 0.12em; text-transform: uppercase; }
+    .dlazdice { width: 100%; min-height: 34px; padding: 0.35rem 0.6rem; border-radius: 12px; white-space: normal; }
+    .mc__hlava { grid-area: hlava; }
+    .mc__platno { grid-area: platno; }
+    .mc-svg { width: 100%; height: clamp(320px, calc(100svh - 380px), 580px); max-height: none; }
+    .mc__ovladani { grid-area: ovladani; }
+    .mc__cas { grid-area: cas; }
+    .mc__pata { grid-area: pata; align-self: start; }
+    .mc > :global(.vl), .mc__karta > :global(.vl) { grid-column: 2; grid-row: 1 / span 5; }
+    .mc__panel { grid-area: panel; max-height: calc(100svh - 330px); }
+    /* kompaktní hlavička: nadpis a přepínač Svět/Česko v jednom řádku, pod nimi krátký perex a odkazy */
+    .mapa-hlava { align-items: flex-end; gap: 1rem 2rem; }
+    .mapa-hlava > .sloupec { display: grid !important; grid-template-columns: auto minmax(0, 1fr); align-items: center; column-gap: 1.25rem; row-gap: 0.45rem !important; max-width: none !important; flex: 1 1 0; }
+    .mapa-hlava > .sloupec > :global(.mapy-prepinac) { grid-column: 2; grid-row: 1; justify-self: start; }
+    .mapa-hlava > .sloupec > .mapa-titul { grid-column: 1; grid-row: 1; }
+    .mapa-hlava > .sloupec > .perex, .mapa-hlava > .sloupec > .mapa-odkazy { grid-column: 1 / -1; }
+    .mapa-odkazy { margin-top: 0; }
+    .mc-svg { height: clamp(300px, calc(100svh - 515px), 580px); }
+    .mapa-hlava .perex { max-width: none; }
+    .mc__ovladani { gap: 0.5rem 1.25rem; }
+    .mc__ovladani :global(.legenda) { gap: 0.3rem 0.9rem; font-size: 0.76rem; }
+  }
 </style>
 
 <script>
