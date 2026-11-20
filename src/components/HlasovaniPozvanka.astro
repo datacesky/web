@@ -65,7 +65,8 @@ const [jmenoPosl, a2Posl] = ZEME[posledniDil.a3];
 
   /* Kompaktní karta v úvodu: nadpis a tlačítko vedle sebe, pod tím tři vedoucí země jako pilulky */
   .hp--mala { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.7rem 1rem; align-items: center; width: 100%; padding: 1rem 1.1rem; border-radius: 20px; text-align: left; }
-  .hp--mala::after { right: -90px; top: -120px; }
+  /* v úvodu bez oranžové záře v rohu: karta má být klidná, oranžové je jen tlačítko */
+  .hp--mala::after { display: none; }
   .hp-m__hlava { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; position: relative; z-index: 1; }
   .hp--mala .hp__stitek { display: inline-flex; align-items: center; gap: 0.45rem; font-size: 0.8rem; }
   .hp-m__pulz { width: 7px; height: 7px; border-radius: 50%; background: var(--orange); box-shadow: 0 0 0 3px rgba(240, 136, 41, 0.25); }

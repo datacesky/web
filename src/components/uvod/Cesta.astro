@@ -6,7 +6,6 @@
 // Bez JavaScriptu zůstane statický glóbus (HeroGlobus) a všechny texty a odkazy.
 import HeroGlobus from './HeroGlobus.astro';
 import HlasovaniPozvanka from '../HlasovaniPozvanka.astro';
-import IkonaZare from '../IkonaZare.astro';
 import SouhrnPruhy from '../SouhrnPruhy.astro';
 import geo from '../../data/kraje.json';
 import podklad from '../../data/cesko-mapa.json';
@@ -94,8 +93,9 @@ const KAPITOLY = [
 const data = JSON.stringify({ epizody: epizody.map((e) => e.a3), eu: eu.map(({ id, hodnoty, desetinna, jednotka, stitek }) => ({ id, hodnoty, desetinna, jednotka, stitek })), supermarkety: SUPERMARKETY, projekce: P });
 const nove = (k: string) => noveNaWebu.filter((x) => x.kapitola === k);
 // číslo kapitoly v nadhlaví (souhrn měsíce je první, když existuje)
-const cislo_ = (id: string) => KAPITOLY.findIndex((k) => k.id === id) + 1;
-const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).split(/\n\s*\n/) : [];
+const cislo_ = (id: string) => String(KAPITOLY.findIndex((k) => k.id === id) + 1).padStart(2, '0');
+// Na úvodu jen krátký perex (čísla jsou hned pod ním v osmi oblastech), celý souhrn je nahoře na stránce Novinky
+const perex = souhrn ? nezalomit(souhrn.souhrn.perex) : '';
 ---
 
 <section class="cesta" data-cesta data-json={data} aria-label="Úvod">
@@ -127,8 +127,11 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
 
   <div class="cesta__text">
     <div class="cesta__uvod" data-krok="uvod">
-      <h1>Česko v mapách, grafech a&nbsp;číslech</h1>
-      <p class="perex">Data z ČSÚ, Eurostatu, Světové banky a dalších primárních zdrojů. Všechno, co tu vidíš, se dá rozkliknout.</p>
+      <h1 class="uvod__titul">
+        <span class="ut__velke">Česko</span>
+        <span class="ut__lehke">v mapách, grafech <em>a&nbsp;číslech</em></span>
+      </h1>
+      <p class="perex uvod__perex">Data z ČSÚ, Eurostatu, Světové banky a dalších primárních zdrojů. Všechno, co tu vidíš, se dá rozkliknout.</p>
       <div class="uvod__hledani" data-uvod-hledani data-zeme={zemeHledani}>
         <label class="uvod__hledani-titul" for="uvod-hledani">Porovnej Česko s jakoukoli zemí</label>
         <div class="hledani">
@@ -151,13 +154,12 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
         <span class="krok__nadhlavi"><b>{cislo_('mesic')}</b>Tento měsíc v datech</span>
         <h2 class="mesic__titulek">{nezalomit(souhrn.souhrn.titulek)}</h2>
         <p class="mesic__vydani">Souhrn měsíce · {nazevVydani(souhrn.vydani)} · z nejnovějších čísel ČSÚ, Eurostatu a Světové banky</p>
-        <div class="mesic__text">{odstavce.map((o) => <p>{o}</p>)}</div>
+        <p class="mesic__text">{perex}</p>
         <ul class="mesic__body" role="list">
           {souhrn.souhrn.body.map((b) => (
             <li>
               <a class:list={['md', `md--${b.ton}`]} href={`/novinky/#s-${b.id}`}>
                 <span class="md__hlava">
-                  <IkonaZare id={b.ikona} velikost={28} />
                   <span class="md__tema">{b.tema}</span>
                   <span class:list={['stav', `stav--${b.ton}`]}>{b.stav}</span>
                 </span>
@@ -168,8 +170,8 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
           ))}
         </ul>
         <div class="krok__akce">
-          <a class="tlacitko tlacitko--plny" href="/novinky/#souhrn">Celý souhrn s grafy</a>
-          <a class="krok__odkaz" href="/novinky/">Všechny novinky →</a>
+          <a class="krok__odkaz krok__odkaz--hlavni" href="/novinky/#souhrn">Celý souhrn s grafy</a>
+          <a class="krok__odkaz" href="/novinky/">Všechny novinky</a>
         </div>
       </article>
     )}
@@ -195,7 +197,7 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
           ))}
         </ul>
       )}
-      <div class="krok__akce"><a class="tlacitko tlacitko--plny" href="/svet/">Otevřít glóbus</a></div>
+      <div class="krok__akce"><a class="krok__odkaz krok__odkaz--hlavni" href="/svet/">Otevřít glóbus</a></div>
     </article>
 
     <!-- Žebříčky -->
@@ -206,7 +208,6 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
       <div class="zeb" role="group" aria-label="Žebříček na glóbusu" data-zebricky>
         {zebricky.map((z, i) => (
           <button type="button" class="zeb__radek" data-zebricek={z.id} aria-pressed={i === 0 ? 'true' : 'false'}>
-            <IkonaZare cesta={z.ikona} velikost={30} />
             <span class="zeb__nazev">{z.nazev}</span>
             <span class="zeb__misto"><strong>{z.r}.</strong><small>{zZe(z.n)} {z.n}</small></span>
           </button>
@@ -220,7 +221,7 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
           </p>
         ))}
       </div>
-      <div class="krok__akce"><a class="tlacitko tlacitko--plny" href="/zebricky/">Všechny žebříčky</a></div>
+      <div class="krok__akce"><a class="krok__odkaz krok__odkaz--hlavni" href="/zebricky/">Všechny žebříčky</a></div>
     </article>
 
     <!-- Evropa -->
@@ -237,12 +238,12 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
             <div class="eu__detail" data-eu-detail={x.id} hidden={i !== 0}>
               <p class="eu__veta">{x.veta}</p>
               {x.srovnani && <SouhrnPruhy srovnani={x.srovnani} />}
-              <a class="eu__odkaz" href={`/novinky/#n-${x.id}`}>{x.nadpis}: graf a detail →</a>
+              <a class="krok__odkaz" href={`/novinky/#n-${x.id}`}>{x.nadpis}: graf a detail</a>
             </div>
           ))}
         </div>
       )}
-      <div class="krok__akce"><a class="tlacitko tlacitko--plny" href="/novinky/">Novinky z dat</a></div>
+      <div class="krok__akce"><a class="krok__odkaz krok__odkaz--hlavni" href="/novinky/">Všechny novinky z dat</a></div>
     </article>
 
     <!-- Česko -->
@@ -265,7 +266,7 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5a7 7 0 0 1 14 0C19 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.5" /></svg>
           Najít nejbližší podle polohy
         </a>
-        <a class="krok__odkaz" href={SUPERMARKETY}>Otevřít celou mapu →</a>
+        <a class="krok__odkaz" href={SUPERMARKETY}>Otevřít celou mapu</a>
       </div>
       <ul class="retezce" aria-label="Řetězce na mapě" data-retezce>
         {retezce.map((r) => (
@@ -356,6 +357,8 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
 </script>
 
 <style>
+  @property --zare { syntax: '<color>'; inherits: true; initial-value: rgba(255, 255, 255, 0.95); }
+  @property --zare-2 { syntax: '<color>'; inherits: true; initial-value: rgba(169, 203, 227, 0.32); }
   /* ---------- rozvržení: text vlevo, glóbus vpravo přilepený ---------- */
   .cesta {
     --hv: var(--hlavicka-vyska, 64px);
@@ -374,6 +377,20 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
     -webkit-mask-composite: source-in; mask-image: linear-gradient(to right, transparent, #000 7%, #000 93%, transparent), linear-gradient(to bottom, transparent, #000 6%, #000 94%, transparent);
     mask-composite: intersect;
   }
+  /* světlo za glóbusem: měkká záře, která pomalu dýchá a podle kapitoly mění odstín (svět modrý, měsíc a Česko teplé) */
+  .cesta__scena { --zare: rgba(255, 255, 255, 0.95); --zare-2: rgba(169, 203, 227, 0.32); transition: --zare 1.2s ease, --zare-2 1.2s ease; }
+  .cesta__scena[data-kapitola='mesic'], .cesta__scena[data-kapitola='cesko'] { --zare-2: rgba(240, 136, 41, 0.2); }
+  .cesta__scena[data-kapitola='zebricky'] { --zare-2: rgba(226, 176, 64, 0.22); }
+  .cesta__scena[data-kapitola='evropa'] { --zare-2: rgba(96, 128, 196, 0.24); }
+  :global([data-tema='tmavy']) .cesta__scena { --zare: rgba(74, 104, 164, 0.42); --zare-2: rgba(36, 56, 100, 0.32); }
+  :global([data-tema='tmavy']) .cesta__scena[data-kapitola='mesic'], :global([data-tema='tmavy']) .cesta__scena[data-kapitola='cesko'] { --zare-2: rgba(240, 136, 41, 0.14); }
+  .cesta__scena::before {
+    content: ''; position: absolute; left: 50%; top: 45%; z-index: 0; width: min(118%, 112svh); aspect-ratio: 1; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, var(--zare), var(--zare-2) 58%, rgba(255, 255, 255, 0) 100%);
+    transform: translate(-50%, -50%); animation: dychani 9s ease-in-out infinite alternate;
+  }
+  @keyframes dychani { from { transform: translate(-50%, -50%) scale(0.95); } to { transform: translate(-50%, -50%) scale(1.05); } }
+  .scena__plocha, .scena__pata { position: relative; z-index: 1; }
   .scena__staticky { position: absolute; left: 50%; top: 50%; width: calc(min(84cqw, 84cqh) * 600 / 560); transform: translate(-50%, -46.875%); transition: opacity 0.5s ease; pointer-events: none; }
   .scena__platno { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.5s ease; cursor: grab; touch-action: pan-y; }
   .scena__platno:active { cursor: grabbing; }
@@ -411,8 +428,18 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
   @media (hover: hover) and (pointer: fine) { .scena__kapitoly a:not(.je-aktivni):hover { background: var(--hover); color: var(--navy); } }
 
   /* ---------- úvod ---------- */
-  .cesta__uvod { min-height: calc(100svh - var(--hv)); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1.25rem; padding-block: 2rem 3rem; }
-  .cesta__uvod h1 { font-size: clamp(2.2rem, 4vw, 3.2rem); line-height: 1.12; }
+  .cesta__uvod { min-height: calc(100svh - var(--hv)); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1.5rem; padding-block: 2rem 3rem; }
+  /* velký vzdušný nadpis: ČESKO obří a těžké, zbytek lehkým řezem ve verzálkách s prostrkáním */
+  .uvod__titul { display: flex; flex-direction: column; gap: 0.55rem; text-transform: uppercase; }
+  .ut__velke { font-size: clamp(4rem, 8.6vw, 7.6rem); font-weight: 900; line-height: 0.86; letter-spacing: -0.045em; margin-left: -0.04em; }
+  .ut__lehke { font-size: clamp(1.35rem, 2.5vw, 2.15rem); font-weight: 300; line-height: 1.22; letter-spacing: 0.05em; color: var(--navy); }
+  .ut__lehke em { display: block; font-style: normal; font-weight: 600; color: var(--orange-text); }
+  .uvod__perex { max-width: 40ch; margin-top: 0.25rem; }
+  /* nadpis a perex při načtení vyjedou zespodu, každý řádek o chvilku později */
+  .ut__velke, .ut__lehke, .uvod__perex { animation: vyjed 0.9s var(--ease-out) both; }
+  .ut__lehke { animation-delay: 0.1s; }
+  .uvod__perex { animation-delay: 0.2s; }
+  @keyframes vyjed { from { opacity: 0; transform: translateY(0.45em); } }
   .uvod__hledani { display: flex; flex-direction: column; gap: 0.45rem; width: min(100%, 420px); position: relative; z-index: 15; }
   .uvod__hledani .hledani, .smu__hledani .hledani { width: 100%; }
   .uvod__hledani-titul, .smu__popisek { font-size: 0.9rem; font-weight: 800; color: var(--navy); }
@@ -426,13 +453,21 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
 
   /* ---------- kapitoly ---------- */
   .krok { min-height: 92svh; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 1rem; padding-block: 12svh; scroll-margin-top: 0; }
-  .krok h2 { font-size: clamp(1.75rem, 3.3vw, 2.5rem); line-height: 1.12; letter-spacing: -0.025em; max-width: 18ch; }
-  .krok__nadhlavi { display: inline-flex; align-items: center; gap: 0.55rem; font-size: 0.8rem; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: var(--orange-text); }
-  .krok__nadhlavi b { display: grid; place-items: center; width: 26px; height: 26px; border-radius: 50%; background: var(--orange); color: var(--na-oranzove); font-size: 0.78rem; letter-spacing: 0; }
+  .krok h2 { font-size: clamp(2rem, 3.9vw, 3.1rem); line-height: 1.06; letter-spacing: -0.035em; max-width: 16ch; }
+  /* číslo kapitoly jako velká lehká číslice 01–05, vedle ní název prostrkanými verzálkami */
+  .krok__nadhlavi { display: inline-flex; align-items: center; gap: 0.8rem; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
+  .krok__nadhlavi b { font-size: clamp(2.4rem, 3.6vw, 3.1rem); font-weight: 300; line-height: 1; letter-spacing: -0.02em; color: var(--orange); font-variant-numeric: tabular-nums; }
   .krok__perex { font-size: clamp(1rem, 1.5vw, 1.08rem); line-height: 1.65; color: var(--text-2); max-width: 46ch; text-wrap: pretty; }
   .krok__perex strong { color: var(--orange-text); font-weight: 800; }
   .krok__akce { display: flex; flex-wrap: wrap; align-items: center; gap: 0.6rem 1.25rem; margin-top: 0.4rem; }
-  .krok__odkaz { font-size: 0.92rem; font-weight: 800; color: var(--orange-text); text-decoration: none; }
+  /* odkazy kapitol: místo plných tlačítek text se šipkou, hlavní odkaz tmavý s linkou pod sebou */
+  .krok__odkaz { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.92rem; font-weight: 800; color: var(--orange-text); text-decoration: none; }
+  .krok__odkaz::after { content: '→'; transition: transform 0.25s var(--ease-out); }
+  .krok__odkaz--hlavni { padding-bottom: 0.2rem; font-size: 1rem; color: var(--navy); background: linear-gradient(var(--orange), var(--orange)) left bottom / 100% 2px no-repeat; }
+  @media (hover: hover) and (pointer: fine) {
+    .krok__odkaz:hover { color: var(--navy); }
+    .krok__odkaz:hover::after { transform: translateX(4px); }
+  }
   .krok__stitek { display: block; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.07em; text-transform: uppercase; color: var(--orange-text); }
   .jen-dotyk { display: none; }
   @media (hover: none) { .jen-mys { display: none; } .jen-dotyk { display: inline; } }
@@ -455,20 +490,19 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
   .krok--mesic { gap: 0.9rem; }
   .krok--mesic .mesic__titulek { font-size: clamp(1.55rem, 2.6vw, 2.1rem); line-height: 1.2; max-width: 26ch; text-wrap: balance; }
   .mesic__vydani { font-size: 0.8rem; font-weight: 700; color: var(--muted); }
-  .mesic__text { display: flex; flex-direction: column; gap: 0.7rem; max-width: 60ch; font-size: 0.98rem; line-height: 1.7; color: var(--text-2); text-wrap: pretty; }
-  .mesic__body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); width: min(100%, 620px); list-style: none; margin: 0.3rem 0 0; padding: 0; border-top: 1px solid var(--line); }
-  .mesic__body > li { border-bottom: 1px solid var(--line); }
-  .mesic__body > li:nth-child(2n) { border-left: 1px solid var(--line); }
-  .md { position: relative; display: flex; flex-direction: column; gap: 0.25rem; height: 100%; padding: 0.85rem 0.9rem 0.9rem; color: var(--navy); text-decoration: none; transition: background-color 0.25s ease; }
-  .md::before { content: ''; position: absolute; left: 0.9rem; top: -1px; width: 24px; height: 3px; border-radius: 0 0 3px 3px; background: var(--line-2); transition: width 0.35s var(--ease-out); }
+  .mesic__text { max-width: 54ch; font-size: clamp(1rem, 1.5vw, 1.08rem); line-height: 1.65; color: var(--text-2); text-wrap: pretty; }
+  /* osm čísel bez mřížky čar: drží je mezery a krátká barevná čárka nad každým číslem */
+  .mesic__body { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.4rem 1rem; width: min(100%, 620px); list-style: none; margin: 0.6rem 0 0 -0.9rem; padding: 0; }
+  .md { position: relative; display: flex; flex-direction: column; gap: 0.25rem; height: 100%; padding: 0.95rem 0.9rem 0.9rem; border-radius: 16px; color: var(--navy); text-decoration: none; transition: background-color 0.25s ease; }
+  .md::before { content: ''; position: absolute; left: 0.9rem; top: 0; width: 24px; height: 3px; border-radius: 0 0 3px 3px; background: var(--line-2); transition: width 0.35s var(--ease-out); }
   .md--dobre::before { background: var(--navy); }
   .md--spatne::before { background: var(--valka); }
   @media (hover: hover) and (pointer: fine) { .md:hover { background: var(--hover); color: var(--navy); } .md:hover::before { width: calc(100% - 1.8rem); } }
   .md:focus-visible { outline: 3px solid var(--orange); outline-offset: -3px; }
   .md__hlava { display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap; }
   .md__tema { font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; margin-right: auto; }
-  .md .stav { font-size: 0.64rem; padding: 0.16rem 0.45rem; }
-  .md__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.1rem 0.4rem; margin-top: 0.2rem; font-size: 1.55rem; font-weight: 900; line-height: 1.1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }
+  .md .stav { font-size: 0.7rem; }
+  .md__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.1rem 0.4rem; margin-top: 0.15rem; font-size: clamp(1.6rem, 2.4vw, 1.95rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; }
   .md__cislo small { font-size: 0.74rem; font-weight: 700; letter-spacing: 0; color: var(--muted); }
   .md__veta { font-size: 0.84rem; line-height: 1.5; color: var(--text-2); text-wrap: pretty; }
 
@@ -497,13 +531,14 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
   .krok__nove strong { font-size: 0.92rem; color: var(--navy); }
 
   /* 2. žebříčky */
-  .zeb { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.15rem 1.25rem; width: min(100%, 560px); }
+  .zeb { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.3rem 0.75rem; width: min(100% + 0.75rem, 572px); margin-left: -0.75rem; }
   .zeb__radek {
-    display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 0.7rem; min-height: 54px; padding: 0.4rem 0.35rem;
-    border: 0; border-bottom: 1px solid var(--line); background: none; color: var(--navy); font-family: inherit; text-align: left; cursor: pointer;
+    display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.7rem; min-height: 54px; padding: 0.4rem 0.75rem;
+    border: 0; border-radius: 12px; background: none; color: var(--navy); font-family: inherit; text-align: left; cursor: pointer;
     transition: background-color 0.2s ease;
   }
-  .zeb__radek[aria-pressed='true'] { border-bottom-color: var(--orange); box-shadow: inset 0 -2px 0 var(--orange); }
+  /* vybraný žebříček: místo linky pod řádkem jemná oranžová plocha */
+  .zeb__radek[aria-pressed='true'] { background: color-mix(in srgb, var(--orange) 13%, transparent); }
   @media (hover: hover) and (pointer: fine) { .zeb__radek:hover { background: var(--hover); } }
   .zeb__nazev { font-size: 0.9rem; font-weight: 800; line-height: 1.25; }
   .zeb__misto { display: flex; align-items: baseline; gap: 0.3rem; white-space: nowrap; }
@@ -548,10 +583,16 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
     .cesta__uvod { order: 0; min-height: auto; align-items: center; text-align: center; padding-block: 1.75rem 0.5rem; }
     .uvod__hledani { text-align: left; }
     /* glóbus přes celou šířku telefonu, text kapitol pod ním zajíždí pod krémovou plochu */
-    .cesta__scena { order: 1; align-self: stretch; height: 42svh; margin-inline: -1.25rem; z-index: 20; background: var(--cream); }
+    .cesta__scena { --pas: #F5F1E9; order: 1; align-self: stretch; height: 42svh; margin-inline: -1.25rem; z-index: 20; background: var(--pas); }
+    :global([data-tema='tmavy']) .cesta__scena { --pas: #101A2E; }
+    /* na telefonu záře vyplní jen pás s glóbusem (elipsa), ať nic nepřetéká do stran ani pod pás */
+    .cesta__scena::before { inset: 0; left: 0; top: 0; width: auto; aspect-ratio: auto; border-radius: 0; transform: none; animation: none; }
+    .uvod__titul { align-items: center; }
+    .ut__velke { font-size: min(23vw, 6.2rem); margin-left: 0; }
+    .ut__lehke { font-size: clamp(1.15rem, 5.4vw, 1.6rem); }
     /* našeptávač zemí v úvodu musí být nad glóbusem, který je pod ním */
     .uvod__hledani { z-index: 25; }
-    .cesta__scena::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 28px; pointer-events: none; background: linear-gradient(to bottom, var(--cream), color-mix(in srgb, var(--cream) 0%, transparent)); }
+    .cesta__scena::after { content: ''; position: absolute; left: 0; right: 0; top: 100%; height: 28px; pointer-events: none; background: linear-gradient(to bottom, var(--pas), color-mix(in srgb, var(--pas) 0%, transparent)); }
     .scena__pata { padding: 0 0 0.6rem; gap: 0.4rem; }
     .scena__legenda { font-size: 0.72rem; min-height: 1.2rem; }
     .scena__kapitoly a { min-height: 30px; padding: 0 0.55rem 0 0.3rem; font-size: 0.7rem; }
@@ -560,7 +601,6 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
     .krok h2 { font-size: clamp(1.5rem, 6.5vw, 2rem); }
     .zeb { grid-template-columns: 1fr; }
     .mesic__body { grid-template-columns: 1fr; }
-    .mesic__body > li:nth-child(2n) { border-left: 0; }
     .vlajky { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; width: calc(100% + 2.5rem); margin-inline: -1.25rem; padding: 0.2rem 1.25rem 0.5rem; scroll-snap-type: x proximity; }
     .vlajky::-webkit-scrollbar { display: none; }
     .vlajky li { flex-shrink: 0; scroll-snap-align: start; }
@@ -572,5 +612,6 @@ const odstavce = souhrn ? nezalomit(souhrn.souhrn.text ?? souhrn.souhrn.perex).s
     :global(.js) .krok > * { opacity: 1 !important; animation: none !important; }
     .cesta__dolu-ikona { animation: none; }
     .scena__retezec, .scena__staticky, .scena__platno { transition: none; }
+    .cesta__scena::before, .ut__velke, .ut__lehke, .uvod__perex { animation: none; }
   }
 </style>

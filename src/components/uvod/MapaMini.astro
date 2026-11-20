@@ -36,13 +36,22 @@ const data = JSON.stringify({ vrstvy: ciselne, kraje: Object.fromEntries(geo.kra
         <span class="znacka">@data<span>.cesky</span></span>
       </div>
     </div>
-    <ol class="mm__poradi" data-mm-poradi></ol>
+    <div class="mm__strana">
+      <ol class="mm__poradi" data-mm-poradi></ol>
+      <button type="button" class="mm__vse" data-mm-vse aria-expanded="false">Všech 14 krajů</button>
+    </div>
   </div>
 </div>
 
 <style>
   .mm { display: flex; flex-direction: column; gap: 1.1rem; }
   .mm__chipy { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: flex-start; }
+  /* telefon: přepínače vrstev v jedné řadě, která jede do strany, místo tří řádků pilulek */
+  @media (max-width: 680px) {
+    .mm__chipy { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -1.25rem; padding: 0.15rem 1.25rem; scroll-padding-inline: 1.25rem; }
+    .mm__chipy::-webkit-scrollbar { display: none; }
+    .mm__chipy .chip { flex-shrink: 0; }
+  }
   .mm__telo { display: grid; grid-template-columns: minmax(0, 7fr) minmax(0, 4fr); gap: 1.25rem; align-items: stretch; }
   @media (max-width: 880px) { .mm__telo { grid-template-columns: 1fr; } }
   /* bez rámečku: mapa i pořadí leží rovnou v bílém pásu úvodní stránky */
@@ -50,8 +59,23 @@ const data = JSON.stringify({ vrstvy: ciselne, kraje: Object.fromEntries(geo.kra
   .mm__mapa svg { width: 100%; height: auto; display: block; }
   .mm__kraj { stroke: var(--obrys); stroke-width: 2; stroke-linejoin: round; transition: fill 0.8s ease, opacity 0.2s ease; }
   @media (hover: hover) and (pointer: fine) { .mm__kraj:hover { opacity: 0.8; } }
-  .mm__poradi { list-style: none; margin: 0; padding: 0 0 0 clamp(0rem, 2.5vw, 2rem); border-left: 1px solid var(--line-jemna); display: flex; flex-direction: column; justify-content: center; gap: 0.35rem; }
-  @media (max-width: 880px) { .mm__poradi { padding-left: 0; border-left: 0; } }
+  .mm__strana { display: flex; flex-direction: column; justify-content: center; gap: 0.75rem; padding-left: clamp(0rem, 2.5vw, 2rem); }
+  .mm__poradi { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0.35rem; }
+  .mm__vse { display: none; align-self: flex-start; padding: 0 0 0.15rem; border: 0; background: linear-gradient(var(--orange), var(--orange)) left bottom / 100% 2px no-repeat; color: var(--navy); font-family: inherit; font-size: 0.88rem; font-weight: 800; cursor: pointer; }
+  /* telefon: místo 14 řádků jen první a poslední tři, celé pořadí po ťuknutí */
+  @media (max-width: 880px) {
+    .mm__strana { padding-left: 0; }
+    .mm__vse { display: inline-block; }
+    .mm__poradi:not(.je-cele) :global(li:nth-child(n + 4):nth-last-child(n + 4):not(.je-vybrany)) { display: none; }
+    /* mezera mezi první a poslední trojicí: tři tečky místo čáry */
+    .mm__poradi:not(.je-cele) :global(li:nth-last-child(3)) { position: relative; margin-top: 1.5rem; }
+    .mm__poradi:not(.je-cele) :global(li:nth-last-child(3))::before { content: '···'; position: absolute; left: 1.9rem; top: -1.45rem; font-size: 1.1rem; font-weight: 900; letter-spacing: 0.2em; color: var(--line-2); }
+  }
+  /* kraj, na který ukážeš na mapě nebo v pořadí: zvýrazní se na obou místech */
+  .mm.je-vyber .mm__kraj:not(.je-vybrany) { opacity: 0.35; }
+  :global(.mm__poradi li) { cursor: default; transition: opacity 0.2s ease; }
+  .mm.je-vyber :global(.mm__poradi li:not(.je-vybrany)) { opacity: 0.5; }
+  :global(.mm__poradi li.je-vybrany .j), :global(.mm__poradi li.je-vybrany .h) { color: var(--orange-text); }
   :global(.mm__poradi li) { display: grid; grid-template-columns: 1.4rem minmax(0, 1fr) auto; gap: 0.5rem; align-items: center; font-size: 0.8rem; font-weight: 700; }
   :global(.mm__poradi .p) { color: var(--muted); font-size: 0.74rem; text-align: right; }
   :global(.mm__poradi .s) { display: flex; flex-direction: column; gap: 0.18rem; min-width: 0; }
@@ -110,7 +134,8 @@ const data = JSON.stringify({ vrstvy: ciselne, kraje: Object.fromEntries(geo.kra
       if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
         for (const [id, li] of nove) {
           const a = predtim.get(id);
-          if (a === undefined) continue;
+          // skryté řádky (na telefonu sbalené pořadí) nemají polohu, ty se nepřesouvají
+          if (a === undefined || a === 0 || !li.offsetParent) continue;
           const d = a - li.getBoundingClientRect().top;
           if (!d) continue;
           li.animate([{ transform: `translateY(${d}px)` }, { transform: 'none' }], { duration: 800, easing: 'cubic-bezier(0.22, 0.8, 0.24, 1)' });
@@ -119,8 +144,37 @@ const data = JSON.stringify({ vrstvy: ciselne, kraje: Object.fromEntries(geo.kra
       radky = nove;
     }
     for (const b of koren.querySelectorAll<HTMLButtonElement>('[data-mm-vrstva]')) {
-      b.addEventListener('click', () => ukaz(vrstvy.find((v) => v.id === b.dataset.mmVrstva)!));
+      b.addEventListener('click', () => { ukaz(vrstvy.find((v) => v.id === b.dataset.mmVrstva)!); vyber(vybrany); });
     }
     ukaz(vrstvy[0]);
+
+    // Ukázání na kraj (myš na mapě nebo v pořadí, ťuknutí na telefonu) ho zvýrazní na mapě i v pořadí
+    let vybrany: string | null = null;
+    function vyber(id: string | null) {
+      vybrany = id;
+      koren!.classList.toggle('je-vyber', !!id);
+      for (const c of cesty) c.classList.toggle('je-vybrany', c.dataset.mmKraj === id);
+      for (const [kid, li] of radky) li.classList.toggle('je-vybrany', kid === id);
+    }
+    const mys = matchMedia('(hover: hover) and (pointer: fine)').matches;
+    for (const c of cesty) {
+      const id = c.dataset.mmKraj!;
+      if (mys) { c.addEventListener('pointerenter', () => vyber(id)); c.addEventListener('pointerleave', () => vyber(null)); }
+      c.addEventListener('click', () => vyber(vybrany === id ? null : id));
+    }
+    if (mys) {
+      ol.addEventListener('pointerover', (e) => {
+        const li = (e.target as HTMLElement).closest('li');
+        const id = li && [...radky].find(([, x]) => x === li)?.[0];
+        if (id) vyber(id);
+      });
+      ol.addEventListener('pointerleave', () => vyber(null));
+    }
+    const vse = koren.querySelector<HTMLButtonElement>('[data-mm-vse]')!;
+    vse.addEventListener('click', () => {
+      const cele = ol.classList.toggle('je-cele');
+      vse.setAttribute('aria-expanded', String(cele));
+      vse.textContent = cele ? 'Jen první a poslední tři' : 'Všech 14 krajů';
+    });
   }
 </script>

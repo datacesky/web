@@ -15,18 +15,41 @@ interface Props {
   kotva?: boolean;
   // štítek „Hlavní novinka“ (úvodní stránka)
   hlavni?: boolean;
+  // řádek místo karty (úvodní stránka): skutečný malý graf místo ilustrace, text, číslo a změna vedle sebe, bez rámečku
+  radek?: boolean;
 }
-const { p, kotva = false, hlavni = false } = Astro.props;
+const { p, kotva = false, hlavni = false, radek = false } = Astro.props;
 const SIPKA = { nahoru: 'M12 19V5 M6 11l6-6 6 6', dolu: 'M12 5v14 M6 13l6 6 6-6', stejne: 'M5 12h14' };
 const OBLAST = { cesko: 'Česko', evropa: 'Evropa', svet: 'Svět' };
 const oblast = p.oblast ?? 'cesko';
 const idDetailu = `nkd-${p.id}-${Math.random().toString(36).slice(2, 7)}`;
 ---
 
-<li class:list={['nk', { 'nk--hlavni': hlavni }]} id={kotva ? `n-${p.id}` : undefined} data-oblast={oblast}>
+<li class:list={['nk', { 'nk--hlavni': hlavni && !radek, 'nk--radek': radek }]} id={kotva ? `n-${p.id}` : undefined} data-oblast={oblast}>
   <button type="button" class="nk__otevrit" data-nk-otevri aria-haspopup="dialog" aria-controls={idDetailu}>
     <span class="sr-only">{p.nadpis}: otevřít graf a detail</span>
   </button>
+  {radek ? (
+    <>
+      {p.graf && <div class="nkr__graf" aria-hidden="true"><MiniGraf graf={p.graf} sirka={280} vyska={112} /></div>}
+      <div class="nkr__telo">
+        <span class="nkr__kde"><span class:list={['oblast-tecka', `oblast-tecka--${oblast}`]}></span>{OBLAST[oblast]} · {p.stitek ?? p.zdroj}</span>
+        <h3 class="nkr__nadpis">{p.nadpis}</h3>
+        <p class="nkr__text">{nezalomit(p.text)}</p>
+      </div>
+      <div class="nkr__hodnota">
+        <p class="nk__cislo"><span data-pocitej>{p.cislo}</span>{p.popisCisla && <small>{p.popisCisla}</small>}</p>
+        {p.zmena && (
+          <span class:list={['nk__zmena', `nk__zmena--${p.smer ?? 'stejne'}`]}>
+            <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d={SIPKA[p.smer ?? 'stejne']} /></svg>
+            {p.zmena}
+          </span>
+        )}
+        <span class="nkr__zdroj">{p.zdroj}</span>
+      </div>
+    </>
+  ) : (
+  <>
   <div class="nk__nahled">
     <NahledNovinky id={p.id} ikona={p.ikona} oblast={oblast} obrazek={p.obrazek} popis={p.nadpis} />
     <span class="nk__oblast"><span class:list={['oblast-tecka', `oblast-tecka--${oblast}`]}></span>{OBLAST[oblast]}</span>
@@ -50,6 +73,8 @@ const idDetailu = `nkd-${p.id}-${Math.random().toString(36).slice(2, 7)}`;
       <span class="nk__vice">{p.graf ? 'Graf a detail' : 'Celý text'}<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg></span>
     </p>
   </div>
+  </>
+  )}
 
   <dialog class="nkd" id={idDetailu} aria-labelledby={`${idDetailu}-t`}>
     <div class="nkd__obal">
@@ -140,9 +165,10 @@ const idDetailu = `nkd-${p.id}-${Math.random().toString(36).slice(2, 7)}`;
   .nk__telo { flex-grow: 1; display: flex; flex-direction: column; gap: 0.4rem; padding: 0.95rem 1.15rem 1rem; }
   .nk__radek { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
   .nk__stitek { flex: 1 1 auto; min-width: 0; font-size: 0.74rem; font-weight: 800; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .nk__zmena { flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.25rem; padding: 0.2rem 0.55rem; border-radius: 999px; font-size: 0.74rem; font-weight: 800; white-space: nowrap; background: var(--bezova); color: var(--text-2); font-variant-numeric: tabular-nums; }
-  .nk__zmena--nahoru { background: var(--oranzova-svetla); color: var(--orange-text); }
-  .nk__zmena--dolu { background: var(--modra-svetla); color: var(--navy); }
+  /* změna jako barevný text se šipkou, bez pilulky */
+  .nk__zmena { flex-shrink: 0; display: inline-flex; align-items: center; gap: 0.25rem; font-size: 0.8rem; font-weight: 800; white-space: nowrap; color: var(--muted); font-variant-numeric: tabular-nums; }
+  .nk__zmena--nahoru { color: var(--orange-text); }
+  .nk__zmena--dolu { color: var(--navy); }
   .nk__cislo { display: flex; align-items: baseline; flex-wrap: wrap; gap: 0.1rem 0.45rem; font-size: clamp(1.8rem, 3.6vw, 2.15rem); font-weight: 900; line-height: 1.1; letter-spacing: -0.03em; color: var(--navy); font-variant-numeric: tabular-nums; }
   .nk__cislo small { font-size: 0.85rem; font-weight: 800; letter-spacing: 0; color: var(--muted); }
   .nk__nadpis { font-size: 0.98rem; line-height: 1.35; color: var(--navy); text-wrap: balance; }
@@ -154,6 +180,40 @@ const idDetailu = `nkd-${p.id}-${Math.random().toString(36).slice(2, 7)}`;
   .nk__pata { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-top: 0.35rem; padding-top: 0.65rem; border-top: 1px solid var(--line); font-size: 0.78rem; font-weight: 700; }
   .nk__zdroj { color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .nk__vice { display: inline-flex; align-items: center; gap: 0.2rem; flex-shrink: 0; color: var(--orange-text); font-weight: 800; transition: gap 0.2s var(--ease-out); }
+
+  /* ---------- řádek (úvodní stránka): bez karty, jen tenká linka nad každým řádkem ---------- */
+  .nk--radek {
+    display: grid; grid-template-columns: minmax(0, 260px) minmax(0, 1fr) auto; grid-template-areas: 'graf telo hodnota';
+    align-items: center; gap: 1.25rem clamp(1.5rem, 4vw, 3rem); padding: 1.6rem 1.25rem; margin-inline: -1.25rem; border: 0;
+    border-radius: 24px; background: none; box-shadow: none; overflow: visible; transition: background-color 0.3s ease;
+  }
+  /* bez čar mezi řádky: odděluje je vzduch, při najetí se řádek podloží světlou plochou */
+  @media (hover: hover) and (pointer: fine) {
+    .nk--radek:hover { transform: none; box-shadow: none; background: color-mix(in srgb, var(--paper) 70%, transparent); }
+    .nk--radek:hover .nkr__nadpis { color: var(--orange-text); }
+    .nk--radek:hover .nkr__graf { transform: translateX(3px); }
+  }
+  .nk--radek:active { transform: none; }
+  .nkr__graf { grid-area: graf; transition: transform 0.35s var(--ease-out); }
+  .nkr__graf :global(.mg__svg text) { stroke: var(--cream); }
+  .nkr__telo { grid-area: telo; display: flex; flex-direction: column; gap: 0.3rem; min-width: 0; }
+  .nkr__kde { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.72rem; font-weight: 800; letter-spacing: 0.06em; text-transform: uppercase; color: var(--muted); }
+  .nkr__nadpis { font-size: clamp(1.1rem, 1.8vw, 1.3rem); line-height: 1.3; color: var(--navy); text-wrap: balance; transition: color 0.2s ease; }
+  .nkr__text {
+    max-width: 58ch; font-size: 0.92rem; line-height: 1.6; color: var(--text-2);
+    display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden;
+  }
+  .nkr__hodnota { grid-area: hodnota; display: flex; flex-direction: column; align-items: flex-end; gap: 0.25rem; text-align: right; }
+  .nkr__hodnota .nk__cislo { justify-content: flex-end; font-size: clamp(1.7rem, 3vw, 2.2rem); }
+  .nkr__zdroj { font-size: 0.74rem; font-weight: 700; color: var(--muted); }
+  /* telefon: text, pod ním číslo se změnou v jednom řádku a graf přes celou šířku (popisek grafu je v detailu) */
+  @media (max-width: 760px) {
+    .nk--radek { grid-template-columns: minmax(0, 1fr); grid-template-areas: 'telo' 'hodnota' 'graf'; align-items: start; gap: 0.7rem; padding: 1.4rem 0 1.6rem; margin-inline: 0; border-radius: 0; }
+    .nkr__hodnota { flex-direction: row; flex-wrap: wrap; align-items: baseline; gap: 0.2rem 0.8rem; text-align: left; }
+    .nkr__hodnota .nk__cislo { justify-content: flex-start; font-size: 1.7rem; }
+    .nkr__zdroj { margin-left: auto; }
+    .nkr__graf :global(.mg__popis) { display: none; }
+  }
 
   /* ---------- detail v okně ---------- */
   .nkd {
